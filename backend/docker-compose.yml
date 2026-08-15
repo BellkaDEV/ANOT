@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_KEY=base64:zZ6l7vG85BvhHlS3Lq9M6Y9Vv4P3O5I2K7G8J3P1A9S=
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=anot
+      - DB_USERNAME=anot_user
+      - DB_PASSWORD=anot_password
+    depends_on:
+      - db
+    volumes:
+      - .:/var/www
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=anot
+      - POSTGRES_USER=anot_user
+      - POSTGRES_PASSWORD=anot_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

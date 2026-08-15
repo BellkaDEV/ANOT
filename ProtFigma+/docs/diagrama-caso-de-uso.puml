@@ -1,0 +1,327 @@
+@startuml DiagramaCasoDeUso_ANOT
+
+' ═══════════════════════════════════════════════════════════════════
+' CONFIGURAÇÃO VISUAL
+' ═══════════════════════════════════════════════════════════════════
+!theme plain
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam backgroundColor #F4F6FB
+skinparam ArrowColor #0E2F5A
+skinparam ArrowFontColor #0E2F5A
+skinparam ArrowFontSize 11
+
+skinparam actor {
+  BackgroundColor #EDF1F8
+  BorderColor #0E2F5A
+  FontColor #0A1628
+  FontStyle bold
+}
+
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #0E2F5A
+  FontColor #0A1628
+  BorderThickness 1.5
+}
+
+skinparam package {
+  BackgroundColor #F0F4FF
+  BorderColor #0E2F5A
+  FontColor #0E2F5A
+  FontStyle bold
+  BorderThickness 2
+}
+
+skinparam note {
+  BackgroundColor #FFFBEB
+  BorderColor #F59E0B
+  FontColor #92400E
+}
+
+title <size:18><b>Diagrama de Caso de Uso — ANOT</b></size>\n<size:13>Plataforma de Comunicação e Organização Acadêmica</size>\n
+
+' ═══════════════════════════════════════════════════════════════════
+' ATORES E HIERARQUIA (Herança/Generalização)
+' ═══════════════════════════════════════════════════════════════════
+
+actor "Usuário\nNão Autenticado" as UA
+actor "Aluno" as AL
+actor "Representante" as REP
+actor "Criador\n(Owner)" as CRI
+
+' Generalização entre atores:
+' Aluno herda de Usuário Não Autenticado
+' Representante herda de Aluno
+' Criador herda de Representante
+AL      -up-|>  UA  : generalização
+REP     -up-|>  AL  : generalização
+CRI     -up-|>  REP : generalização
+
+note right of CRI
+  Hierarquia de permissões:
+  UA → Aluno → Representante → Criador
+  Cada ator herda todos os casos
+  de uso do ator acima.
+end note
+
+' ═══════════════════════════════════════════════════════════════════
+' SISTEMA
+' ═══════════════════════════════════════════════════════════════════
+
+rectangle "ANOT — Sistema de Comunicação Acadêmica" {
+
+  ' ─────────────────────────────────────────────────────────────
+  ' SUBSISTEMA 1: AUTENTICAÇÃO
+  ' ─────────────────────────────────────────────────────────────
+  package "Autenticação" as PKG_AUTH {
+
+    usecase "Registrar conta"          as UC01
+    usecase "Fazer login"              as UC02
+    usecase "Validar credenciais"      as UC02a
+    usecase "Recuperar senha"          as UC03
+    usecase "Fazer logout"             as UC04
+
+  }
+
+  ' ─────────────────────────────────────────────────────────────
+  ' SUBSISTEMA 2: GESTÃO DE TURMAS
+  ' ─────────────────────────────────────────────────────────────
+  package "Gestão de Turmas" as PKG_TURMA {
+
+    usecase "Visualizar turmas\ndo usuário"        as UC05
+    usecase "Entrar em turma\npor código"          as UC06
+    usecase "Validar código\nde acesso"            as UC06a
+    usecase "Exibir preview\nda turma"             as UC06b
+    usecase "Criar turma"                          as UC07
+    usecase "Gerar código\núnico de acesso"        as UC07a
+    usecase "Gerar QR Code\nde convite"            as UC07b
+    usecase "Editar dados\nda turma"               as UC08
+    usecase "Compartilhar link\nde acesso"         as UC09
+    usecase "Excluir turma"                        as UC10
+    usecase "Confirmar exclusão\nda turma"         as UC10a
+
+  }
+
+  ' ─────────────────────────────────────────────────────────────
+  ' SUBSISTEMA 3: ATIVIDADES
+  ' ─────────────────────────────────────────────────────────────
+  package "Gestão de Atividades" as PKG_ATIV {
+
+    usecase "Visualizar lista\nde atividades"         as UC11
+    usecase "Filtrar por\ntipo de atividade"          as UC11a
+    usecase "Buscar atividade\npor texto"             as UC11b
+    usecase "Visualizar detalhe\nda atividade"        as UC12
+    usecase "Atualizar progresso\npessoal"            as UC13
+    usecase "Registrar notas\npessoais"               as UC14
+    usecase "Criar atividade"                         as UC15
+    usecase "Validar campos\nda atividade"            as UC15a
+    usecase "Sincronizar evento\nno calendário"       as UC15b
+    usecase "Adicionar horário\nde entrega"           as UC15c
+    usecase "Editar atividade"                        as UC16
+    usecase "Excluir atividade"                       as UC17
+    usecase "Confirmar exclusão\nda atividade"        as UC17a
+    usecase "Remover evento\nvinculado do calendário" as UC17b
+
+  }
+
+  ' ─────────────────────────────────────────────────────────────
+  ' SUBSISTEMA 4: AVISOS
+  ' ─────────────────────────────────────────────────────────────
+  package "Gestão de Avisos" as PKG_AVISO {
+
+    usecase "Visualizar avisos\nda turma"          as UC18
+    usecase "Buscar aviso\npor texto"              as UC18a
+    usecase "Marcar aviso\ncomo lido"              as UC18b
+    usecase "Marcar todos\ncomo lidos"             as UC18c
+    usecase "Criar aviso"                          as UC19
+    usecase "Definir prioridade\ndo aviso"         as UC19a
+    usecase "Calcular data\nde expiração (21d)"    as UC19b
+    usecase "Editar aviso"                         as UC20
+    usecase "Excluir aviso"                        as UC21
+    usecase "Confirmar exclusão\ndo aviso"         as UC21a
+
+  }
+
+  ' ─────────────────────────────────────────────────────────────
+  ' SUBSISTEMA 5: CALENDÁRIO
+  ' ─────────────────────────────────────────────────────────────
+  package "Calendário de Eventos" as PKG_CAL {
+
+    usecase "Visualizar calendário\nmensal"        as UC22
+    usecase "Navegar entre\nmeses"                 as UC22a
+    usecase "Filtrar eventos\npor tipo"            as UC22b
+    usecase "Selecionar dia\nno calendário"        as UC22c
+    usecase "Exibir eventos\ndo dia selecionado"   as UC22d
+
+  }
+
+  ' ─────────────────────────────────────────────────────────────
+  ' SUBSISTEMA 6: MEMBROS
+  ' ─────────────────────────────────────────────────────────────
+  package "Gestão de Membros" as PKG_MEMBROS {
+
+    usecase "Visualizar lista\nde membros"           as UC23
+    usecase "Ver detalhe\ndo membro"                 as UC24
+    usecase "Promover a\nRepresentante"              as UC25
+    usecase "Verificar role\natual do membro"        as UC25a
+    usecase "Rebaixar\na Aluno"                      as UC26
+    usecase "Verificar permissão\nexclusiva do Dono" as UC26a
+    usecase "Expulsar membro\nda turma"              as UC27
+    usecase "Confirmar\nexpulsão"                    as UC27a
+    usecase "Verificar proteção\ndo Criador"         as UC27b
+
+  }
+
+  ' ─────────────────────────────────────────────────────────────
+  ' SUBSISTEMA 7: PERFIL E PREFERÊNCIAS
+  ' ─────────────────────────────────────────────────────────────
+  package "Perfil e Preferências" as PKG_PERFIL {
+
+    usecase "Editar nome\ndo perfil"              as UC28
+    usecase "Alternar\nmodo escuro"               as UC29
+    usecase "Configurar\nnotificações push"        as UC30
+    usecase "Visualizar\nsobre o app"             as UC31
+
+  }
+
+}
+
+' ═══════════════════════════════════════════════════════════════════
+' ASSOCIAÇÕES: Usuário Não Autenticado
+' ═══════════════════════════════════════════════════════════════════
+UA --> UC01
+UA --> UC02
+UA --> UC03
+
+' ═══════════════════════════════════════════════════════════════════
+' ASSOCIAÇÕES: Aluno (herda UA + ações próprias)
+' ═══════════════════════════════════════════════════════════════════
+AL --> UC04
+AL --> UC05
+AL --> UC06
+AL --> UC11
+AL --> UC12
+AL --> UC13
+AL --> UC14
+AL --> UC18
+AL --> UC22
+AL --> UC28
+AL --> UC29
+AL --> UC30
+AL --> UC31
+
+' ═══════════════════════════════════════════════════════════════════
+' ASSOCIAÇÕES: Representante (herda Aluno + ações próprias)
+' ═══════════════════════════════════════════════════════════════════
+REP --> UC15
+REP --> UC16
+REP --> UC17
+REP --> UC19
+REP --> UC20
+REP --> UC21
+REP --> UC23
+REP --> UC24
+REP --> UC25
+REP --> UC27
+
+' ═══════════════════════════════════════════════════════════════════
+' ASSOCIAÇÕES: Criador (herda Representante + ações exclusivas)
+' ═══════════════════════════════════════════════════════════════════
+CRI --> UC07
+CRI --> UC08
+CRI --> UC09
+CRI --> UC10
+CRI --> UC26
+
+' ═══════════════════════════════════════════════════════════════════
+' RELAÇÕES <<include>>
+' Funcionalidades obrigatórias que SEMPRE são executadas junto
+' ═══════════════════════════════════════════════════════════════════
+
+' Autenticação
+UC02  .>  UC02a  : <<include>>
+
+' Turmas
+UC06  .>  UC06a  : <<include>>
+UC07  .>  UC07a  : <<include>>
+UC07  .>  UC07b  : <<include>>
+UC10  .>  UC10a  : <<include>>
+
+' Atividades
+UC15  .>  UC15a  : <<include>>
+UC15  .>  UC15b  : <<include>>
+UC16  .>  UC15b  : <<include>>
+UC17  .>  UC17a  : <<include>>
+UC17  .>  UC17b  : <<include>>
+
+' Avisos
+UC19  .>  UC19a  : <<include>>
+UC19  .>  UC19b  : <<include>>
+UC21  .>  UC21a  : <<include>>
+
+' Membros
+UC25  .>  UC25a  : <<include>>
+UC26  .>  UC26a  : <<include>>
+UC27  .>  UC27a  : <<include>>
+UC27  .>  UC27b  : <<include>>
+
+' ═══════════════════════════════════════════════════════════════════
+' RELAÇÕES <<extend>>
+' Comportamentos OPCIONAIS que estendem um caso de uso base
+' ═══════════════════════════════════════════════════════════════════
+
+' Turmas
+UC06b  .>  UC06  : <<extend>>\n{ponto de extensão:\ncódigo válido encontrado}
+
+' Atividades
+UC11a  .>  UC11  : <<extend>>\n{ponto de extensão:\nfiltro selecionado}
+UC11b  .>  UC11  : <<extend>>\n{ponto de extensão:\ntexto digitado}
+UC15c  .>  UC15  : <<extend>>\n{ponto de extensão:\nopção de horário ativada}
+
+' Avisos
+UC18a  .>  UC18  : <<extend>>\n{ponto de extensão:\ntexto digitado}
+UC18b  .>  UC18  : <<extend>>\n{ponto de extensão:\nclique no aviso}
+UC18c  .>  UC18  : <<extend>>\n{ponto de extensão:\nbotão "marcar todas"}
+
+' Calendário
+UC22a  .>  UC22  : <<extend>>\n{ponto de extensão:\nnavegação de mês}
+UC22b  .>  UC22  : <<extend>>\n{ponto de extensão:\nfiltro selecionado}
+UC22c  .>  UC22  : <<extend>>\n{ponto de extensão:\ndia clicado}
+UC22d  .>  UC22c : <<extend>>\n{ponto de extensão:\ndia tem eventos}
+
+' ═══════════════════════════════════════════════════════════════════
+' NOTAS EXPLICATIVAS
+' ═══════════════════════════════════════════════════════════════════
+
+note bottom of PKG_AUTH
+  <b>Obs.:</b> O papel (Aluno / Representante / Criador)
+  é definido pelo contexto da turma,
+  não no momento do cadastro.
+end note
+
+note bottom of PKG_ATIV
+  <b>Obs.:</b> "Sincronizar evento no calendário"
+  é executado tanto na criação quanto
+  na edição de atividades (<<include>> em ambos).
+  A exclusão remove o evento vinculado.
+end note
+
+note bottom of PKG_AVISO
+  <b>Obs.:</b> Avisos expiram automaticamente
+  após 21 dias (calculado em <<include>>
+  "Calcular data de expiração").
+  O autor não recebe indicador de "não lido"
+  dos próprios avisos.
+end note
+
+note right of PKG_MEMBROS
+  <b>Restrição:</b>
+  • "Rebaixar a Aluno" — exclusivo do Criador
+  • O Criador não pode ser expulso
+    ("Verificar proteção do Criador" garante isso)
+  • Um Representante não pode se auto-rebaixar
+    nem se auto-expulsar
+end note
+
+@enduml

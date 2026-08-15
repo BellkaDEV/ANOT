@@ -1,0 +1,25 @@
+{
+  "name": "anot-rn",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start":   "expo start",
+    "android": "expo start --android",
+    "ios":     "expo start --ios"
+  },
+  "dependencies": {
+    "expo":                          "~54.0.0",
+    "expo-status-bar":               "~2.0.0",
+    "react":                         "18.3.2",
+    "react-native":                  "0.76.5",
+    "@expo/vector-icons":            "^14.0.2",
+    "expo-font":                     "~13.0.1",
+    "react-native-safe-area-context":"4.14.0",
+    "react-native-screens":          "~4.4.0"
+  },
+  "devDependencies": {
+    "@babel/core":                   "^7.25.0",
+    "@types/react":                  "~18.3.12",
+    "typescript":                    "^5.3.3"
+  }
+}
