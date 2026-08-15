@@ -9,7 +9,7 @@ export type Screen =
   | "createClass" | "classCreated" | "joinClass"
   | "classHome" | "activityDetail" | "notifications"
   | "events" | "profile" | "settings" | "about"
-  | "repPanel" | "activityForm";
+  | "repPanel" | "activityForm" | "announcementForm";
 
 export interface AppTheme {
   bg: string; card: string; card2: string; headerBg: string;
@@ -24,6 +24,7 @@ export interface Activity { id: string; title: string; type: ActivityType; subje
 export interface AppEvent { id: string; title: string; day: number; month: number; type: EventKind; subject?: string; room?: string; }
 export interface AppClass {
   id: string; code: string; name: string; course: string; institution: string; period: string; modality: Modality;
+  isOpen?: boolean;
   ownerId: string; members: Member[];
   announcements: Announcement[]; events: AppEvent[]; activities: Activity[];
 }

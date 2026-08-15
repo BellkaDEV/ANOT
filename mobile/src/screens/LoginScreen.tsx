@@ -74,7 +74,7 @@ export default function LoginScreen({ onLogin, onBack, onRegister, th }: Props) 
         <View style={[S.demoCard, { backgroundColor: th.card, borderColor: th.border }]}>
           <Text style={[S.demoTitle, { color: th.muted }]}>CONTAS DEMO RÁPIDO</Text>
           {Object.entries(DEMO_ACCOUNTS).map(([em, { name }]) => (
-            <TouchableOpacity key={em} onPress={() => { setEmail(em); setPw("123456"); }}
+            <TouchableOpacity key={em} onPress={() => { setEmail(em); setPw("password123"); }}
               style={[S.demoRow, { borderColor: th.border }]}>
               <View style={[S.demoAvatar, { backgroundColor: th.orangeLight }]}>
                 <Text style={[S.demoInit, { color: th.orange }]}>{name[0]}</Text>

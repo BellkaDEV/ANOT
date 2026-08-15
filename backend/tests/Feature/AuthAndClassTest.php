@@ -52,7 +52,7 @@ class AuthAndClassTest extends TestCase
             ->assertJsonPath('class.my_role', 'owner');
 
         $code = $response->json('class.code');
-        $this->assertStringStartsWith('ANOT-', $code);
+        $this->assertEquals(6, strlen($code));
 
         $this->assertDatabaseHas('class_members', [
             'user_id' => $user->id,

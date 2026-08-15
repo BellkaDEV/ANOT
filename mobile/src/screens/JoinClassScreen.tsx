@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Btn, FInput } from "../components/ui";
 import type { AppTheme } from "../types";
@@ -7,22 +8,24 @@ import type { AppTheme } from "../types";
 interface Props { onJoin: (code: string) => void; onBack: () => void; th: AppTheme }
 
 export default function JoinClassScreen({ onJoin, onBack, th }: Props) {
+  const insets = useSafeAreaInsets();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   function submit() {
-    const c = code.trim().toUpperCase();
-    if (!c) { setError("Código obrigatório"); return; }
-    if (c.length < 8) { setError("Código inválido"); return; }
+    const c = code.trim();
+    if (!c) { setError("Código ou link é obrigatório"); return; }
+    if (c.length < 3) { setError("Código muito curto"); return; }
     setError("");
     setLoading(true);
-    setTimeout(() => { setLoading(false); onJoin(c); }, 700);
+    onJoin(c);
+    setTimeout(() => setLoading(false), 800);
   }
 
   return (
-    <SafeAreaView style={[S.safe, { backgroundColor: th.bg }]}>
-      <View style={[S.header, { backgroundColor: th.headerBg }]}>
+    <View style={[S.safe, { backgroundColor: th.bg }]}>
+      <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
         <TouchableOpacity onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Ionicons name="arrow-back" size={22} color="#fff"/>
         </TouchableOpacity>
@@ -57,20 +60,20 @@ export default function JoinClassScreen({ onJoin, onBack, th }: Props) {
               <Text style={[S.cardSub, { color: th.muted }]}>Digite o código fornecido pelo representante</Text>
             </View>
           </View>
-          <FInput th={th} label="Código" value={code} onChange={t => setCode(t.toUpperCase())}
-            placeholder="ENG-2025-7XK4" leftIcon="key-outline" error={error}
-            hint="O código é único e identifica sua turma"/>
+          <FInput th={th} label="Código de Acesso" value={code} onChange={t => setCode(t.toUpperCase())}
+            placeholder="Ex.: 7K9W2X" leftIcon="key-outline" error={error}
+            hint="Digite o código único de 6 caracteres ou cole o link de entrada"/>
           <Btn th={th} onPress={submit} full loading={loading} iconName="enter">Entrar na turma</Btn>
         </View>
 
         <View style={[S.hintCard, { backgroundColor: th.card2, borderColor: th.border }]}>
           <Ionicons name="information-circle-outline" size={16} color={th.muted}/>
           <Text style={[S.hintText, { color: th.muted }]}>
-            O código tem o formato CURSO-ANO-XXXX. Peça ao representante da sua turma.
+            O código possui 6 caracteres (ex: 7K9W2X). Você também pode colar o link direto enviado pelo representante.
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

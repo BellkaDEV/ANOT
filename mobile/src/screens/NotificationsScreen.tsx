@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge, Empty } from "../components/ui";
 import FloatingNav from "../components/FloatingNav";
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function NotificationsScreen({ cls, user, readSet, onMarkRead, onNav, th }: Props) {
+  const insets = useSafeAreaInsets();
   const [showExpired, setShowExpired] = useState(false);
 
   const active  = cls.announcements.filter(a => !isExpired(a.createdAt));
@@ -59,8 +61,8 @@ export default function NotificationsScreen({ cls, user, readSet, onMarkRead, on
   }
 
   return (
-    <SafeAreaView style={[S.safe, { backgroundColor: th.bg }]}>
-      <View style={[S.header, { backgroundColor: th.headerBg }]}>
+    <View style={[S.safe, { backgroundColor: th.bg }]}>
+      <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
         <Text style={S.hTitle}>Avisos</Text>
         {unread > 0 && (
           <View style={S.badge}><Text style={S.badgeText}>{unread} novos</Text></View>
@@ -88,7 +90,7 @@ export default function NotificationsScreen({ cls, user, readSet, onMarkRead, on
       </ScrollView>
 
       <FloatingNav current="notifications" onNav={onNav} th={th} unread={unread}/>
-    </SafeAreaView>
+    </View>
   );
 }
 

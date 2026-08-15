@@ -13,7 +13,12 @@ class SchoolClass extends Model
         'institution',
         'period',
         'modality',
+        'is_open',
         'owner_id',
+    ];
+
+    protected $casts = [
+        'is_open' => 'boolean',
     ];
 
     public function owner()
@@ -31,5 +36,20 @@ class SchoolClass extends Model
         return $this->belongsToMany(User::class, 'class_members', 'class_id', 'user_id')
                     ->withPivot('role', 'joined_at')
                     ->withTimestamps();
+    }
+
+    public function announcements()
+    {
+        return $this->hasMany(Announcement::class, 'class_id');
+    }
+
+    public function activities()
+    {
+        return $this->hasMany(Activity::class, 'class_id');
+    }
+
+    public function events()
+    {
+        return $this->hasMany(Event::class, 'class_id');
     }
 }

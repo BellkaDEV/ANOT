@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Share,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge, SkelCard, Empty, AccentCard, SLabel } from "../components/ui";
 import FloatingNav from "../components/FloatingNav";
@@ -21,13 +22,16 @@ interface Props {
   onViewActivity: (id: string) => void;
   onRepPanel: () => void;
   onBack: () => void;
+  onCopyCode?: () => void;
+  onToggleOpen?: () => void;
   loading?: boolean;
   th: AppTheme;
 }
 
 export default function ClassHomeScreen({
-  cls, user, statuses, readSet, onNav, onViewActivity, onRepPanel, onBack, loading, th,
+  cls, user, statuses, readSet, onNav, onViewActivity, onRepPanel, onBack, onCopyCode, onToggleOpen, loading, th,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState<ActFilter>("todos");
   const [search, setSearch] = useState("");
   const myRole = cls.members.find(m => m.userId === user.id)?.classRole ?? "student";
@@ -54,9 +58,9 @@ export default function ClassHomeScreen({
   ];
 
   return (
-    <SafeAreaView style={[S.safe, { backgroundColor: th.bg }]}>
+    <View style={[S.safe, { backgroundColor: th.bg }]}>
       {/* Header */}
-      <View style={[S.header, { backgroundColor: th.headerBg }]}>
+      <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
         <TouchableOpacity onPress={onBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="arrow-back" size={22} color="#fff"/>
         </TouchableOpacity>
@@ -198,7 +202,7 @@ export default function ClassHomeScreen({
       </ScrollView>
 
       <FloatingNav current="classHome" onNav={onNav} th={th} unread={unread}/>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -235,4 +239,13 @@ const S = StyleSheet.create({
   dueBadge:{ flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 2,
              paddingHorizontal: 7, borderRadius: 20 },
   dueBadgeText:{ fontSize: 11, fontWeight: "600" },
+  codeCard: { borderRadius: 16, borderWidth: 1, padding: 14, gap: 8 },
+  codeLabel: { fontSize: 10, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase" },
+  codeValue: { fontSize: 20, fontWeight: "900", letterSpacing: 2 },
+  shareBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+              paddingVertical: 9, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1 },
+  shareBtnText: { fontSize: 12, fontWeight: "700" },
+  toggleBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+               paddingVertical: 9, borderRadius: 10, marginTop: 4 },
+  toggleBtnText: { fontSize: 12, fontWeight: "700" },
 });

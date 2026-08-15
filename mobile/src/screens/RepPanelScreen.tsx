@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Share,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge, Btn, Empty, MemberAvatar, SLabel } from "../components/ui";
 import { PRIORITY_META, ACT_META, ROLE_META, isExpired } from "../constants";
+import { copyToClipboard } from "../utils/clipboard";
 import type {
   AppTheme, AppClass, AppUser, Announcement, Activity, Member, ClassRole,
 } from "../types";
@@ -26,6 +28,9 @@ interface Props {
   onViewMember: (m: Member) => void;
   onUpdateClass: (data: Partial<AppClass>) => void;
   onDeleteClass: () => void;
+  onCopyCode?: () => void;
+  onToggleOpen?: () => void;
+  onRegenerateCode?: () => void;
   onBack: () => void;
   th: AppTheme;
 }
@@ -34,8 +39,9 @@ export default function RepPanelScreen({
   cls, user, onAddAnn, onEditAnn, onDelAnn,
   onAddActivity, onEditActivity, onDelActivity,
   onPromote, onDemote, onExpel, onViewMember,
-  onDeleteClass, onBack, th,
+  onDeleteClass, onCopyCode, onToggleOpen, onRegenerateCode, onBack, th,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<RepTab>("avisos");
   const myRole = cls.members.find(m => m.userId === user.id)?.classRole ?? "student";
   const isOwner = myRole === "owner";
@@ -159,11 +165,64 @@ export default function RepPanelScreen({
   // ── TURMA TAB ───────────────────────────────────────────────────────────────
   function TabTurma() {
     return (
-      <View style={{ gap: 10 }}>
+      <View style={{ gap: 12 }}>
+        {/* Card de Código e Compartilhamento (Exclusivo do Painel do Representante) */}
+        <View style={[S.codeCard, { backgroundColor: th.card, borderColor: th.border }]}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <View style={{ gap: 2 }}>
+              <Text style={[S.codeLabel, { color: th.muted }]}>CÓDIGO DE ACESSO</Text>
+              <Text style={[S.codeValue, { color: th.fg }]} selectable>{cls.code}</Text>
+            </View>
+            <Badge
+              color={cls.isOpen !== false ? "#065f46" : "#991b1b"}
+              bg={cls.isOpen !== false ? "#ecfdf5" : "#fef2f2"}
+            >
+              {cls.isOpen !== false ? "🟢 Turma Aberta" : "🔴 Turma Fechada"}
+            </Badge>
+          </View>
+
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+            <TouchableOpacity
+              onPress={async () => {
+                await copyToClipboard(cls.code);
+                if (onCopyCode) onCopyCode();
+              }}
+              style={[S.shareBtn, { backgroundColor: th.navyLight, borderColor: th.navy + "30" }]}
+            >
+              <Ionicons name="copy-outline" size={14} color={th.navy}/>
+              <Text style={[S.shareBtnText, { color: th.navy }]}>Copiar código</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                Share.share({
+                  message: `Entre na minha turma ${cls.name} no ANOT!\n\nCódigo de acesso: ${cls.code}\nLink de entrada: anot://join?code=${cls.code}`,
+                  title: `Convite para ${cls.name}`,
+                });
+              }}
+              style={[S.shareBtn, { backgroundColor: th.orangeLight, borderColor: th.orange + "30" }]}
+            >
+              <Ionicons name="share-social-outline" size={14} color={th.orange}/>
+              <Text style={[S.shareBtnText, { color: th.orange }]}>Compartilhar</Text>
+            </TouchableOpacity>
+
+            {onRegenerateCode && (
+              <TouchableOpacity
+                onPress={onRegenerateCode}
+                style={[S.shareBtn, { backgroundColor: "rgba(245, 158, 11, 0.12)", borderColor: "rgba(245, 158, 11, 0.3)" }]}
+              >
+                <Ionicons name="refresh-outline" size={14} color="#d97706"/>
+                <Text style={[S.shareBtnText, { color: "#d97706" }]}>Novo código</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
         <View style={[S.infoCard, { backgroundColor: th.card, borderColor: th.border }]}>
           {[
             { label: "Turma",       val: cls.name },
             { label: "Código",      val: cls.code },
+            { label: "Status",      val: cls.isOpen !== false ? "🟢 Inscrições Abertas" : "🔴 Turma Fechada" },
             { label: "Curso",       val: cls.course },
             { label: "Instituição", val: cls.institution },
             { label: "Período",     val: cls.period },
@@ -175,6 +234,19 @@ export default function RepPanelScreen({
             </View>
           ))}
         </View>
+
+        {onToggleOpen && (
+          <Btn
+            th={th}
+            variant="secondary"
+            onPress={onToggleOpen}
+            full
+            iconName={cls.isOpen !== false ? "lock-closed-outline" : "lock-open-outline"}
+          >
+            {cls.isOpen !== false ? "Bloquear novas inscrições" : "Abrir turma para novos alunos"}
+          </Btn>
+        )}
+
         {isOwner && (
           <Btn th={th} variant="danger" onPress={onDeleteClass} full iconName="trash-outline">
             Excluir turma
@@ -185,8 +257,8 @@ export default function RepPanelScreen({
   }
 
   return (
-    <SafeAreaView style={[S.safe, { backgroundColor: th.bg }]}>
-      <View style={[S.header, { backgroundColor: th.headerBg }]}>
+    <View style={[S.safe, { backgroundColor: th.bg }]}>
+      <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
         <TouchableOpacity onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Ionicons name="arrow-back" size={22} color="#fff"/>
         </TouchableOpacity>
@@ -218,7 +290,7 @@ export default function RepPanelScreen({
         {tab === "membros"    && <TabMembros/>}
         {tab === "turma"      && <TabTurma/>}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -248,4 +320,10 @@ const S = StyleSheet.create({
               padding: 12, borderBottomWidth: 1 },
   infoKey:  { fontSize: 12, fontWeight: "600" },
   infoVal:  { fontSize: 13, fontWeight: "700", maxWidth: "55%", textAlign: "right" },
+  codeCard: { borderRadius: 14, borderWidth: 1, padding: 14, gap: 8 },
+  codeLabel: { fontSize: 10, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase" },
+  codeValue: { fontSize: 20, fontWeight: "900", letterSpacing: 2 },
+  shareBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+              paddingVertical: 9, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1 },
+  shareBtnText: { fontSize: 12, fontWeight: "700" },
 });

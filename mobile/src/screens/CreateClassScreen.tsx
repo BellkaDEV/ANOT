@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Btn, FInput } from "../components/ui";
 import type { AppTheme, Modality } from "../types";
@@ -17,6 +18,7 @@ const MODALITIES: { key: Modality; label: string; icon: string }[] = [
 ];
 
 export default function CreateClassScreen({ onSubmit, onBack, th }: Props) {
+  const insets = useSafeAreaInsets();
   const [name, setName]         = useState("");
   const [course, setCourse]     = useState("");
   const [inst, setInst]         = useState("");
@@ -45,8 +47,8 @@ export default function CreateClassScreen({ onSubmit, onBack, th }: Props) {
   }
 
   return (
-    <SafeAreaView style={[S.safe, { backgroundColor: th.bg }]}>
-      <View style={[S.header, { backgroundColor: th.headerBg }]}>
+    <View style={[S.safe, { backgroundColor: th.bg }]}>
+      <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 14) }]}>
         <TouchableOpacity onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Ionicons name="arrow-back" size={22} color="#fff"/>
         </TouchableOpacity>
@@ -94,7 +96,7 @@ export default function CreateClassScreen({ onSubmit, onBack, th }: Props) {
           <Btn th={th} onPress={submit} full loading={loading} iconName="checkmark-circle">Criar turma</Btn>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

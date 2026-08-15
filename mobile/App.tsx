@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 
 import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 import api from "./src/services/api";
@@ -35,6 +36,7 @@ import SettingsScreen       from "./src/screens/SettingsScreen";
 import AboutScreen          from "./src/screens/AboutScreen";
 import RepPanelScreen       from "./src/screens/RepPanelScreen";
 import ActivityFormScreen   from "./src/screens/ActivityFormScreen";
+import AnnouncementFormScreen from "./src/screens/AnnouncementFormScreen";
 
 function mapBackendClass(c: any): AppClass {
   return {
@@ -45,6 +47,7 @@ function mapBackendClass(c: any): AppClass {
     institution: c.institution || '',
     period: c.period || '',
     modality: c.modality || 'presencial',
+    isOpen: c.is_open !== undefined ? Boolean(c.is_open) : true,
     ownerId: String(c.owner_id || c.user_id || ''),
     members: (c.members || []).map((m: any) => ({
       id: String(m.id),
@@ -91,12 +94,14 @@ function mapBackendClass(c: any): AppClass {
   };
 }
 
+let demoClassesStore: AppClass[] = [DEMO_CLASS];
+
 function MainApp() {
   const { user: authUser, login: authLogin, register: authRegister, logout: authLogout, signed } = useAuth();
 
   const [dark, setDark] = useState(false);
   const [screen, setScreen] = useState<Screen>("welcome");
-  const [classes, setClasses] = useState<AppClass[]>([DEMO_CLASS]);
+  const [classes, setClasses] = useState<AppClass[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [statuses, setStatuses] = useState<Record<string, ActivityStatus>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -110,22 +115,20 @@ function MainApp() {
   const [editAnnId, setEditAnnId] = useState<string | null>(null);
   const [isLoadingClasses, setIsLoadingClasses] = useState(false);
 
-  const [localUser, setLocalUser] = useState<AppUser | null>(null);
-
   const th = dark ? DARK : LIGHT;
   const activeClass = classes.find(c => c.id === activeId) ?? null;
 
-  const appUser: AppUser | null = authUser ? {
+  const appUser: AppUser | null = useMemo(() => authUser ? {
     id: String(authUser.id),
     name: authUser.name,
     email: authUser.email
-  } : localUser;
+  } : null, [authUser?.id, authUser?.name, authUser?.email]);
 
   // Toast Function
   const toast = useCallback((msg: string, type: "success" | "error" | "info" = "success") => {
     const id = Date.now();
-    setToasts(prev => [...prev, { id, msg, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+    setToasts(prev => [...prev.slice(-2), { id, msg, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 2800);
   }, []);
 
   // Sync auth state to initial screen
@@ -135,44 +138,38 @@ function MainApp() {
     }
   }, [signed]);
 
-  // Load Classes from API when signed in
+  // Load Classes from API when signed in or user changes
   const fetchClassesFromApi = useCallback(async () => {
     if (!signed) return;
     setIsLoadingClasses(true);
+
     try {
       const response = await api.get('/classes');
       const backendClasses = response.data.classes || [];
-      if (backendClasses.length > 0) {
-        const mapped = backendClasses.map(mapBackendClass);
-        setClasses(mapped);
-      }
+      const mapped = backendClasses.map(mapBackendClass);
+      setClasses(mapped);
     } catch (err) {
-      console.log('Using local fallback classes:', err);
+      console.log('Error fetching classes:', err);
     } finally {
       setIsLoadingClasses(false);
     }
   }, [signed]);
 
+  const userIdStr = authUser ? String(authUser.id) : null;
   useEffect(() => {
-    fetchClassesFromApi();
-  }, [fetchClassesFromApi]);
+    if (signed) {
+      fetchClassesFromApi();
+    }
+  }, [signed, userIdStr]);
 
-  // Auth Handlers
+  // Auth Handlers (Strict API Authentication - No Bypasses)
   async function doLogin(email: string, pw: string) {
     try {
       await authLogin(email, pw);
       setScreen("dashboard");
-      toast(`Bem-vindo(a)!`);
+      toast("Bem-vindo(a)!");
     } catch (err: any) {
-      const demoAcc = DEMO_ACCOUNTS[email];
-      if (demoAcc || pw === "demo123" || pw === "password" || !err.response) {
-        const name = demoAcc?.name || email.split("@")[0];
-        setLocalUser({ id: email, name, email });
-        setScreen("dashboard");
-        toast(`Bem-vindo(a), ${name.split(" ")[0]}!`);
-        return;
-      }
-      const msg = err.response?.data?.message || "Erro ao realizar login";
+      const msg = err.response?.data?.message || err.message || "Usuário ou senha inválidos.";
       toast(msg, "error");
     }
   }
@@ -180,16 +177,11 @@ function MainApp() {
   async function doRegister(name: string, email: string, pw: string) {
     try {
       await authRegister(name, email, pw);
+      setClasses([]);
       setScreen("dashboard");
       toast("Conta criada com sucesso!");
     } catch (err: any) {
-      if (!err.response) {
-        setLocalUser({ id: email, name, email });
-        setScreen("dashboard");
-        toast("Conta criada com sucesso!");
-        return;
-      }
-      const msg = err.response?.data?.message || "Erro ao criar conta";
+      const msg = err.response?.data?.message || err.message || "Erro ao criar conta";
       toast(msg, "error");
     }
   }
@@ -200,7 +192,7 @@ function MainApp() {
     } catch (err) {
       console.log(err);
     }
-    setLocalUser(null);
+    setClasses([]);
     setScreen("welcome");
     setActiveId(null);
   }
@@ -272,7 +264,7 @@ function MainApp() {
     try {
       await api.post(`/classes/${cls.id}/announcements`, {
         title: data.title,
-        description: data.desc,
+        content: data.desc,
         priority: data.priority,
       });
       fetchClassesFromApi();
@@ -291,7 +283,7 @@ function MainApp() {
     try {
       await api.put(`/announcements/${id}`, {
         title: data.title,
-        description: data.desc,
+        content: data.desc,
         priority: data.priority,
       });
       fetchClassesFromApi();
@@ -484,10 +476,34 @@ function MainApp() {
 
     const myRole = activeClass.members.find(m => m.userId === appUser.id)?.classRole ?? "student";
 
+  async function doToggleOpenClass(cls: AppClass) {
+    try {
+      const response = await api.put(`/classes/${cls.id}/toggle-open`);
+      fetchClassesFromApi();
+      toast(response.data?.message || "Status da turma atualizado!");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Erro ao alterar status da turma";
+      toast(msg, "error");
+    }
+  }
+
+  async function doRegenerateCode(cls: AppClass) {
+    try {
+      const response = await api.put(`/classes/${cls.id}/regenerate-code`);
+      fetchClassesFromApi();
+      toast(response.data?.message || "Novo código de acesso gerado com sucesso!");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Erro ao regerar código de acesso";
+      toast(msg, "error");
+    }
+  }
+
     if (screen === "classHome") return (
       <>
         <ClassHomeScreen cls={activeClass} user={appUser} statuses={statuses} readSet={readSet}
           onNav={nav} onViewActivity={id => { setViewActId(id); nav("activityDetail"); }}
+          onCopyCode={() => toast("Código copiado!")}
+          onToggleOpen={() => doToggleOpenClass(activeClass)}
           onRepPanel={() => nav("repPanel")} onBack={() => nav("dashboard")} th={th}/>
         <QRModal code={activeClass.code} visible={qrVisible} onClose={() => setQrVisible(false)} th={th}/>
       </>
@@ -516,8 +532,8 @@ function MainApp() {
     if (screen === "repPanel") return (
       <>
         <RepPanelScreen cls={activeClass} user={appUser}
-          onAddAnn={() => { setEditAnnId(null); }}
-          onEditAnn={id => { setEditAnnId(id); }}
+          onAddAnn={() => { setEditAnnId(null); nav("announcementForm"); }}
+          onEditAnn={id => { setEditAnnId(id); nav("announcementForm"); }}
           onDelAnn={id => doDelAnn(activeClass, id)}
           onAddActivity={() => { setEditActId(null); nav("activityForm"); }}
           onEditActivity={id => { setEditActId(id); nav("activityForm"); }}
@@ -528,6 +544,9 @@ function MainApp() {
           onViewMember={m => setMemberSheet(m)}
           onUpdateClass={() => {}}
           onDeleteClass={doDeleteClass}
+          onCopyCode={() => toast("Código copiado!")}
+          onToggleOpen={() => doToggleOpenClass(activeClass)}
+          onRegenerateCode={() => doRegenerateCode(activeClass)}
           onBack={goClassHome} th={th}/>
         <MemberSheet
           member={memberSheet} visible={!!memberSheet}
@@ -549,11 +568,29 @@ function MainApp() {
       );
     }
 
+    if (screen === "announcementForm") {
+      const existing = editAnnId ? activeClass.announcements.find(a => a.id === editAnnId) : undefined;
+      return (
+        <AnnouncementFormScreen existing={existing}
+          onSave={data => {
+            if (editAnnId) {
+              doEditAnn(activeClass, editAnnId, data);
+            } else {
+              doAddAnn(activeClass, data);
+            }
+            nav("repPanel");
+          }}
+          onDelete={existing ? () => { doDelAnn(activeClass, existing.id); nav("repPanel"); } : undefined}
+          onBack={() => nav("repPanel")} th={th}/>
+      );
+    }
+
     return null;
   }
 
   return (
     <SafeAreaProvider>
+      <StatusBar style="light" animated />
       <View style={{ flex: 1, backgroundColor: th.bg }}>
         {renderInner()}
         <ToastLayer toasts={toasts}/>

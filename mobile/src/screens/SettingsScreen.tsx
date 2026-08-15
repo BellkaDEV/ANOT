@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { FToggle, HDivider } from "../components/ui";
 import type { AppTheme } from "../types";
@@ -7,6 +8,7 @@ import type { AppTheme } from "../types";
 interface Props { dark: boolean; onToggleDark: (v: boolean) => void; onBack: () => void; th: AppTheme }
 
 export default function SettingsScreen({ dark, onToggleDark, onBack, th }: Props) {
+  const insets = useSafeAreaInsets();
   const sections = [
     {
       title: "Aparência",
@@ -38,8 +40,8 @@ export default function SettingsScreen({ dark, onToggleDark, onBack, th }: Props
   ];
 
   return (
-    <SafeAreaView style={[S.safe, { backgroundColor: th.bg }]}>
-      <View style={[S.header, { backgroundColor: th.headerBg }]}>
+    <View style={[S.safe, { backgroundColor: th.bg }]}>
+      <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
         <TouchableOpacity onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Ionicons name="arrow-back" size={22} color="#fff"/>
         </TouchableOpacity>
@@ -73,7 +75,7 @@ export default function SettingsScreen({ dark, onToggleDark, onBack, th }: Props
           </View>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

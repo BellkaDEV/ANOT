@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Btn, SkelCard, Empty } from "../components/ui";
 import type { AppTheme, AppClass, AppUser } from "../types";
@@ -19,10 +20,11 @@ interface Props {
 export default function DashboardScreen({
   user, classes, onSelectClass, onCreateClass, onJoinClass, onProfile, onSettings, loading, th,
 }: Props) {
+  const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView style={[S.safe, { backgroundColor: th.bg }]}>
+    <View style={[S.safe, { backgroundColor: th.bg }]}>
       {/* Header */}
-      <View style={[S.header, { backgroundColor: th.headerBg }]}>
+      <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
         <View>
           <Text style={S.hGreet}>Olá, {user.name.split(" ")[0]} 👋</Text>
           <Text style={S.hSub}>{classes.length} {classes.length === 1 ? "turma" : "turmas"} ativas</Text>
@@ -106,7 +108,7 @@ export default function DashboardScreen({
           })
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

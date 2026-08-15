@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge, Btn, FTextarea, HDivider } from "../components/ui";
 import { STATUS_META, ACT_META } from "../constants";
@@ -20,6 +21,7 @@ interface Props {
 export default function ActivityDetailScreen({
   activity, status, notes, onSaveStatus, onSaveNotes, onBack, th,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const [localNotes, setLocalNotes] = useState(notes);
   const [saved, setSaved] = useState(false);
   const am = ACT_META[activity.type];
@@ -34,8 +36,8 @@ export default function ActivityDetailScreen({
   }
 
   return (
-    <SafeAreaView style={[S.safe, { backgroundColor: th.bg }]}>
-      <View style={[S.header, { backgroundColor: th.headerBg }]}>
+    <View style={[S.safe, { backgroundColor: th.bg }]}>
+      <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
         <TouchableOpacity onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Ionicons name="arrow-back" size={22} color="#fff"/>
         </TouchableOpacity>
@@ -123,7 +125,7 @@ export default function ActivityDetailScreen({
           </Btn>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

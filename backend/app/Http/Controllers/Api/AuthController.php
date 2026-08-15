@@ -13,16 +13,33 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
-            'avatar_url' => 'nullable|string|url',
-        ]);
+        if ($request->has('email')) {
+            $request->merge([
+                'email' => strtolower(trim($request->email)),
+            ]);
+        }
+
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users,email',
+                'password' => 'required|string|min:6|confirmed',
+                'avatar_url' => 'nullable|string|url',
+            ]);
+        } catch (ValidationException $e) {
+            $errors = $e->errors();
+            if (isset($errors['email'])) {
+                return response()->json([
+                    'message' => 'Este e-mail já está cadastrado no sistema.',
+                    'errors' => $errors,
+                ], 422);
+            }
+            throw $e;
+        }
 
         $user = User::create([
-            'name' => $validated['name'],
-            'email' => strtolower(trim($validated['email'])),
+            'name' => trim($validated['name']),
+            'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'avatar_url' => $validated['avatar_url'] ?? null,
         ]);
@@ -38,17 +55,23 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        if ($request->has('email')) {
+            $request->merge([
+                'email' => strtolower(trim($request->email)),
+            ]);
+        }
+
         $validated = $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
         ]);
 
-        $user = User::where('email', strtolower(trim($validated['email'])))->first();
+        $user = User::where('email', $validated['email'])->first();
 
         if (!$user || !Hash::check($validated['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['As credenciais fornecidas estão incorretas.'],
-            ]);
+            return response()->json([
+                'message' => 'Usuário ou senha inválidos.'
+            ], 401);
         }
 
         $token = $user->createToken('anot_auth_token')->plainTextToken;

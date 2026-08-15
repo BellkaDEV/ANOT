@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge, Empty } from "../components/ui";
 import FloatingNav from "../components/FloatingNav";
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function EventsScreen({ cls, user, onNav, th }: Props) {
+  const insets = useSafeAreaInsets();
   const initMonth = CAL_MONTHS.findIndex(m => m.month === TODAY_MONTH);
   const [mi, setMi] = useState(initMonth >= 0 ? initMonth : 1);
   const [selDay, setSelDay] = useState<number | null>(TODAY_DAY);
@@ -54,8 +56,8 @@ export default function EventsScreen({ cls, user, onNav, th }: Props) {
   }
 
   return (
-    <SafeAreaView style={[S.safe, { backgroundColor: th.bg }]}>
-      <View style={[S.header, { backgroundColor: th.headerBg }]}>
+    <View style={[S.safe, { backgroundColor: th.bg }]}>
+      <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
         <Text style={S.hTitle}>Calendário</Text>
         <View style={[S.countBadge, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
           <Text style={S.countText}>{cls.events.length} eventos</Text>
@@ -172,7 +174,7 @@ export default function EventsScreen({ cls, user, onNav, th }: Props) {
       </ScrollView>
 
       <FloatingNav current="events" onNav={onNav} th={th}/>
-    </SafeAreaView>
+    </View>
   );
 }
 

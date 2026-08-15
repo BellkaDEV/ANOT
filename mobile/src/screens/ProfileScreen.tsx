@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Btn, HDivider } from "../components/ui";
 import FloatingNav from "../components/FloatingNav";
@@ -20,6 +21,7 @@ interface Props {
 export default function ProfileScreen({
   user, classes, statuses, onNav, onSettings, onAbout, onLogout, th,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const totalActs = classes.reduce((s, c) => s + c.activities.length, 0);
   const done      = Object.values(statuses).filter(v => v === "done").length;
   const pct       = totalActs > 0 ? Math.round(done / totalActs * 100) : 0;
@@ -30,8 +32,8 @@ export default function ProfileScreen({
   ];
 
   return (
-    <SafeAreaView style={[S.safe, { backgroundColor: th.bg }]}>
-      <View style={[S.header, { backgroundColor: th.headerBg }]}>
+    <View style={[S.safe, { backgroundColor: th.bg }]}>
+      <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
         <Text style={S.hTitle}>Perfil</Text>
       </View>
 
@@ -96,7 +98,7 @@ export default function ProfileScreen({
       </ScrollView>
 
       <FloatingNav current="profile" onNav={onNav} th={th}/>
-    </SafeAreaView>
+    </View>
   );
 }
 

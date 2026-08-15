@@ -26,6 +26,8 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::post('/classes/join', [ClassController::class, 'join']);
     Route::get('/classes/{id}', [ClassController::class, 'show']);
     Route::put('/classes/{id}', [ClassController::class, 'update']);
+    Route::put('/classes/{id}/toggle-open', [ClassController::class, 'toggleOpen']);
+    Route::put('/classes/{id}/regenerate-code', [ClassController::class, 'regenerateCode']);
     Route::delete('/classes/{id}', [ClassController::class, 'destroy']);
 
     // Membros & Permissões
