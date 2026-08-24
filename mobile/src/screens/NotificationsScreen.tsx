@@ -72,7 +72,7 @@ export default function NotificationsScreen({ cls, user, readSet, onMarkRead, on
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         <View style={S.body}>
           {shown.length === 0 ? (
-            <Empty th={th} icon="🔔" title="Nenhum aviso" sub="Fique de olho, novos avisos aparecerão aqui"/>
+            <Empty th={th} icon="notifications-off-outline" title="Nenhum aviso" sub="Fique de olho, novos avisos aparecerão aqui"/>
           ) : (
             shown.map(a => <AnnCard key={a.id} ann={a}/>)
           )}

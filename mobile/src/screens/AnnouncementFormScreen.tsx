@@ -34,15 +34,11 @@ export default function AnnouncementFormScreen({ existing, onSave, onDelete, onB
 
   function submit() {
     if (!validate()) return;
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      onSave({
-        title: title.trim(),
-        desc: desc.trim(),
-        priority,
-      });
-    }, 400);
+    onSave({
+      title: title.trim(),
+      desc: desc.trim(),
+      priority,
+    });
   }
 
   return (

@@ -1,20 +1,22 @@
+import type { AppTheme } from "../types";
+
 export const theme = {
   colors: {
-    primary: '#0e2f5a', // Azul Marinho (navy)
-    secondary: '#e4822e', // Laranja (orange)
-    background: '#f4f6fb', // Cinza azulado claro (bg)
-    card: '#ffffff', // Branco para cartões e inputs (card)
-    cardSecondary: '#edf1f8', // Segundo nível de card (card2)
-    text: '#0a1628', // Texto principal (fg)
-    textSecondary: '#5a6a8a', // Texto secundário (muted)
-    border: '#e6ecf5', // Borda padrão (border)
-    success: '#10b981', // Verde sucesso (emerald)
-    error: '#ef4444', // Vermelho erro (rose/red)
-    warning: '#f59e0b', // Amarelo/Laranja aviso (amber)
-    orangeLight: 'rgba(228,130,46,0.1)',
-    navyLight: 'rgba(14,47,90,0.07)',
-    inputBg: '#edf1f8',
-    white: '#ffffff',
+    primary: "#0e2f5a",
+    secondary: "#e4822e",
+    background: "#f4f6fb",
+    card: "#ffffff",
+    cardSecondary: "#edf1f8",
+    text: "#0a1628",
+    textSecondary: "#5a6a8a",
+    border: "#e6ecf5",
+    success: "#10b981",
+    error: "#ef4444",
+    warning: "#f59e0b",
+    orangeLight: "rgba(228,130,46,0.1)",
+    navyLight: "rgba(14,47,90,0.07)",
+    inputBg: "#edf1f8",
+    white: "#ffffff",
   },
   spacing: {
     xs: 4,
@@ -25,10 +27,29 @@ export const theme = {
   },
   borderRadius: {
     sm: 8,
-    md: 14,
+    md: 12,
     lg: 16,
-    xl: 22,
+    xl: 24,
     round: 9999,
   },
 };
 
+export function getThemeColors(th: AppTheme) {
+  return {
+    primary: th.navy,
+    secondary: th.orange,
+    background: th.bg,
+    card: th.card,
+    cardSecondary: th.card2,
+    text: th.fg,
+    textSecondary: th.muted,
+    border: th.border,
+    success: th.success,
+    error: th.error,
+    warning: th.warning,
+    orangeLight: th.orangeLight,
+    navyLight: th.navyLight,
+    inputBg: th.inputBg,
+    white: th.isDark ? th.fg : "#ffffff",
+  };
+}

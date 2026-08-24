@@ -38,15 +38,11 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
 
   function submit() {
     if (!validate()) return;
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      onSave({
-        title: title.trim(), subject: subject.trim(), type, dueDate,
-        dueTime: dueTime || undefined, dueLabel: fmtDueLabel(dueDate),
-        description: desc.trim() || undefined,
-      });
-    }, 500);
+    onSave({
+      title: title.trim(), subject: subject.trim(), type, dueDate,
+      dueTime: dueTime || undefined, dueLabel: fmtDueLabel(dueDate),
+      description: desc.trim() || undefined,
+    });
   }
 
   return (
@@ -83,7 +79,7 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
                   <TouchableOpacity key={t} onPress={() => setType(t)}
                     style={[S.typeChip, { borderColor: active ? am.color : th.border,
                       backgroundColor: active ? am.color + "18" : "transparent" }]}>
-                    <Text style={{ fontSize: 14 }}>{am.emoji}</Text>
+                    <Ionicons name={am.icon as any} size={16} color={active ? am.color : th.muted}/>
                     <Text style={[S.typeLabel, { color: active ? am.color : th.muted,
                       fontWeight: active ? "700" : "500" }]}>{am.label}</Text>
                   </TouchableOpacity>

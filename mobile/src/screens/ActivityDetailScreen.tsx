@@ -49,7 +49,7 @@ export default function ActivityDetailScreen({
         {/* Type & Status */}
         <View style={[S.card, { backgroundColor: th.card, borderColor: am.color + "40", borderLeftColor: am.color }]}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-            <Text style={{ fontSize: 28 }}>{am.emoji}</Text>
+            <Ionicons name={am.icon as any} size={28} color={am.color}/>
             <View style={{ flex: 1 }}>
               <Text style={[S.actTitle, { color: th.fg }]}>{activity.title}</Text>
               <Text style={[S.actSubject, { color: th.muted }]}>{activity.subject}</Text>

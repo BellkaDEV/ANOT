@@ -121,7 +121,7 @@ export default function ClassHomeScreen({
                 return (
                   <TouchableOpacity key={act.id} onPress={() => onViewActivity(act.id)}
                     style={[S.upCard, { backgroundColor: th.card, borderColor: am.color + "40" }]}>
-                    <Text style={{ fontSize: 20 }}>{am.emoji}</Text>
+                    <Ionicons name={am.icon as any} size={20} color={am.color}/>
                     <Text style={[S.upLabel, { color: am.color }]}>{am.label}</Text>
                     <Text style={[S.upTitle, { color: th.fg }]} numberOfLines={2}>{act.title}</Text>
                     <Text style={[S.upSubject, { color: th.muted }]}>{act.subject}</Text>
@@ -167,7 +167,7 @@ export default function ClassHomeScreen({
           {loading ? (
             [1, 2, 3].map(i => <SkelCard key={i} th={th}/>)
           ) : filtered.length === 0 ? (
-            <Empty th={th} icon="📋" title="Nenhuma atividade" sub="Ajuste os filtros ou aguarde novos cadastros"/>
+            <Empty th={th} icon="clipboard-outline" title="Nenhuma atividade" sub="Ajuste os filtros ou aguarde novos cadastros"/>
           ) : (
             filtered.map(act => {
               const am = ACT_META[act.type];
@@ -178,7 +178,7 @@ export default function ClassHomeScreen({
                   style={[S.actCard, { backgroundColor: th.card, borderColor: th.border, borderLeftColor: am.color }]}>
                   <View style={{ flex: 1, gap: 4 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <Text style={{ fontSize: 14 }}>{am.emoji}</Text>
+                      <Ionicons name={am.icon as any} size={16} color={am.color}/>
                       <Text style={[S.actTitle, { color: th.fg }]} numberOfLines={2}>{act.title}</Text>
                     </View>
                     <Text style={[S.actSubject, { color: th.muted }]}>{act.subject}</Text>

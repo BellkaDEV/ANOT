@@ -1,10 +1,11 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { theme } from '../theme/theme';
+import React from "react";
+import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import type { AppTheme } from "../types";
+import { LIGHT } from "../constants";
 
 interface ClassCardProps {
   schoolClass: {
-    id: number;
+    id: number | string;
     code: string;
     name: string;
     course?: string;
@@ -13,28 +14,33 @@ interface ClassCardProps {
     modality?: string;
   };
   onPress: () => void;
+  th?: AppTheme;
 }
 
-export default function ClassCard({ schoolClass, onPress }: ClassCardProps) {
+export default function ClassCard({ schoolClass, onPress, th = LIGHT }: ClassCardProps) {
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.card, { backgroundColor: th.card, borderColor: th.border }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.header}>
-        <Text style={styles.className} numberOfLines={1}>{schoolClass.name}</Text>
-        <View style={styles.codeBadge}>
-          <Text style={styles.codeText}>{schoolClass.code}</Text>
+        <Text style={[styles.className, { color: th.fg }]} numberOfLines={1}>{schoolClass.name}</Text>
+        <View style={[styles.codeBadge, { backgroundColor: th.navyLight }]}>
+          <Text style={[styles.codeText, { color: th.navy }]}>{schoolClass.code}</Text>
         </View>
       </View>
 
-      {schoolClass.course && (
-        <Text style={styles.course} numberOfLines={1}>Curso: {schoolClass.course}</Text>
+      {Boolean(schoolClass.course) && (
+        <Text style={[styles.course, { color: th.muted }]} numberOfLines={1}>Curso: {schoolClass.course}</Text>
       )}
 
-      <View style={styles.footer}>
-        {schoolClass.institution && (
-          <Text style={styles.info} numberOfLines={1}>{schoolClass.institution}</Text>
+      <View style={[styles.footer, { borderTopColor: th.border }]}>
+        {Boolean(schoolClass.institution) && (
+          <Text style={[styles.info, { color: th.muted }]} numberOfLines={1}>{schoolClass.institution}</Text>
         )}
-        {schoolClass.period && (
-          <Text style={styles.periodBadge}>{schoolClass.period}</Text>
+        {Boolean(schoolClass.period) && (
+          <Text style={[styles.periodBadge, { color: th.orange, backgroundColor: th.orangeLight }]}>{schoolClass.period}</Text>
         )}
       </View>
     </TouchableOpacity>
@@ -43,68 +49,58 @@ export default function ClassCard({ schoolClass, onPress }: ClassCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
   },
   className: {
     fontSize: 18,
-    fontWeight: '700',
-    color: theme.colors.primary,
+    fontWeight: "700",
     flex: 1,
-    marginRight: theme.spacing.sm,
+    marginRight: 8,
   },
   codeBadge: {
-    backgroundColor: 'rgba(14, 47, 90, 0.08)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: theme.borderRadius.sm,
+    borderRadius: 8,
   },
   codeText: {
-    color: theme.colors.primary,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   course: {
     fontSize: 14,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.md,
+    marginBottom: 16,
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-    paddingTop: theme.spacing.sm,
+    paddingTop: 8,
   },
   info: {
     fontSize: 13,
-    color: theme.colors.textSecondary,
     flex: 1,
-    marginRight: theme.spacing.sm,
+    marginRight: 8,
   },
   periodBadge: {
     fontSize: 11,
-    fontWeight: '600',
-    color: theme.colors.secondary,
-    backgroundColor: 'rgba(228, 130, 46, 0.08)',
+    fontWeight: "600",
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: theme.borderRadius.sm,
+    borderRadius: 8,
   },
 });

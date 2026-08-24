@@ -1,48 +1,50 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { theme } from '../theme/theme';
+import React from "react";
+import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import type { AppTheme } from "../types";
+import { LIGHT } from "../constants";
 
 interface ActivityItemProps {
   activity: {
-    id: number;
+    id: number | string;
     title: string;
-    type: string; // dever, trabalho, teste, outros
+    type: string;
     subject?: string;
     due_date: string;
     due_time?: string;
     description?: string;
     user_progress?: {
-      status: string; // todo, in_progress, done
+      status: string;
     } | null;
   };
   onPress: () => void;
-  onStatusChange?: (newStatus: 'todo' | 'in_progress' | 'done') => void;
+  onStatusChange?: (newStatus: "todo" | "in_progress" | "done") => void;
+  th?: AppTheme;
 }
 
-export default function ActivityItem({ activity, onPress, onStatusChange }: ActivityItemProps) {
-  const currentStatus = activity.user_progress?.status || 'todo';
+export default function ActivityItem({ activity, onPress, onStatusChange, th = LIGHT }: ActivityItemProps) {
+  const currentStatus = activity.user_progress?.status || "todo";
 
   const getStatusMeta = (status: string) => {
     switch (status) {
-      case 'done':
-        return { label: 'Pronto', color: theme.colors.success, bg: 'rgba(16, 185, 129, 0.12)' };
-      case 'in_progress':
-        return { label: 'Em andamento', color: theme.colors.secondary, bg: 'rgba(228, 130, 46, 0.12)' };
+      case "done":
+        return { label: "Pronto", color: th.success, bg: th.successBg };
+      case "in_progress":
+        return { label: "Em andamento", color: th.orange, bg: th.orangeLight };
       default:
-        return { label: 'Não feito', color: '#9ca3af', bg: 'rgba(156, 163, 175, 0.12)' };
+        return { label: "Não feito", color: th.muted, bg: th.card2 };
     }
   };
 
   const getTypeMeta = (type: string) => {
     switch (type) {
-      case 'teste':
-        return { label: 'Teste/Prova', color: theme.colors.error };
-      case 'trabalho':
-        return { label: 'Trabalho', color: '#3b82f6' };
-      case 'dever':
-        return { label: 'Dever', color: theme.colors.secondary };
+      case "teste":
+        return { label: "Teste/Prova", color: th.error };
+      case "trabalho":
+        return { label: "Trabalho", color: th.navy };
+      case "dever":
+        return { label: "Dever", color: th.orange };
       default:
-        return { label: 'Outros', color: '#8b5cf6' };
+        return { label: "Outros", color: "#8b5cf6" };
     }
   };
 
@@ -51,30 +53,33 @@ export default function ActivityItem({ activity, onPress, onStatusChange }: Acti
 
   const handleCycleStatus = () => {
     if (!onStatusChange) return;
-
-    if (currentStatus === 'todo') {
-      onStatusChange('in_progress');
-    } else if (currentStatus === 'in_progress') {
-      onStatusChange('done');
+    if (currentStatus === "todo") {
+      onStatusChange("in_progress");
+    } else if (currentStatus === "in_progress") {
+      onStatusChange("done");
     } else {
-      onStatusChange('todo');
+      onStatusChange("todo");
     }
   };
 
   const formatDateLabel = (dateString: string) => {
     try {
-      const parts = dateString.split('-');
+      const parts = dateString.split("-");
       const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
       const day = parseInt(parts[2], 10);
       const monthIdx = parseInt(parts[1], 10) - 1;
-      return `${day} ${months[monthIdx]}`;
+      return `${day} ${months[monthIdx] || ""}`;
     } catch {
       return dateString;
     }
   };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.card, { backgroundColor: th.card, borderColor: th.border }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={[styles.accentLine, { backgroundColor: sm.color }]} />
       <View style={styles.content}>
         <View style={styles.mainInfo}>
@@ -82,13 +87,13 @@ export default function ActivityItem({ activity, onPress, onStatusChange }: Acti
             <Text style={[styles.typeLabel, { color: tm.color }]}>
               {tm.label.toUpperCase()}
             </Text>
-            {activity.due_time && (
-              <Text style={styles.timeLabel}>· {activity.due_time}</Text>
+            {Boolean(activity.due_time) && (
+              <Text style={[styles.timeLabel, { color: th.muted }]}>· {activity.due_time}</Text>
             )}
           </View>
-          <Text style={styles.title} numberOfLines={1}>{activity.title}</Text>
-          <Text style={styles.subtext}>
-            {activity.subject || 'Sem matéria'} · {formatDateLabel(activity.due_date)}
+          <Text style={[styles.title, { color: th.fg }]} numberOfLines={1}>{activity.title}</Text>
+          <Text style={[styles.subtext, { color: th.muted }]}>
+            {activity.subject || "Sem matéria"} · {formatDateLabel(activity.due_date)}
           </Text>
         </View>
 
@@ -108,22 +113,20 @@ export default function ActivityItem({ activity, onPress, onStatusChange }: Acti
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: theme.colors.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.colors.border,
     marginBottom: 8,
-    overflow: 'hidden',
-    flexDirection: 'row',
+    overflow: "hidden",
+    flexDirection: "row",
   },
   accentLine: {
     width: 3,
-    height: '100%',
+    height: "100%",
   },
   content: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 14,
     gap: 10,
   },
@@ -132,33 +135,30 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   typeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
     marginBottom: 2,
   },
   typeLabel: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.5,
   },
   timeLabel: {
     fontSize: 10,
-    color: theme.colors.textSecondary,
   },
   title: {
     fontSize: 13,
-    fontWeight: '700',
-    color: theme.colors.text,
+    fontWeight: "700",
   },
   subtext: {
     fontSize: 11,
-    color: theme.colors.textSecondary,
     marginTop: 2,
   },
   badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -171,6 +171,6 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

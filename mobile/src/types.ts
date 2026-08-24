@@ -16,6 +16,9 @@ export interface AppTheme {
   fg: string; muted: string; border: string;
   orange: string; orangeLight: string;
   navy: string; navyLight: string; inputBg: string; isDark: boolean;
+  success: string; successBg: string;
+  error: string; errorBg: string;
+  warning: string; warningBg: string;
 }
 export interface AppUser  { id: string; name: string; email: string; }
 export interface Member   { id: string; userId: string; name: string; email: string; classRole: ClassRole; joinedAt: string; }

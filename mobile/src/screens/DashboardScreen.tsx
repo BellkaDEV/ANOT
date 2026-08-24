@@ -54,7 +54,7 @@ export default function DashboardScreen({
               <Ionicons name="enter" size={22} color={th.navy}/>
             </View>
             <Text style={[S.actionLabel, { color: th.fg }]}>Entrar em turma</Text>
-            <Text style={[S.actionSub, { color: th.muted }]}>Via código ou QR</Text>
+            <Text style={[S.actionSub, { color: th.muted }]}>Via código ou link</Text>
           </TouchableOpacity>
         </View>
 
@@ -63,7 +63,7 @@ export default function DashboardScreen({
         {loading ? (
           [1, 2].map(i => <SkelCard key={i} th={th}/>)
         ) : classes.length === 0 ? (
-          <Empty th={th} icon="🎓" title="Nenhuma turma ainda"
+          <Empty th={th} icon="school-outline" title="Nenhuma turma ainda"
             sub="Crie ou entre em uma turma para começar"/>
         ) : (
           classes.map(cls => {

@@ -147,7 +147,7 @@ export default function EventsScreen({ cls, user, onNav, th }: Props) {
         <View style={[S.section, { borderTopColor: th.border }]}>
           <Text style={[S.sLabel, { color: th.muted }]}>TODOS OS EVENTOS</Text>
           {cls.events.filter(e => e.month === cm.month).length === 0 ? (
-            <Empty th={th} icon="📆" title="Sem eventos este mês"/>
+            <Empty th={th} icon="calendar-outline" title="Sem eventos este mês"/>
           ) : (
             cls.events.filter(e => e.month === cm.month).sort((a,b) => a.day - b.day).map(evt => {
               const em = EVENT_META[evt.type];

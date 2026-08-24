@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { View, ActivityIndicator, StyleSheet, useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 import api from "./src/services/api";
@@ -9,16 +10,15 @@ import ErrorBoundary from "./src/components/ErrorBoundary";
 import OfflineBanner from "./src/components/OfflineBanner";
 
 import type {
-  Screen, AppUser, AppClass, Activity, ActivityStatus, Announcement, Member, ToastItem
+  Screen, AppUser, AppClass, Activity, ActivityStatus, Announcement, Member, ToastItem, AppTheme
 } from "./src/types";
 import {
-  LIGHT, DARK, DEMO_CLASS, DEMO_ACCOUNTS,
+  LIGHT, DARK,
   nid, makeCode, TODAY_ISO, fmtDueLabel
 } from "./src/constants";
 
 import ToastLayer from "./src/components/ToastLayer";
 import MemberSheet from "./src/components/MemberSheet";
-import QRModal from "./src/components/QRModal";
 
 import WelcomeScreen      from "./src/screens/WelcomeScreen";
 import LoginScreen        from "./src/screens/LoginScreen";
@@ -32,7 +32,7 @@ import ActivityDetailScreen from "./src/screens/ActivityDetailScreen";
 import NotificationsScreen  from "./src/screens/NotificationsScreen";
 import EventsScreen         from "./src/screens/EventsScreen";
 import ProfileScreen        from "./src/screens/ProfileScreen";
-import SettingsScreen       from "./src/screens/SettingsScreen";
+import SettingsScreen, { ThemeMode } from "./src/screens/SettingsScreen";
 import AboutScreen          from "./src/screens/AboutScreen";
 import RepPanelScreen       from "./src/screens/RepPanelScreen";
 import ActivityFormScreen   from "./src/screens/ActivityFormScreen";
@@ -41,52 +41,52 @@ import AnnouncementFormScreen from "./src/screens/AnnouncementFormScreen";
 function mapBackendClass(c: any): AppClass {
   return {
     id: String(c.id),
-    code: c.code || '',
-    name: c.name || '',
-    course: c.course || '',
-    institution: c.institution || '',
-    period: c.period || '',
-    modality: c.modality || 'presencial',
+    code: c.code || "",
+    name: c.name || "",
+    course: c.course || "",
+    institution: c.institution || "",
+    period: c.period || "",
+    modality: c.modality || "presencial",
     isOpen: c.is_open !== undefined ? Boolean(c.is_open) : true,
-    ownerId: String(c.owner_id || c.user_id || ''),
+    ownerId: String(c.owner_id || c.user_id || ""),
     members: (c.members || []).map((m: any) => ({
       id: String(m.id),
       userId: String(m.user_id || m.user?.id || m.id),
-      name: m.user?.name || m.name || 'Membro',
-      email: m.user?.email || m.email || '',
-      classRole: m.role || m.classRole || 'student',
+      name: m.user?.name || m.name || "Membro",
+      email: m.user?.email || m.email || "",
+      classRole: m.role || m.classRole || "student",
       joinedAt: m.joined_at ? String(m.joined_at).slice(0, 10) : TODAY_ISO,
     })),
     announcements: (c.announcements || []).map((a: any) => ({
       id: String(a.id),
-      title: a.title || '',
-      desc: a.description || a.desc || '',
-      priority: a.priority || 'media',
-      authorId: String(a.author_id || a.user_id || ''),
-      authorName: a.author?.name || a.authorName || 'Representante',
-      date: a.created_at ? new Date(a.created_at).toLocaleDateString('pt-BR') : 'Hoje',
+      title: a.title || "",
+      desc: a.content || a.description || a.desc || "",
+      priority: a.priority || "media",
+      authorId: String(a.author_id || a.user_id || ""),
+      authorName: a.author?.name || a.authorName || "Representante",
+      date: a.created_at ? new Date(a.created_at).toLocaleDateString("pt-BR") : "Hoje",
       createdAt: a.created_at || new Date().toISOString(),
     })),
     activities: (c.activities || []).map((act: any) => ({
       id: String(act.id),
-      title: act.title || '',
-      type: act.type || 'dever',
-      subject: act.subject || '',
+      title: act.title || "",
+      type: act.type || "dever",
+      subject: act.subject || "",
       dueDate: act.due_date || TODAY_ISO,
       dueTime: act.due_time || undefined,
       dueLabel: fmtDueLabel(act.due_date || TODAY_ISO),
-      description: act.description || '',
-      createdById: String(act.created_by_id || ''),
-      createdByName: act.creator?.name || act.createdByName || 'Criador',
+      description: act.description || "",
+      createdById: String(act.created_by_id || ""),
+      createdByName: act.creator?.name || act.createdByName || "Criador",
     })),
     events: (c.events || []).map((e: any) => {
-      const parts = (e.event_date || TODAY_ISO).split('-');
+      const parts = (e.event_date || TODAY_ISO).split("-");
       return {
         id: String(e.id),
-        title: e.title || '',
-        day: parseInt(parts[2] || '28', 10),
-        month: parseInt(parts[1] || '5', 10),
-        type: e.type || 'entrega',
+        title: e.title || "",
+        day: parseInt(parts[2] || "28", 10),
+        month: parseInt(parts[1] || "5", 10),
+        type: e.type || "entrega",
         subject: e.subject || undefined,
         room: e.room || undefined,
       };
@@ -94,12 +94,13 @@ function mapBackendClass(c: any): AppClass {
   };
 }
 
-let demoClassesStore: AppClass[] = [DEMO_CLASS];
-
 function MainApp() {
   const { user: authUser, login: authLogin, register: authRegister, logout: authLogout, signed } = useAuth();
+  const systemScheme = useColorScheme();
 
-  const [dark, setDark] = useState(false);
+  const [themeMode, setThemeModeState] = useState<ThemeMode>("system");
+  const [reduceMotion, setReduceMotionState] = useState<boolean>(false);
+
   const [screen, setScreen] = useState<Screen>("welcome");
   const [classes, setClasses] = useState<AppClass[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -111,11 +112,40 @@ function MainApp() {
   const [createdCls, setCreatedCls] = useState<AppClass | null>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [memberSheet, setMemberSheet] = useState<Member | null>(null);
-  const [qrVisible, setQrVisible] = useState(false);
   const [editAnnId, setEditAnnId] = useState<string | null>(null);
   const [isLoadingClasses, setIsLoadingClasses] = useState(false);
+  const [isSubmittingForm, setIsSubmittingForm] = useState(false);
 
-  const th = dark ? DARK : LIGHT;
+  // Load preferences from AsyncStorage
+  useEffect(() => {
+    AsyncStorage.getItem("@anot_theme_pref").then(val => {
+      if (val === "system" || val === "light" || val === "dark") {
+        setThemeModeState(val as ThemeMode);
+      }
+    }).catch(() => {});
+
+    AsyncStorage.getItem("@anot_reduce_motion").then(val => {
+      if (val !== null) setReduceMotionState(val === "true");
+    }).catch(() => {});
+  }, []);
+
+  const setThemeMode = useCallback((mode: ThemeMode) => {
+    setThemeModeState(mode);
+    AsyncStorage.setItem("@anot_theme_pref", mode).catch(() => {});
+  }, []);
+
+  const setReduceMotion = useCallback((val: boolean) => {
+    setReduceMotionState(val);
+    AsyncStorage.setItem("@anot_reduce_motion", String(val)).catch(() => {});
+  }, []);
+
+  const th: AppTheme = useMemo(() => {
+    if (themeMode === "system") {
+      return systemScheme === "dark" ? DARK : LIGHT;
+    }
+    return themeMode === "dark" ? DARK : LIGHT;
+  }, [themeMode, systemScheme]);
+
   const activeClass = classes.find(c => c.id === activeId) ?? null;
 
   const appUser: AppUser | null = useMemo(() => authUser ? {
@@ -131,6 +161,14 @@ function MainApp() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 2800);
   }, []);
 
+  const handleClearCache = useCallback(() => {
+    AsyncStorage.clear().then(() => {
+      toast("Cache local limpo com sucesso!");
+    }).catch(() => {
+      toast("Erro ao limpar cache local", "error");
+    });
+  }, [toast]);
+
   // Sync auth state to initial screen
   useEffect(() => {
     if (signed && screen === "welcome") {
@@ -145,61 +183,67 @@ function MainApp() {
 
     try {
       const response = await api.get('/classes');
-      const backendClasses = response.data.classes || [];
+      const backendClasses = Array.isArray(response.data) ? response.data : (response.data.classes || []);
       const mapped = backendClasses.map(mapBackendClass);
       setClasses(mapped);
-    } catch (err) {
+    } catch (err: any) {
       console.log('Error fetching classes:', err);
+      toast("Erro ao carregar turmas", "error");
     } finally {
       setIsLoadingClasses(false);
     }
-  }, [signed]);
+  }, [signed, toast]);
 
-  const userIdStr = authUser ? String(authUser.id) : null;
   useEffect(() => {
     if (signed) {
       fetchClassesFromApi();
+    } else {
+      setClasses([]);
+      setActiveId(null);
     }
-  }, [signed, userIdStr]);
+  }, [signed, fetchClassesFromApi]);
 
-  // Auth Handlers (Strict API Authentication - No Bypasses)
+  // Auth wrappers
   async function doLogin(email: string, pw: string) {
+    setIsSubmittingForm(true);
     try {
       await authLogin(email, pw);
       setScreen("dashboard");
-      toast("Bem-vindo(a)!");
+      toast("Bem-vindo(a) ao ANOT!");
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || "Usuário ou senha inválidos.";
+      const msg = err.response?.data?.message || "Usuário ou senha inválidos.";
       toast(msg, "error");
+    } finally {
+      setIsSubmittingForm(false);
     }
   }
 
   async function doRegister(name: string, email: string, pw: string) {
+    setIsSubmittingForm(true);
     try {
       await authRegister(name, email, pw);
-      setClasses([]);
       setScreen("dashboard");
       toast("Conta criada com sucesso!");
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || "Erro ao criar conta";
+      const msg = err.response?.data?.message || "Erro ao criar conta. Verifique os dados.";
       toast(msg, "error");
+    } finally {
+      setIsSubmittingForm(false);
     }
   }
 
-  async function doLogout() {
-    try {
-      await authLogout();
-    } catch (err) {
-      console.log(err);
-    }
+  function doLogout() {
+    authLogout();
     setClasses([]);
-    setScreen("welcome");
     setActiveId(null);
+    setScreen("welcome");
+    toast("Você saiu da conta.");
   }
 
   // Class CRUD Handlers
   async function doCreateClass(data: { name: string; course: string; institution: string; period: string; modality: "presencial" | "ead" | "hibrido" }) {
     if (!appUser) return;
+    setIsSubmittingForm(true);
     try {
       const response = await api.post('/classes', data);
       const newBackendCls = response.data.class;
@@ -209,25 +253,17 @@ function MainApp() {
       setActiveId(newCls.id);
       setScreen("classCreated");
       toast("Turma criada com sucesso!");
-    } catch (err) {
-      // Local fallback
-      const code = makeCode(data.course, data.period);
-      const newCls: AppClass = {
-        id: nid(), code, ...data,
-        ownerId: appUser.id,
-        members: [{ id: nid(), userId: appUser.id, name: appUser.name, email: appUser.email, classRole: "owner", joinedAt: TODAY_ISO }],
-        announcements: [], events: [], activities: [],
-      };
-      setClasses(prev => [newCls, ...prev]);
-      setCreatedCls(newCls);
-      setActiveId(newCls.id);
-      setScreen("classCreated");
-      toast("Turma criada localmente!");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Erro ao criar turma no servidor.";
+      toast(msg, "error");
+    } finally {
+      setIsSubmittingForm(false);
     }
   }
 
   async function doJoin(code: string) {
     if (!appUser) return;
+    setIsSubmittingForm(true);
     try {
       const response = await api.post('/classes/join', { code });
       const joinedBackendCls = response.data.class;
@@ -240,8 +276,10 @@ function MainApp() {
       setScreen("classHome");
       toast("Entrou na turma com sucesso!");
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Código inválido ou turma não encontrada";
+      const msg = err.response?.data?.message || "Código inválido ou turma não encontrada.";
       toast(msg, "error");
+    } finally {
+      setIsSubmittingForm(false);
     }
   }
 
@@ -249,13 +287,14 @@ function MainApp() {
     if (!activeId) return;
     try {
       await api.delete(`/classes/${activeId}`);
-    } catch (err) {
-      console.log('Delete local fallback');
+      setClasses(prev => prev.filter(c => c.id !== activeId));
+      setActiveId(null);
+      setScreen("dashboard");
+      toast("Turma excluída com sucesso.");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Erro ao excluir turma.";
+      toast(msg, "error");
     }
-    setClasses(prev => prev.filter(c => c.id !== activeId));
-    setActiveId(null);
-    setScreen("dashboard");
-    toast("Turma excluída");
   }
 
   // Announcements Handlers
@@ -268,15 +307,11 @@ function MainApp() {
         priority: data.priority,
       });
       fetchClassesFromApi();
-    } catch (err) {
-      const ann: Announcement = {
-        id: nid(), ...data,
-        authorId: appUser.id, authorName: appUser.name,
-        date: "Agora", createdAt: new Date().toISOString(),
-      };
-      setClasses(prev => prev.map(c => c.id === cls.id ? { ...c, announcements: [ann, ...c.announcements] } : c));
+      toast("Aviso publicado!");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Erro ao publicar aviso.";
+      toast(msg, "error");
     }
-    toast("Aviso publicado!");
   }
 
   async function doEditAnn(cls: AppClass, id: string, data: Partial<Announcement>) {
@@ -287,24 +322,22 @@ function MainApp() {
         priority: data.priority,
       });
       fetchClassesFromApi();
-    } catch (err) {
-      setClasses(prev => prev.map(c => c.id === cls.id ? {
-        ...c, announcements: c.announcements.map(a => a.id === id ? { ...a, ...data } : a)
-      } : c));
+      toast("Aviso atualizado!");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Erro ao atualizar aviso.";
+      toast(msg, "error");
     }
-    toast("Aviso atualizado!");
   }
 
   async function doDelAnn(cls: AppClass, id: string) {
     try {
       await api.delete(`/announcements/${id}`);
       fetchClassesFromApi();
-    } catch (err) {
-      setClasses(prev => prev.map(c => c.id === cls.id ? {
-        ...c, announcements: c.announcements.filter(a => a.id !== id)
-      } : c));
+      toast("Aviso removido.");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Erro ao remover aviso.";
+      toast(msg, "error");
     }
-    toast("Aviso removido");
   }
 
   // Activities Handlers
@@ -332,16 +365,9 @@ function MainApp() {
       }
       fetchClassesFromApi();
       toast(existingId ? "Atividade atualizada!" : "Atividade criada!");
-    } catch (err) {
-      if (existingId) {
-        setClasses(prev => prev.map(c => c.id === cls.id ? {
-          ...c, activities: c.activities.map(a => a.id === existingId ? { ...a, ...data } : a)
-        } : c));
-      } else {
-        const act: Activity = { id: nid(), ...data, createdById: appUser.id, createdByName: appUser.name };
-        setClasses(prev => prev.map(c => c.id === cls.id ? { ...c, activities: [...c.activities, act] } : c));
-      }
-      toast(existingId ? "Atividade atualizada!" : "Atividade criada!");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Erro ao salvar atividade.";
+      toast(msg, "error");
     }
   }
 
@@ -349,12 +375,11 @@ function MainApp() {
     try {
       await api.delete(`/activities/${id}`);
       fetchClassesFromApi();
-    } catch (err) {
-      setClasses(prev => prev.map(c => c.id === cls.id ? {
-        ...c, activities: c.activities.filter(a => a.id !== id)
-      } : c));
+      toast("Atividade removida.");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Erro ao remover atividade.";
+      toast(msg, "error");
     }
-    toast("Atividade removida");
   }
 
   // Member Moderation Handlers
@@ -363,12 +388,11 @@ function MainApp() {
       const m = cls.members.find(mem => mem.id === memberId);
       if (m) await api.put(`/classes/${cls.id}/members/${m.userId}/promote`);
       fetchClassesFromApi();
-    } catch (err) {
-      setClasses(prev => prev.map(c => c.id === cls.id ? {
-        ...c, members: c.members.map(m => m.id === memberId ? { ...m, classRole: "rep" } : m)
-      } : c));
+      toast("Membro promovido a representante!");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Erro ao promover membro.";
+      toast(msg, "error");
     }
-    toast("Membro promovido a representante!");
   }
 
   async function doDemote(cls: AppClass, memberId: string) {
@@ -376,12 +400,11 @@ function MainApp() {
       const m = cls.members.find(mem => mem.id === memberId);
       if (m) await api.put(`/classes/${cls.id}/members/${m.userId}/demote`);
       fetchClassesFromApi();
-    } catch (err) {
-      setClasses(prev => prev.map(c => c.id === cls.id ? {
-        ...c, members: c.members.map(m => m.id === memberId ? { ...m, classRole: "student" } : m)
-      } : c));
+      toast("Membro rebaixado para aluno.");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Erro ao rebaixar membro.";
+      toast(msg, "error");
     }
-    toast("Membro rebaixado para aluno");
   }
 
   async function doExpel(cls: AppClass, memberId: string) {
@@ -389,48 +412,35 @@ function MainApp() {
       const m = cls.members.find(mem => mem.id === memberId);
       if (m) await api.delete(`/classes/${cls.id}/members/${m.userId}`);
       fetchClassesFromApi();
-    } catch (err) {
-      setClasses(prev => prev.map(c => c.id === cls.id ? {
-        ...c, members: c.members.filter(m => m.id !== memberId)
-      } : c));
+      toast("Membro removido da turma.");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Erro ao remover membro.";
+      toast(msg, "error");
     }
-    toast("Membro removido da turma");
   }
 
   // Progress & Notes
-  async function doSaveStatus(actId: string, s: ActivityStatus) {
+  function doSaveStatus(actId: string, s: ActivityStatus) {
     setStatuses(prev => ({ ...prev, [actId]: s }));
-    try {
-      await api.put(`/activities/${actId}/progress`, { status: s });
-    } catch (err) {
-      console.log('Progress save local');
-    }
   }
-
-  async function doSaveNotes(actId: string, n: string) {
+  function doSaveNotes(actId: string, n: string) {
     setNotes(prev => ({ ...prev, [actId]: n }));
-    try {
-      await api.put(`/activities/${actId}/progress`, { personal_notes: n });
-    } catch (err) {
-      console.log('Notes save local');
-    }
   }
 
+  // Read announcements tracking
   function doMarkRead(annId: string) {
     setReadSet(prev => new Set(prev).add(annId));
   }
 
+  // Navigation helpers
   function nav(s: Screen) { setScreen(s); }
-  function goClassHome() {
-    if (activeId) setScreen("classHome");
-    else setScreen("dashboard");
-  }
+  function goClassHome()  { setScreen("classHome"); }
 
-  // RENDER LOGIC
+  // Screen Rendering Router
   function renderInner(): React.ReactElement | null {
     if (screen === "welcome")  return <WelcomeScreen onLogin={() => nav("login")} onRegister={() => nav("register")} th={th}/>;
-    if (screen === "login")    return <LoginScreen onLogin={doLogin} onBack={() => nav("welcome")} onRegister={() => nav("register")} th={th}/>;
-    if (screen === "register") return <RegisterScreen onRegister={doRegister} onBack={() => nav("login")} th={th}/>;
+    if (screen === "login")    return <LoginScreen onLogin={doLogin} onBack={() => nav("welcome")} onRegister={() => nav("register")} loading={isSubmittingForm} th={th}/>;
+    if (screen === "register") return <RegisterScreen onRegister={doRegister} onBack={() => nav("login")} loading={isSubmittingForm} th={th}/>;
 
     if (!appUser) return <WelcomeScreen onLogin={() => nav("login")} onRegister={() => nav("register")} th={th}/>;
 
@@ -442,7 +452,7 @@ function MainApp() {
     );
 
     if (screen === "createClass") return (
-      <CreateClassScreen onSubmit={doCreateClass} onBack={() => nav("dashboard")} th={th}/>
+      <CreateClassScreen onSubmit={doCreateClass} onBack={() => nav("dashboard")} loading={isSubmittingForm} th={th}/>
     );
 
     if (screen === "classCreated" && createdCls) return (
@@ -452,7 +462,7 @@ function MainApp() {
     );
 
     if (screen === "joinClass") return (
-      <JoinClassScreen onJoin={doJoin} onBack={() => nav("dashboard")} th={th}/>
+      <JoinClassScreen onJoin={doJoin} onBack={() => nav("dashboard")} loading={isSubmittingForm} th={th}/>
     );
 
     if (screen === "profile") return (
@@ -462,7 +472,15 @@ function MainApp() {
     );
 
     if (screen === "settings") return (
-      <SettingsScreen dark={dark} onToggleDark={v => setDark(v)} onBack={() => nav("profile")} th={th}/>
+      <SettingsScreen
+        themeMode={themeMode}
+        onSelectThemeMode={setThemeMode}
+        reduceMotion={reduceMotion}
+        onToggleReduceMotion={setReduceMotion}
+        onClearCache={handleClearCache}
+        onBack={() => nav("profile")}
+        th={th}
+      />
     );
 
     if (screen === "about") return <AboutScreen onBack={() => nav("profile")} th={th}/>;
@@ -476,37 +494,34 @@ function MainApp() {
 
     const myRole = activeClass.members.find(m => m.userId === appUser.id)?.classRole ?? "student";
 
-  async function doToggleOpenClass(cls: AppClass) {
-    try {
-      const response = await api.put(`/classes/${cls.id}/toggle-open`);
-      fetchClassesFromApi();
-      toast(response.data?.message || "Status da turma atualizado!");
-    } catch (err: any) {
-      const msg = err.response?.data?.message || "Erro ao alterar status da turma";
-      toast(msg, "error");
+    async function doToggleOpenClass(cls: AppClass) {
+      try {
+        const response = await api.put(`/classes/${cls.id}/toggle-open`);
+        fetchClassesFromApi();
+        toast(response.data?.message || "Status da turma atualizado!");
+      } catch (err: any) {
+        const msg = err.response?.data?.message || "Erro ao alterar status da turma";
+        toast(msg, "error");
+      }
     }
-  }
 
-  async function doRegenerateCode(cls: AppClass) {
-    try {
-      const response = await api.put(`/classes/${cls.id}/regenerate-code`);
-      fetchClassesFromApi();
-      toast(response.data?.message || "Novo código de acesso gerado com sucesso!");
-    } catch (err: any) {
-      const msg = err.response?.data?.message || "Erro ao regerar código de acesso";
-      toast(msg, "error");
+    async function doRegenerateCode(cls: AppClass) {
+      try {
+        const response = await api.put(`/classes/${cls.id}/regenerate-code`);
+        fetchClassesFromApi();
+        toast(response.data?.message || "Novo código de acesso gerado com sucesso!");
+      } catch (err: any) {
+        const msg = err.response?.data?.message || "Erro ao regerar código de acesso";
+        toast(msg, "error");
+      }
     }
-  }
 
     if (screen === "classHome") return (
-      <>
-        <ClassHomeScreen cls={activeClass} user={appUser} statuses={statuses} readSet={readSet}
-          onNav={nav} onViewActivity={id => { setViewActId(id); nav("activityDetail"); }}
-          onCopyCode={() => toast("Código copiado!")}
-          onToggleOpen={() => doToggleOpenClass(activeClass)}
-          onRepPanel={() => nav("repPanel")} onBack={() => nav("dashboard")} th={th}/>
-        <QRModal code={activeClass.code} visible={qrVisible} onClose={() => setQrVisible(false)} th={th}/>
-      </>
+      <ClassHomeScreen cls={activeClass} user={appUser} statuses={statuses} readSet={readSet}
+        onNav={nav} onViewActivity={id => { setViewActId(id); nav("activityDetail"); }}
+        onCopyCode={() => toast("Código copiado!")}
+        onToggleOpen={() => doToggleOpenClass(activeClass)}
+        onRepPanel={() => nav("repPanel")} onBack={() => nav("dashboard")} th={th}/>
     );
 
     if (screen === "activityDetail" && viewActId) {

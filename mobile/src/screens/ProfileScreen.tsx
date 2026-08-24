@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Btn, HDivider } from "../components/ui";
+import ConfirmDialog from "../components/ConfirmDialog";
 import FloatingNav from "../components/FloatingNav";
 import { getInitials } from "../constants";
 import type { AppTheme, AppUser, AppClass, Screen, ActivityStatus } from "../types";
@@ -30,6 +31,8 @@ export default function ProfileScreen({
     { icon: "settings-outline",         label: "Configurações",      onPress: onSettings },
     { icon: "information-circle-outline",label: "Sobre o ANOT",      onPress: onAbout },
   ];
+
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   return (
     <View style={[S.safe, { backgroundColor: th.bg }]}>
@@ -93,9 +96,23 @@ export default function ProfileScreen({
         </View>
 
         <View style={{ paddingHorizontal: 16 }}>
-          <Btn th={th} variant="danger" onPress={onLogout} full iconName="log-out-outline">Sair da conta</Btn>
+          <Btn th={th} variant="danger" onPress={() => setConfirmLogout(true)} full iconName="log-out-outline">Sair da conta</Btn>
         </View>
       </ScrollView>
+
+      <ConfirmDialog
+        visible={confirmLogout}
+        title="Sair da Conta?"
+        message="Tem certeza de que deseja encerrar a sua sessão neste aplicativo?"
+        confirmLabel="Sair"
+        isDestructive
+        onConfirm={() => {
+          setConfirmLogout(false);
+          onLogout();
+        }}
+        onCancel={() => setConfirmLogout(false)}
+        th={th}
+      />
 
       <FloatingNav current="profile" onNav={onNav} th={th}/>
     </View>
