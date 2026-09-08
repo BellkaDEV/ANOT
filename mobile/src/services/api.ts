@@ -12,6 +12,7 @@ const API_URL = `${(ENV_API_URL || DEFAULT_URL).replace(/\/$/, '')}/api`;
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
