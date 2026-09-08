@@ -138,7 +138,7 @@ class GroupWorkTest extends TestCase
 
         // Tentar entrar no G2 estando já no G1
         $response = $this->actingAs($students[0])->postJson("/api/activity-groups/{$group2->id}/join");
-        $response->assertStatus(422);
+        $response->assertStatus(409);
     }
 
     public function test_full_group_rejects_joining()
