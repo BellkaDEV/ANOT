@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Share,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Share,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge, Btn, Empty, MemberAvatar, SLabel } from "../components/ui";
 import { PRIORITY_META, ACT_META, ROLE_META, isExpired } from "../constants";
@@ -19,6 +19,7 @@ interface Props {
   onAddAnn: () => void;
   onEditAnn: (id: string) => void;
   onDelAnn: (id: string) => void;
+  onViewAnn?: (id: string) => void;
   onAddActivity: () => void;
   onEditActivity: (id: string) => void;
   onDelActivity: (id: string) => void;
@@ -36,7 +37,7 @@ interface Props {
 }
 
 export default function RepPanelScreen({
-  cls, user, onAddAnn, onEditAnn, onDelAnn,
+  cls, user, onAddAnn, onEditAnn, onDelAnn, onViewAnn,
   onAddActivity, onEditActivity, onDelActivity,
   onPromote, onDemote, onExpel, onViewMember,
   onDeleteClass, onCopyCode, onToggleOpen, onRegenerateCode, onBack, th,
@@ -67,7 +68,11 @@ export default function RepPanelScreen({
             return (
               <View key={ann.id} style={[S.itemCard, { backgroundColor: th.card, borderColor: th.border,
                 borderLeftColor: pm.dot, opacity: exp ? 0.6 : 1 }]}>
-                <View style={{ flex: 1, gap: 4 }}>
+                <TouchableOpacity
+                  style={{ flex: 1, gap: 4 }}
+                  onPress={() => onViewAnn && onViewAnn(ann.id)}
+                  activeOpacity={0.7}
+                >
                   <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
                     <Badge color={pm.text} bg={pm.bg}>{pm.label}</Badge>
                     {exp && <Badge color="#9ca3af" bg="rgba(156,163,175,0.1)">Expirado</Badge>}
@@ -75,7 +80,7 @@ export default function RepPanelScreen({
                   <Text style={[S.itemTitle, { color: th.fg }]} numberOfLines={2}>{ann.title}</Text>
                   <Text style={[S.itemSub, { color: th.muted }]} numberOfLines={2}>{ann.desc}</Text>
                   <Text style={[S.itemMeta, { color: th.muted }]}>{ann.date} · {ann.authorName}</Text>
-                </View>
+                </TouchableOpacity>
                 <View style={{ gap: 6 }}>
                   <TouchableOpacity onPress={() => onEditAnn(ann.id)} style={[S.iconBtn, { backgroundColor: th.navyLight }]}>
                     <Ionicons name="pencil-outline" size={14} color={th.navy}/>

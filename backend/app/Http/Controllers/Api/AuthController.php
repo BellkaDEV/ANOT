@@ -23,8 +23,18 @@ class AuthController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users,email',
-                'password' => 'required|string|min:6|confirmed',
+                'password' => [
+                    'required',
+                    'string',
+                    'min:12',
+                    'regex:/[a-zA-Z]/',
+                    'regex:/[0-9]/',
+                    'confirmed',
+                ],
                 'avatar_url' => 'nullable|string|url',
+            ], [
+                'password.min' => 'A senha deve conter no mínimo 12 caracteres.',
+                'password.regex' => 'A senha deve conter pelo menos uma letra e um número.',
             ]);
         } catch (ValidationException $e) {
             $errors = $e->errors();
@@ -89,6 +99,15 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Logout realizado com sucesso.',
+        ]);
+    }
+
+    public function logoutAll(Request $request)
+    {
+        $request->user()->tokens()->delete();
+
+        return response()->json([
+            'message' => 'Todas as sessões foram encerradas com sucesso.',
         ]);
     }
 

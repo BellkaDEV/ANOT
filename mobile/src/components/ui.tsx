@@ -46,54 +46,141 @@ export function Badge({color,bg,children}:{color:string;bg:string;children:strin
 }
 
 // ─── INPUT FIELD ──────────────────────────────────────────────────────────────
-export function FInput({label,value,onChange,placeholder,error,secure,leftIcon,rightIcon,onRightPress,maxLen,th,hint}:{
-  label?:string;value:string;onChange:(v:string)=>void;placeholder?:string;error?:string;
-  secure?:boolean;leftIcon?:string;rightIcon?:string;onRightPress?:()=>void;maxLen?:number;th:AppTheme;hint?:string;
+export function FInput({
+  label, value, onChange, placeholder, error, secure, leftIcon, rightIcon, onRightPress, maxLen, th, hint,
+  keyboardType, autoCapitalize, accessibilityLabel, accessibilityHint,
+}:{
+  label?: string; value: string; onChange: (v: string) => void; placeholder?: string; error?: string;
+  secure?: boolean; leftIcon?: string; rightIcon?: string; onRightPress?: () => void; maxLen?: number; th: AppTheme; hint?: string;
+  keyboardType?: any; autoCapitalize?: any; accessibilityLabel?: string; accessibilityHint?: string;
 }) {
-  const [f,setF]=useState(false);
-  const bc=error?"#ef4444":f?th.orange:th.border;
+  const [f, setF] = useState(false);
+  const bc = error ? th.error : f ? th.orange : th.border;
+
   return (
-    <View style={{gap:6}}>
-      {label&&<Text style={[S.label,{color:th.muted}]}>{label}</Text>}
-      <View>
-        {leftIcon&&(
+    <View style={{ gap: 6 }}>
+      {label && <Text style={[S.label, { color: th.muted }]}>{label}</Text>}
+      <View style={{ justifyContent: "center" }}>
+        {leftIcon && (
           <View style={S.leftIconWrap} pointerEvents="none">
-            <Ionicons name={leftIcon as any} size={15} color={f?th.orange:th.muted}/>
+            <Ionicons name={leftIcon as any} size={18} color={f ? th.orange : th.muted} />
           </View>
         )}
-        <TextInput value={value} onChangeText={onChange} placeholder={placeholder}
-          placeholderTextColor={th.muted} secureTextEntry={secure} maxLength={maxLen}
-          onFocus={()=>setF(true)} onBlur={()=>setF(false)}
-          style={[S.input,{borderColor:bc,backgroundColor:th.inputBg,color:th.fg,
-            paddingLeft:leftIcon?42:16,paddingRight:rightIcon?44:16},
-            f&&{shadowColor:error?"#ef4444":th.orange,shadowOffset:{width:0,height:0},shadowOpacity:0.15,shadowRadius:6,elevation:2}]}/>
-        {rightIcon&&(
-          <TouchableOpacity style={S.rightIconWrap} onPress={onRightPress} hitSlop={{top:8,bottom:8,left:8,right:8}}>
-            <Ionicons name={rightIcon as any} size={15} color={th.muted}/>
+        <TextInput
+          value={value}
+          onChangeText={onChange}
+          placeholder={placeholder}
+          placeholderTextColor={th.muted}
+          secureTextEntry={secure}
+          maxLength={maxLen}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          selectionColor={th.orange}
+          onFocus={() => setF(true)}
+          onBlur={() => setF(false)}
+          accessibilityLabel={accessibilityLabel || label || placeholder}
+          accessibilityHint={accessibilityHint}
+          style={[
+            S.input,
+            {
+              borderColor: bc,
+              backgroundColor: th.inputBg,
+              color: th.fg,
+              paddingLeft: leftIcon ? 42 : 14,
+              paddingRight: rightIcon ? 44 : 14,
+            },
+            f && {
+              shadowColor: error ? th.error : th.orange,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.15,
+              shadowRadius: 6,
+              elevation: 2,
+            },
+          ]}
+        />
+        {rightIcon && (
+          <TouchableOpacity
+            style={S.rightIconWrap}
+            onPress={onRightPress}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityLabel="Ação do campo"
+          >
+            <Ionicons name={rightIcon as any} size={18} color={th.muted} />
           </TouchableOpacity>
         )}
       </View>
-      {maxLen&&<Text style={[S.counter,{color:th.muted}]}>{value.length}/{maxLen}</Text>}
-      {error&&<Text style={S.errorText}>⚠ {error}</Text>}
-      {hint&&!error&&<Text style={[S.counter,{color:th.muted}]}>{hint}</Text>}
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        {error ? (
+          <Text style={[S.errorText, { color: th.error }]}>⚠ {error}</Text>
+        ) : hint ? (
+          <Text style={[S.counter, { color: th.muted }]}>{hint}</Text>
+        ) : (
+          <View />
+        )}
+        {maxLen ? (
+          <Text style={[S.counter, { color: value.length >= maxLen ? th.error : th.muted }]}>
+            {value.length}/{maxLen}
+          </Text>
+        ) : null}
+      </View>
     </View>
   );
 }
 
 // ─── TEXTAREA ─────────────────────────────────────────────────────────────────
-export function FTextarea({label,value,onChange,placeholder,rows=4,maxLen,th}:{
-  label?:string;value:string;onChange:(v:string)=>void;placeholder?:string;rows?:number;maxLen?:number;th:AppTheme;
+export function FTextarea({
+  label, value, onChange, placeholder, rows = 4, maxLen, th, error, accessibilityLabel, accessibilityHint,
+}:{
+  label?: string; value: string; onChange: (v: string) => void; placeholder?: string; rows?: number; maxLen?: number; th: AppTheme;
+  error?: string; accessibilityLabel?: string; accessibilityHint?: string;
 }) {
-  const [f,setF]=useState(false);
+  const [f, setF] = useState(false);
+  const minH = Math.max(90, rows * 24);
+  const bc = error ? th.error : f ? th.orange : th.border;
+
   return (
-    <View style={{gap:6}}>
-      {label&&<Text style={[S.label,{color:th.muted}]}>{label}</Text>}
-      <TextInput value={value} onChangeText={onChange} placeholder={placeholder}
-        placeholderTextColor={th.muted} multiline numberOfLines={rows}
-        onFocus={()=>setF(true)} onBlur={()=>setF(false)} maxLength={maxLen}
-        style={[S.textarea,{borderColor:f?th.orange:th.border,backgroundColor:th.inputBg,color:th.fg},
-          f&&{shadowColor:th.orange,shadowOffset:{width:0,height:0},shadowOpacity:0.15,shadowRadius:6,elevation:2}]}/>
-      {maxLen&&<Text style={[S.counter,{color:th.muted}]}>{value.length}/{maxLen}</Text>}
+    <View style={{ gap: 6 }}>
+      {label && <Text style={[S.label, { color: th.muted }]}>{label}</Text>}
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        placeholderTextColor={th.muted}
+        multiline
+        numberOfLines={rows}
+        scrollEnabled
+        textAlignVertical="top"
+        selectionColor={th.orange}
+        onFocus={() => setF(true)}
+        onBlur={() => setF(false)}
+        maxLength={maxLen}
+        accessibilityLabel={accessibilityLabel || label || placeholder}
+        accessibilityHint={accessibilityHint}
+        style={[
+          S.textarea,
+          {
+            borderColor: bc,
+            backgroundColor: th.inputBg,
+            color: th.fg,
+            minHeight: minH,
+          },
+          f && {
+            shadowColor: error ? th.error : th.orange,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.15,
+            shadowRadius: 6,
+            elevation: 2,
+          },
+        ]}
+      />
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        {error ? <Text style={[S.errorText, { color: th.error }]}>⚠ {error}</Text> : <View />}
+        {maxLen ? (
+          <Text style={[S.counter, { color: value.length >= maxLen ? th.error : th.muted }]}>
+            {value.length}/{maxLen}
+          </Text>
+        ) : null}
+      </View>
     </View>
   );
 }

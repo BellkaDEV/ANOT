@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Platform, DevSettings } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Platform, DevSettings } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme/theme';
 
 interface Props {

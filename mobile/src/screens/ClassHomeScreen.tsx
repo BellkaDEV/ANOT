@@ -20,6 +20,7 @@ interface Props {
   readSet: Set<string>;
   onNav: (s: Screen) => void;
   onViewActivity: (id: string) => void;
+  onViewAnnouncement?: (id: string) => void;
   onRepPanel: () => void;
   onBack: () => void;
   onCopyCode?: () => void;
@@ -29,7 +30,7 @@ interface Props {
 }
 
 export default function ClassHomeScreen({
-  cls, user, statuses, readSet, onNav, onViewActivity, onRepPanel, onBack, onCopyCode, onToggleOpen, loading, th,
+  cls, user, statuses, readSet, onNav, onViewActivity, onViewAnnouncement, onRepPanel, onBack, onCopyCode, onToggleOpen, loading, th,
 }: Props) {
   const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState<ActFilter>("todos");
@@ -90,15 +91,19 @@ export default function ClassHomeScreen({
                 cls.announcements.filter(a => !isExpired(a.createdAt)).slice(0, 2).map(ann => {
                   const pm = PRIORITY_META[ann.priority];
                   const isNew = !readSet.has(ann.id);
+                  const handlePress = () => {
+                    if (onViewAnnouncement) onViewAnnouncement(ann.id);
+                    else onNav("notifications");
+                  };
                   return (
-                    <AccentCard key={ann.id} th={th} accent={pm.dot} onPress={() => onNav("notifications")}>
+                    <AccentCard key={ann.id} th={th} accent={pm.dot} onPress={handlePress}>
                       <View style={{ padding: 14, gap: 6 }}>
                         <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
                           {isNew && <View style={[S.newDot, { backgroundColor: th.orange }]}/>}
                           <Text style={[S.annTitle, { color: th.fg, flex: 1 }]} numberOfLines={2}>{ann.title}</Text>
                           <Badge color={pm.text} bg={pm.bg}>{pm.label}</Badge>
                         </View>
-                        <Text style={[S.annDesc, { color: th.muted }]} numberOfLines={2}>{ann.desc}</Text>
+                        <Text style={[S.annDesc, { color: th.muted }]} numberOfLines={2}>{ann.desc || ann.content}</Text>
                         <Text style={[S.annDate, { color: th.muted }]}>{ann.date}</Text>
                       </View>
                     </AccentCard>
@@ -143,6 +148,8 @@ export default function ClassHomeScreen({
             <Ionicons name="search-outline" size={16} color={th.muted}/>
             <TextInput value={search} onChangeText={setSearch} placeholder="Buscar atividade..."
               placeholderTextColor={th.muted}
+              selectionColor={th.orange}
+              accessibilityLabel="Buscar atividade"
               style={[S.searchInput, { color: th.fg }]}/>
             {search ? (
               <TouchableOpacity onPress={() => setSearch("")}>

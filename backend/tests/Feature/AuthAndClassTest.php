@@ -19,8 +19,8 @@ class AuthAndClassTest extends TestCase
         $registerRes = $this->postJson('/api/register', [
             'name' => 'Carlos Criador',
             'email' => 'carlos@anot.com',
-            'password' => 'senha123',
-            'password_confirmation' => 'senha123',
+            'password' => 'SenhaSegura1234',
+            'password_confirmation' => 'SenhaSegura1234',
         ]);
 
         $registerRes->assertStatus(201)
@@ -28,7 +28,7 @@ class AuthAndClassTest extends TestCase
 
         $loginRes = $this->postJson('/api/login', [
             'email' => 'carlos@anot.com',
-            'password' => 'senha123',
+            'password' => 'SenhaSegura1234',
         ]);
 
         $loginRes->assertStatus(200)

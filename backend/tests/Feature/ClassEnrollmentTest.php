@@ -17,8 +17,8 @@ class ClassEnrollmentTest extends TestCase
         $response = $this->postJson('/api/register', [
             'name' => 'Novo Aluno Teste',
             'email' => 'novoaluno@teste.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'password' => 'SenhaSegura1234',
+            'password_confirmation' => 'SenhaSegura1234',
         ]);
 
         $response->assertStatus(201)

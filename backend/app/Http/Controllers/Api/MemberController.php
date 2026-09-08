@@ -12,13 +12,27 @@ class MemberController extends Controller
 {
     public function index(Request $request, $classId)
     {
+        $currentUser = $request->user();
         $schoolClass = SchoolClass::find($classId);
         if (!$schoolClass) {
             return response()->json(['message' => 'Turma não encontrada.'], 404);
         }
 
+        $myMembership = ClassMember::where('class_id', $classId)
+            ->where('user_id', $currentUser->id)
+            ->first();
+
+        $myRole = $myMembership ? $myMembership->role : ($schoolClass->owner_id === $currentUser->id ? 'owner' : null);
+
+        if (!$myRole) {
+            return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
+        }
+
+        // Se for representante ou criador, inclui e-mail; caso contrário omite dados sensíveis como e-mail
+        $userFields = in_array($myRole, ['owner', 'rep']) ? 'id,name,email,avatar_url' : 'id,name,avatar_url';
+
         $members = ClassMember::where('class_id', $classId)
-            ->with(['user:id,name,email,avatar_url'])
+            ->with(['user:' . $userFields])
             ->get();
 
         return response()->json([
@@ -145,6 +159,38 @@ class MemberController extends Controller
         }
 
         $targetMembership->delete();
+
+        // Limpar membros de grupo e convites da pessoa removida da turma
+        $groups = \App\Models\ActivityGroup::whereHas('activity', function ($q) use ($classId) {
+            $q->where('class_id', $classId);
+        })->get();
+
+        foreach ($groups as $group) {
+            $groupMember = \App\Models\ActivityGroupMember::where('activity_group_id', $group->id)
+                ->where('user_id', $userId)
+                ->first();
+
+            if ($groupMember) {
+                $groupMember->delete();
+
+                if ($group->leader_user_id == $userId) {
+                    $oldest = \App\Models\ActivityGroupMember::where('activity_group_id', $group->id)
+                        ->orderBy('joined_at', 'asc')
+                        ->orderBy('id', 'asc')
+                        ->first();
+
+                    $group->leader_user_id = $oldest ? $oldest->user_id : null;
+                    $group->save();
+                }
+            }
+
+            \App\Models\ActivityGroupInvitation::where('activity_group_id', $group->id)
+                ->where(function ($q) use ($userId) {
+                    $q->where('invited_user_id', $userId)
+                      ->orWhere('invited_by_user_id', $userId);
+                })
+                ->delete();
+        }
 
         return response()->json([
             'message' => 'Membro removido da turma com sucesso.',
