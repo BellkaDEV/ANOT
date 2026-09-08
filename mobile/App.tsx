@@ -387,13 +387,15 @@ function MainApp() {
     }
   }
 
-  async function doDelAnn(cls: AppClass, id: string) {
+  async function doDelAnn(cls: AppClass, id: string): Promise<boolean> {
     try {
       await api.delete(`/announcements/${id}`);
       await fetchClassesFromApi();
       toast("Aviso removido.");
+      return true;
     } catch (err: any) {
       handleApiError(err, "Erro ao remover aviso.");
+      return false;
     }
   }
 
@@ -437,13 +439,15 @@ function MainApp() {
     }
   }
 
-  async function doDelActivity(cls: AppClass, id: string) {
+  async function doDelActivity(cls: AppClass, id: string): Promise<boolean> {
     try {
       await api.delete(`/activities/${id}`);
       await fetchClassesFromApi();
       toast("Atividade removida.");
+      return true;
     } catch (err: any) {
       handleApiError(err, "Erro ao remover atividade.");
+      return false;
     }
   }
 
@@ -544,18 +548,18 @@ function MainApp() {
 
   // Progress & Notes (Persisted to API)
   async function doSaveStatus(actId: string, s: ActivityStatus) {
-    setStatuses(prev => ({ ...prev, [actId]: s }));
     try {
       await api.put(`/activities/${actId}/progress`, { status: s, personal_notes: notes[actId] ?? "" });
+      setStatuses(prev => ({ ...prev, [actId]: s }));
     } catch (err: any) {
       handleApiError(err, "Erro ao salvar status da atividade.");
     }
   }
 
   async function doSaveNotes(actId: string, n: string) {
-    setNotes(prev => ({ ...prev, [actId]: n }));
     try {
       await api.put(`/activities/${actId}/progress`, { status: statuses[actId] ?? "todo", personal_notes: n });
+      setNotes(prev => ({ ...prev, [actId]: n }));
     } catch (err: any) {
       handleApiError(err, "Erro ao salvar anotações.");
     }
@@ -668,7 +672,7 @@ function MainApp() {
           user={appUser}
           myRole={myRole}
           onEdit={id => { setEditAnnId(id); nav("announcementForm"); }}
-          onDelete={id => { doDelAnn(activeClass, id); nav("classHome"); }}
+          onDelete={async id => { if (await doDelAnn(activeClass, id)) nav("classHome"); }}
           onBack={() => nav("classHome")}
           th={th}
         />
@@ -749,7 +753,7 @@ function MainApp() {
             const ok = await doSaveActivity(activeClass, data, editActId ?? undefined);
             if (ok) nav("repPanel");
           }}
-          onDelete={existing ? () => { doDelActivity(activeClass, existing.id); nav("repPanel"); } : undefined}
+          onDelete={existing ? async () => { if (await doDelActivity(activeClass, existing.id)) nav("repPanel"); } : undefined}
           onBack={() => nav("repPanel")} th={th}/>
       );
     }
@@ -764,7 +768,7 @@ function MainApp() {
               : await doAddAnn(activeClass, data);
             if (ok) nav("repPanel");
           }}
-          onDelete={existing ? () => { doDelAnn(activeClass, existing.id); nav("repPanel"); } : undefined}
+          onDelete={existing ? async () => { if (await doDelAnn(activeClass, existing.id)) nav("repPanel"); } : undefined}
           onBack={() => nav("repPanel")} th={th}/>
       );
     }

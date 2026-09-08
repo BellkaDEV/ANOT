@@ -3,17 +3,8 @@ import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme/theme';
 import api from '../services/api';
+import { CAL_MONTHS, TODAY_DAY, TODAY_MONTH } from '../constants';
 
-// Calendar months: April–October 2026 (same as Figma seed)
-const CAL_MONTHS = [
-  { year: 2026, month: 4, name: "Abril 2026", short: "ABR", days: 30, offset: 2 },
-  { year: 2026, month: 5, name: "Maio 2026", short: "MAI", days: 31, offset: 4 },
-  { year: 2026, month: 6, name: "Junho 2026", short: "JUN", days: 30, offset: 0 },
-  { year: 2026, month: 7, name: "Julho 2026", short: "JUL", days: 31, offset: 2 },
-  { year: 2026, month: 8, name: "Agosto 2026", short: "AGO", days: 31, offset: 5 },
-  { year: 2026, month: 9, name: "Setembro 2026", short: "SET", days: 30, offset: 1 },
-  { year: 2026, month: 10, name: "Outubro 2026", short: "OUT", days: 31, offset: 3 },
-];
 
 export default function CalendarScreen({ navigation }: any) {
   const [classes, setClasses] = useState<any[]>([]);
@@ -23,8 +14,8 @@ export default function CalendarScreen({ navigation }: any) {
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
 
   // Calendar UI states matching figma
-  const [monthIdx, setMonthIdx] = useState(1); // default May 2026 (index 1)
-  const [selDay, setSelDay] = useState<number | null>(28);
+  const [monthIdx, setMonthIdx] = useState(TODAY_MONTH - 1);
+  const [selDay, setSelDay] = useState<number | null>(TODAY_DAY);
   const [filter, setFilter] = useState<'all' | 'prova' | 'entrega' | 'evento' | 'periodo'>('all');
 
   const fetchClasses = async () => {
@@ -88,8 +79,8 @@ export default function CalendarScreen({ navigation }: any) {
 
   const cm = CAL_MONTHS[monthIdx]!;
   const totalCells = Math.ceil((cm.offset + cm.days) / 7) * 7;
-  const todayMonth = 5; // May
-  const todayDay = 28;  // 28th (Figma seed alignment)
+  const todayMonth = TODAY_MONTH;
+  const todayDay = TODAY_DAY;
 
   // Parse event date (YYYY-MM-DD) into day and month
   const parseEventDate = (dateStr: string) => {

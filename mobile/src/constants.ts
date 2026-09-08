@@ -48,19 +48,25 @@ export const ROLE_META: Record<ClassRole,{label:string;color:string;bg:string}> 
   student: {label:"Aluno",         color:"#5a6a8a", bg:"rgba(90,106,138,0.10)"},
 };
 
-export const CAL_MONTHS = [
-  {year:2026, month:4,  name:"Abril 2026",    short:"ABR", days:30, offset:2},
-  {year:2026, month:5,  name:"Maio 2026",     short:"MAI", days:31, offset:4},
-  {year:2026, month:6,  name:"Junho 2026",    short:"JUN", days:30, offset:0},
-  {year:2026, month:7,  name:"Julho 2026",    short:"JUL", days:31, offset:2},
-  {year:2026, month:8,  name:"Agosto 2026",   short:"AGO", days:31, offset:5},
-  {year:2026, month:9,  name:"Setembro 2026", short:"SET", days:30, offset:1},
-  {year:2026, month:10, name:"Outubro 2026",  short:"OUT", days:31, offset:3},
-] as const;
+const MONTH_NAMES_PT = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"] as const;
+const MONTH_SHORT_PT = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"] as const;
+const now = new Date();
+const localIso = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-export const TODAY_ISO = "2026-05-28";
-export const TODAY_DAY = 28;
-export const TODAY_MONTH = 5;
+export const TODAY_ISO = localIso(now);
+export const TODAY_DAY = now.getDate();
+export const TODAY_MONTH = now.getMonth() + 1;
+export const CAL_MONTHS = Array.from({ length: 12 }, (_, monthIndex) => {
+  const firstDay = new Date(now.getFullYear(), monthIndex, 1);
+  return {
+    year: now.getFullYear(),
+    month: monthIndex + 1,
+    name: `${MONTH_NAMES_PT[monthIndex]} ${now.getFullYear()}`,
+    short: MONTH_SHORT_PT[monthIndex],
+    days: new Date(now.getFullYear(), monthIndex + 1, 0).getDate(),
+    offset: (firstDay.getDay() + 6) % 7,
+  };
+});
 
 export const QUICK_DATES = [
   {label:"Hoje",offset:0},{label:"Amanhã",offset:1},
@@ -77,4 +83,3 @@ export const isExpired = (createdAt:string) => { const d=new Date(createdAt),t=n
 export const makeCode = (course:string,period:string) => { const pre=course.split(" ").map(w=>w[0]||"X").join("").toUpperCase().slice(0,3).padEnd(3,"X"); const yr=period.replace(/\D/g,"").slice(0,4).padEnd(4,"0"); return`${pre}-${yr}-${Math.random().toString(36).slice(2,6).toUpperCase()}`; };
 export const addDays = (iso:string,days:number) => { const d=new Date(iso+"T12:00:00"); d.setDate(d.getDate()+days); return d.toISOString().slice(0,10); };
 export const buildCalRows = (cm:{offset:number;days:number}) => { const total=Math.ceil((cm.offset+cm.days)/7)*7; const rows:Array<Array<number|null>>=[];for(let i=0;i<total;i+=7){const row:Array<number|null>=[];for(let j=0;j<7;j++){const day=i+j-cm.offset+1;row.push(day>=1&&day<=cm.days?day:null);}rows.push(row);}return rows; };
-

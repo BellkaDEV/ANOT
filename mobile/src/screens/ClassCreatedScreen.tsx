@@ -1,13 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Btn } from "../components/ui";
 import type { AppTheme, AppClass } from "../types";
+import QRModal from "../components/QRModal";
 
 interface Props { cls: AppClass; onGo: () => void; onDash: () => void; th: AppTheme }
 
 export default function ClassCreatedScreen({ cls, onGo, onDash, th }: Props) {
+  const [qrVisible, setQrVisible] = useState(false);
   return (
     <SafeAreaView style={[S.safe, { backgroundColor: th.bg }]}>
       <ScrollView contentContainerStyle={S.body}>
@@ -26,6 +28,7 @@ export default function ClassCreatedScreen({ cls, onGo, onDash, th }: Props) {
           <Text style={[S.codeLabel, { color: th.muted }]}>CÓDIGO DA TURMA</Text>
           <Text style={[S.code, { color: th.orange }]} selectable>{cls.code}</Text>
           <Text style={[S.codeSub, { color: th.muted }]}>Compartilhe com seus colegas para que entrem na turma</Text>
+          <Btn th={th} variant="secondary" onPress={() => setQrVisible(true)} full iconName="qr-code-outline">Exibir QR Code</Btn>
         </View>
 
         {/* Class info */}
@@ -53,6 +56,7 @@ export default function ClassCreatedScreen({ cls, onGo, onDash, th }: Props) {
           <Btn th={th} variant="secondary" onPress={onDash} full>Voltar ao início</Btn>
         </View>
       </ScrollView>
+      <QRModal code={cls.code} visible={qrVisible} onClose={() => setQrVisible(false)} th={th} />
     </SafeAreaView>
   );
 }
