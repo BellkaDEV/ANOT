@@ -1,10 +1,10 @@
 import axios from 'axios';
-import { getToken, removeToken } from './tokenStorage';
+import { deleteToken, getToken } from './tokenStorage';
 
 const ENV_API_URL = process.env.EXPO_PUBLIC_API_URL;
-const DEFAULT_URL = 'http://localhost:8000/api';
+const DEFAULT_URL = 'http://localhost:8000';
 
-const API_URL = ENV_API_URL || DEFAULT_URL;
+const API_URL = `${(ENV_API_URL || DEFAULT_URL).replace(/\/$/, '')}/api`;
 
 if (process.env.NODE_ENV === 'production' && !API_URL.startsWith('https://')) {
   console.warn('SEGURANÇA: A URL da API em produção deve utilizar o protocolo HTTPS.');
@@ -70,7 +70,7 @@ api.interceptors.response.use(
 
       if (error.response.status === 401 && !isHandling401) {
         isHandling401 = true;
-        await removeToken();
+        await deleteToken();
         unauthorizedListeners.forEach(cb => cb());
         setTimeout(() => {
           isHandling401 = false;
