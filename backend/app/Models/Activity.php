@@ -10,6 +10,10 @@ class Activity extends Model
         'class_id',
         'title',
         'type',
+        'work_mode',
+        'group_size',
+        'assessment_format',
+        'points_value',
         'subject',
         'due_date',
         'due_time',
@@ -60,5 +64,10 @@ class Activity extends Model
     public function linkedEvent()
     {
         return $this->hasOne(Event::class, 'activity_id');
+    }
+
+    public function groups()
+    {
+        return $this->hasMany(ActivityGroup::class, 'activity_id');
     }
 }

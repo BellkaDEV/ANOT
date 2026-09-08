@@ -1,10 +1,18 @@
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { deleteToken, getToken } from './tokenStorage';
 
-const API_URL = 'http://192.168.1.196:8000/api';
+const ENV_API_URL = process.env.EXPO_PUBLIC_API_URL;
+const DEFAULT_URL = 'http://localhost:8000';
+
+if (process.env.NODE_ENV === 'production' && !ENV_API_URL?.startsWith('https://')) {
+  throw new Error('A URL da API em produção deve ser configurada com HTTPS.');
+}
+
+const API_URL = `${(ENV_API_URL || DEFAULT_URL).replace(/\/$/, '')}/api`;
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -12,7 +20,10 @@ const api = axios.create({
 });
 
 type ConnectionCallback = (isOnline: boolean) => void;
+type UnauthorizedCallback = () => void;
+
 const listeners = new Set<ConnectionCallback>();
+const unauthorizedListeners = new Set<UnauthorizedCallback>();
 
 export const subscribeToConnection = (callback: ConnectionCallback) => {
   listeners.add(callback);
@@ -21,13 +32,22 @@ export const subscribeToConnection = (callback: ConnectionCallback) => {
   };
 };
 
+export const subscribeToUnauthorized = (callback: UnauthorizedCallback) => {
+  unauthorizedListeners.add(callback);
+  return () => {
+    unauthorizedListeners.delete(callback);
+  };
+};
+
 const notifyConnection = (isOnline: boolean) => {
   listeners.forEach(cb => cb(isOnline));
 };
 
+let isHandling401 = false;
+
 api.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem('@ANOT_token');
+    const token = await getToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -43,12 +63,20 @@ api.interceptors.response.use(
     notifyConnection(true);
     return response;
   },
-  (error) => {
+  async (error) => {
     if (!error.response) {
-      // Request failed and no response was returned, meaning network/host is unreachable
       notifyConnection(false);
     } else {
       notifyConnection(true);
+
+      if (error.response.status === 401 && !isHandling401) {
+        isHandling401 = true;
+        await deleteToken();
+        unauthorizedListeners.forEach(cb => cb());
+        setTimeout(() => {
+          isHandling401 = false;
+        }, 1000);
+      }
     }
     return Promise.reject(error);
   }

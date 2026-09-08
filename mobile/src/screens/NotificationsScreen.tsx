@@ -12,11 +12,12 @@ interface Props {
   user: AppUser;
   readSet: Set<string>;
   onMarkRead: (id: string) => void;
+  onViewAnnouncement?: (id: string) => void;
   onNav: (s: Screen) => void;
   th: AppTheme;
 }
 
-export default function NotificationsScreen({ cls, user, readSet, onMarkRead, onNav, th }: Props) {
+export default function NotificationsScreen({ cls, user, readSet, onMarkRead, onViewAnnouncement, onNav, th }: Props) {
   const insets = useSafeAreaInsets();
   const [showExpired, setShowExpired] = useState(false);
 
@@ -29,8 +30,12 @@ export default function NotificationsScreen({ cls, user, readSet, onMarkRead, on
     const pm = PRIORITY_META[ann.priority];
     const exp = isExpired(ann.createdAt);
     const isNew = !readSet.has(ann.id) && !exp;
+    const handlePress = () => {
+      onMarkRead(ann.id);
+      if (onViewAnnouncement) onViewAnnouncement(ann.id);
+    };
     return (
-      <TouchableOpacity onPress={() => !readSet.has(ann.id) && onMarkRead(ann.id)}
+      <TouchableOpacity onPress={handlePress}
         style={[S.annCard, { backgroundColor: th.card, borderColor: th.border, borderLeftColor: pm.dot,
           opacity: exp ? 0.55 : 1 }]}>
         <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
@@ -40,7 +45,7 @@ export default function NotificationsScreen({ cls, user, readSet, onMarkRead, on
               <Text style={[S.annTitle, { color: th.fg, flex: 1 }]} numberOfLines={2}>{ann.title}</Text>
               <Badge color={pm.text} bg={pm.bg}>{pm.label}</Badge>
             </View>
-            <Text style={[S.annDesc, { color: th.muted }]}>{ann.desc}</Text>
+            <Text style={[S.annDesc, { color: th.muted }]} numberOfLines={2}>{ann.desc || ann.content}</Text>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 }}>
               <Ionicons name="person-outline" size={11} color={th.muted}/>
               <Text style={[S.annMeta, { color: th.muted }]}>{ann.authorName}</Text>
@@ -55,6 +60,7 @@ export default function NotificationsScreen({ cls, user, readSet, onMarkRead, on
               )}
             </View>
           </View>
+          <Ionicons name="chevron-forward" size={16} color={th.muted} style={{ marginTop: 2 }}/>
         </View>
       </TouchableOpacity>
     );

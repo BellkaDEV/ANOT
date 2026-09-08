@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../services/api';
+import api, { subscribeToUnauthorized } from '../services/api';
+import { deleteToken, getToken, saveToken } from '../services/tokenStorage';
 
 export interface User {
   id: number;
@@ -30,20 +30,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     async function loadStorageData() {
       try {
-        const storedToken = await AsyncStorage.getItem('@ANOT_token');
-        const storedUser = await AsyncStorage.getItem('@ANOT_user');
-
-        if (storedToken && storedUser) {
-          setUser(JSON.parse(storedUser));
+        const storedToken = await getToken();
+        if (storedToken) {
+          try {
+            // Validar token via /me no backend
+            const response = await api.get('/me');
+            const currentUser = response.data.user || response.data;
+            setUser(currentUser);
+          } catch (err: any) {
+            if (err.response?.status === 401) {
+              await deleteToken();
+              setUser(null);
+            }
+          }
         }
       } catch (err) {
-        console.error('Erro ao carregar dados do Storage', err);
+        console.log('Erro ao validar token de autenticação:', err);
       } finally {
         setIsLoading(false);
       }
     }
 
     loadStorageData();
+
+    // Inscrever para limpar sessão se um 401 ocorrer em qualquer requisição
+    const unsubscribe = subscribeToUnauthorized(async () => {
+      await deleteToken();
+      setUser(null);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -53,8 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await api.post('/login', { email, password });
       const { user: loggedUser, token } = response.data;
 
-      await AsyncStorage.setItem('@ANOT_token', token);
-      await AsyncStorage.setItem('@ANOT_user', JSON.stringify(loggedUser));
+      await saveToken(token);
 
       setUser(loggedUser);
     } catch (err: any) {
@@ -78,8 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       const { user: registeredUser, token } = response.data;
 
-      await AsyncStorage.setItem('@ANOT_token', token);
-      await AsyncStorage.setItem('@ANOT_user', JSON.stringify(registeredUser));
+      await saveToken(token);
 
       setUser(registeredUser);
     } catch (err: any) {
@@ -96,10 +112,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await api.post('/logout');
     } catch (err) {
-      console.warn('Erro ao notificar logout no servidor:', err);
+      console.log('Aviso ao notificar logout no servidor:', err);
     } finally {
-      await AsyncStorage.removeItem('@ANOT_token');
-      await AsyncStorage.removeItem('@ANOT_user');
+      await deleteToken();
       setUser(null);
       setIsLoading(false);
     }

@@ -5,33 +5,44 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: always
     ports:
-      - "8000:80"
+      - "${PORT:-8000}:80"
     environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
-      - APP_KEY=base64:zZ6l7vG85BvhHlS3Lq9M6Y9Vv4P3O5I2K7G8J3P1A9S=
-      - DB_CONNECTION=pgsql
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_DATABASE=anot
-      - DB_USERNAME=anot_user
-      - DB_PASSWORD=anot_password
+      - APP_ENV=${APP_ENV:-production}
+      - APP_DEBUG=${APP_DEBUG:-false}
+      # Nunca versionar credenciais reais. Use .env ou segredos do provedor cloud.
+      - APP_KEY=${APP_KEY:?APP_KEY deve ser definido}
+      - DB_CONNECTION=${DB_CONNECTION:-pgsql}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_DATABASE=${DB_DATABASE:?DB_DATABASE deve ser definido}
+      - DB_USERNAME=${DB_USERNAME:?DB_USERNAME deve ser definido}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD deve ser definido}
     depends_on:
-      - db
-    volumes:
-      - .:/var/www
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   db:
     image: postgres:16-alpine
-    ports:
-      - "5432:5432"
+    restart: always
     environment:
-      - POSTGRES_DB=anot
-      - POSTGRES_USER=anot_user
-      - POSTGRES_PASSWORD=anot_password
+      # Nunca versionar credenciais reais. Use .env ou segredos do provedor cloud.
+      - POSTGRES_DB=${DB_DATABASE:?DB_DATABASE deve ser definido}
+      - POSTGRES_USER=${DB_USERNAME:?DB_USERNAME deve ser definido}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:?DB_PASSWORD deve ser definido}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:?DB_USERNAME deve ser definido} -d ${DB_DATABASE:?DB_DATABASE deve ser definido}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:

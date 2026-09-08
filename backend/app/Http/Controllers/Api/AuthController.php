@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -23,8 +23,18 @@ class AuthController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users,email',
-                'password' => 'required|string|min:6|confirmed',
+                'password' => [
+                    'required',
+                    'string',
+                    Password::min(8)->mixedCase()->numbers(),
+                    'confirmed',
+                ],
                 'avatar_url' => 'nullable|string|url',
+            ], [
+                'password' => 'A senha não atende aos requisitos mínimos.',
+                'password.min' => 'A senha não atende aos requisitos mínimos.',
+                'password.mixed' => 'A senha não atende aos requisitos mínimos.',
+                'password.numbers' => 'A senha não atende aos requisitos mínimos.',
             ]);
         } catch (ValidationException $e) {
             $errors = $e->errors();
@@ -70,7 +80,7 @@ class AuthController extends Controller
 
         if (!$user || !Hash::check($validated['password'], $user->password)) {
             return response()->json([
-                'message' => 'Usuário ou senha inválidos.'
+                'message' => 'Credenciais inválidas.',
             ], 401);
         }
 
@@ -89,6 +99,15 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Logout realizado com sucesso.',
+        ]);
+    }
+
+    public function logoutAll(Request $request)
+    {
+        $request->user()->tokens()->delete();
+
+        return response()->json([
+            'message' => 'Todas as sessões foram encerradas com sucesso.',
         ]);
     }
 

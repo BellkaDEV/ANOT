@@ -29,6 +29,7 @@ import ClassCreatedScreen from "./src/screens/ClassCreatedScreen";
 import JoinClassScreen    from "./src/screens/JoinClassScreen";
 import ClassHomeScreen    from "./src/screens/ClassHomeScreen";
 import ActivityDetailScreen from "./src/screens/ActivityDetailScreen";
+import AnnouncementDetailScreen from "./src/screens/AnnouncementDetailScreen";
 import NotificationsScreen  from "./src/screens/NotificationsScreen";
 import EventsScreen         from "./src/screens/EventsScreen";
 import ProfileScreen        from "./src/screens/ProfileScreen";
@@ -61,23 +62,54 @@ function mapBackendClass(c: any): AppClass {
       id: String(a.id),
       title: a.title || "",
       desc: a.content || a.description || a.desc || "",
+      content: a.content || a.description || a.desc || "",
       priority: a.priority || "media",
       authorId: String(a.author_id || a.user_id || ""),
       authorName: a.author?.name || a.authorName || "Representante",
       date: a.created_at ? new Date(a.created_at).toLocaleDateString("pt-BR") : "Hoje",
       createdAt: a.created_at || new Date().toISOString(),
+      expiresAt: a.expires_at || a.expiresAt || null,
     })),
     activities: (c.activities || []).map((act: any) => ({
       id: String(act.id),
       title: act.title || "",
       type: act.type || "dever",
+      workMode: act.work_mode || undefined,
+      groupSize: act.group_size ? Number(act.group_size) : undefined,
+      assessmentFormat: act.assessment_format || undefined,
+      pointsValue: act.points_value !== null && act.points_value !== undefined ? Number(act.points_value) : undefined,
       subject: act.subject || "",
       dueDate: act.due_date || TODAY_ISO,
       dueTime: act.due_time || undefined,
       dueLabel: fmtDueLabel(act.due_date || TODAY_ISO),
       description: act.description || "",
-      createdById: String(act.created_by_id || ""),
+      createdById: String(act.created_by_id || act.created_by || ""),
       createdByName: act.creator?.name || act.createdByName || "Criador",
+      groups: (act.groups || []).map((g: any) => ({
+        id: String(g.id),
+        activityId: String(g.activity_id),
+        name: g.name || "",
+        capacity: Number(g.capacity || 2),
+        leaderUserId: g.leader_user_id ? String(g.leader_user_id) : null,
+        description: g.description || null,
+        leader: g.leader ? { id: String(g.leader.id), name: g.leader.name, email: g.leader.email } : null,
+        members: (g.members || []).map((m: any) => ({
+          id: String(m.id),
+          activityGroupId: String(m.activity_group_id),
+          userId: String(m.user_id),
+          joinedAt: String(m.joined_at || ""),
+          user: m.user ? { id: String(m.user.id), name: m.user.name, email: m.user.email } : undefined,
+        })),
+        invitations: (g.invitations || []).map((inv: any) => ({
+          id: String(inv.id),
+          activityGroupId: String(inv.activity_group_id),
+          invitedUserId: String(inv.invited_user_id),
+          invitedByUserId: String(inv.invited_by_user_id),
+          status: inv.status || "pending",
+          invitedUser: inv.invited_user ? { id: String(inv.invited_user.id), name: inv.invited_user.name, email: inv.invited_user.email } : undefined,
+          invitedBy: inv.invited_by ? { id: String(inv.invited_by.id), name: inv.invited_by.name, email: inv.invited_by.email } : undefined,
+        })),
+      })),
     })),
     events: (c.events || []).map((e: any) => {
       const parts = (e.event_date || TODAY_ISO).split("-");
@@ -108,6 +140,7 @@ function MainApp() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [readSet, setReadSet] = useState<Set<string>>(new Set());
   const [viewActId, setViewActId] = useState<string | null>(null);
+  const [viewAnnId, setViewAnnId] = useState<string | null>(null);
   const [editActId, setEditActId] = useState<string | null>(null);
   const [createdCls, setCreatedCls] = useState<AppClass | null>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -203,6 +236,34 @@ function MainApp() {
     }
   }, [signed, fetchClassesFromApi]);
 
+  // Standardized API error handler
+  const handleApiError = useCallback((err: any, defaultMsg: string) => {
+    if (err.response?.status === 401) {
+      authLogout();
+      setClasses([]);
+      setActiveId(null);
+      setScreen("welcome");
+      toast("Sua sessão expirou. Por favor, faça login novamente.", "error");
+      return;
+    }
+
+    let msg = defaultMsg;
+    if (err.response?.status === 422) {
+      if (err.response.data?.errors) {
+        const firstKey = Object.keys(err.response.data.errors)[0];
+        const firstErr = err.response.data.errors[firstKey];
+        msg = Array.isArray(firstErr) ? firstErr[0] : String(firstErr);
+      } else if (err.response.data?.message) {
+        msg = err.response.data.message;
+      }
+    } else if (err.response?.status >= 500) {
+      msg = "Ocorreu um erro no servidor. Tente novamente mais tarde.";
+    } else if (err.response?.data?.message) {
+      msg = err.response.data.message;
+    }
+    toast(msg, "error");
+  }, [authLogout, toast]);
+
   // Auth wrappers
   async function doLogin(email: string, pw: string) {
     setIsSubmittingForm(true);
@@ -211,8 +272,7 @@ function MainApp() {
       setScreen("dashboard");
       toast("Bem-vindo(a) ao ANOT!");
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Usuário ou senha inválidos.";
-      toast(msg, "error");
+      handleApiError(err, "Usuário ou senha inválidos.");
     } finally {
       setIsSubmittingForm(false);
     }
@@ -225,8 +285,7 @@ function MainApp() {
       setScreen("dashboard");
       toast("Conta criada com sucesso!");
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Erro ao criar conta. Verifique os dados.";
-      toast(msg, "error");
+      handleApiError(err, "Erro ao criar conta. Verifique os dados.");
     } finally {
       setIsSubmittingForm(false);
     }
@@ -254,8 +313,7 @@ function MainApp() {
       setScreen("classCreated");
       toast("Turma criada com sucesso!");
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Erro ao criar turma no servidor.";
-      toast(msg, "error");
+      handleApiError(err, "Erro ao criar turma no servidor.");
     } finally {
       setIsSubmittingForm(false);
     }
@@ -276,8 +334,7 @@ function MainApp() {
       setScreen("classHome");
       toast("Entrou na turma com sucesso!");
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Código inválido ou turma não encontrada.";
-      toast(msg, "error");
+      handleApiError(err, "Código inválido ou turma não encontrada.");
     } finally {
       setIsSubmittingForm(false);
     }
@@ -292,62 +349,68 @@ function MainApp() {
       setScreen("dashboard");
       toast("Turma excluída com sucesso.");
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Erro ao excluir turma.";
-      toast(msg, "error");
+      handleApiError(err, "Erro ao excluir turma.");
     }
   }
 
   // Announcements Handlers
-  async function doAddAnn(cls: AppClass, data: Omit<Announcement, "id" | "authorId" | "authorName" | "date" | "createdAt">) {
-    if (!appUser) return;
+  async function doAddAnn(cls: AppClass, data: Omit<Announcement, "id" | "authorId" | "authorName" | "date" | "createdAt">): Promise<boolean> {
+    if (!appUser) return false;
     try {
       await api.post(`/classes/${cls.id}/announcements`, {
         title: data.title,
-        content: data.desc,
+        content: data.desc || data.content,
         priority: data.priority,
       });
-      fetchClassesFromApi();
+      await fetchClassesFromApi();
       toast("Aviso publicado!");
+      return true;
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Erro ao publicar aviso.";
-      toast(msg, "error");
+      handleApiError(err, "Erro ao publicar aviso.");
+      return false;
     }
   }
 
-  async function doEditAnn(cls: AppClass, id: string, data: Partial<Announcement>) {
+  async function doEditAnn(cls: AppClass, id: string, data: Partial<Announcement>): Promise<boolean> {
     try {
       await api.put(`/announcements/${id}`, {
         title: data.title,
-        content: data.desc,
+        content: data.desc || data.content,
         priority: data.priority,
       });
-      fetchClassesFromApi();
+      await fetchClassesFromApi();
       toast("Aviso atualizado!");
+      return true;
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Erro ao atualizar aviso.";
-      toast(msg, "error");
+      handleApiError(err, "Erro ao atualizar aviso.");
+      return false;
     }
   }
 
-  async function doDelAnn(cls: AppClass, id: string) {
+  async function doDelAnn(cls: AppClass, id: string): Promise<boolean> {
     try {
       await api.delete(`/announcements/${id}`);
-      fetchClassesFromApi();
+      await fetchClassesFromApi();
       toast("Aviso removido.");
+      return true;
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Erro ao remover aviso.";
-      toast(msg, "error");
+      handleApiError(err, "Erro ao remover aviso.");
+      return false;
     }
   }
 
   // Activities Handlers
-  async function doSaveActivity(cls: AppClass, data: Omit<Activity, "id" | "createdById" | "createdByName">, existingId?: string) {
-    if (!appUser) return;
+  async function doSaveActivity(cls: AppClass, data: Omit<Activity, "id" | "createdById" | "createdByName">, existingId?: string): Promise<boolean> {
+    if (!appUser) return false;
     try {
       if (existingId) {
         await api.put(`/activities/${existingId}`, {
           title: data.title,
           type: data.type,
+          work_mode: data.workMode,
+          group_size: data.groupSize,
+          assessment_format: data.assessmentFormat,
+          points_value: data.pointsValue,
           subject: data.subject,
           due_date: data.dueDate,
           due_time: data.dueTime,
@@ -357,28 +420,95 @@ function MainApp() {
         await api.post(`/classes/${cls.id}/activities`, {
           title: data.title,
           type: data.type,
+          work_mode: data.workMode,
+          group_size: data.groupSize,
+          assessment_format: data.assessmentFormat,
+          points_value: data.pointsValue,
           subject: data.subject,
           due_date: data.dueDate,
           due_time: data.dueTime,
           description: data.description,
         });
       }
-      fetchClassesFromApi();
+      await fetchClassesFromApi();
       toast(existingId ? "Atividade atualizada!" : "Atividade criada!");
+      return true;
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Erro ao salvar atividade.";
-      toast(msg, "error");
+      handleApiError(err, "Não foi possível salvar a atividade. Tente novamente.");
+      return false;
     }
   }
 
-  async function doDelActivity(cls: AppClass, id: string) {
+  async function doDelActivity(cls: AppClass, id: string): Promise<boolean> {
     try {
       await api.delete(`/activities/${id}`);
-      fetchClassesFromApi();
+      await fetchClassesFromApi();
       toast("Atividade removida.");
+      return true;
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Erro ao remover atividade.";
-      toast(msg, "error");
+      handleApiError(err, "Erro ao remover atividade.");
+      return false;
+    }
+  }
+
+  // Activity Groups Handlers
+  async function doJoinGroup(groupId: string) {
+    try {
+      const res = await api.post(`/activity-groups/${groupId}/join`);
+      await fetchClassesFromApi();
+      toast(res.data?.message || "Você entrou no grupo!");
+    } catch (err: any) {
+      handleApiError(err, "Erro ao entrar no grupo.");
+    }
+  }
+
+  async function doLeaveGroup(groupId: string) {
+    try {
+      const res = await api.post(`/activity-groups/${groupId}/leave`);
+      await fetchClassesFromApi();
+      toast(res.data?.message || "Você saiu do grupo.");
+    } catch (err: any) {
+      handleApiError(err, "Erro ao sair do grupo.");
+    }
+  }
+
+  async function doUpdateGroupDesc(groupId: string, description: string) {
+    try {
+      const res = await api.put(`/activity-groups/${groupId}/description`, { description });
+      await fetchClassesFromApi();
+      toast(res.data?.message || "Tema do grupo atualizado!");
+    } catch (err: any) {
+      handleApiError(err, "Erro ao atualizar descrição do grupo.");
+    }
+  }
+
+  async function doInviteMember(groupId: string, invitedUserId: string) {
+    try {
+      const res = await api.post(`/activity-groups/${groupId}/invite`, { invited_user_id: invitedUserId });
+      await fetchClassesFromApi();
+      toast(res.data?.message || "Convite enviado com sucesso!");
+    } catch (err: any) {
+      handleApiError(err, "Erro ao enviar convite.");
+    }
+  }
+
+  async function doRespondInvitation(invitationId: string, action: "accept" | "decline") {
+    try {
+      const res = await api.post(`/group-invitations/${invitationId}/respond`, { action });
+      await fetchClassesFromApi();
+      toast(res.data?.message || (action === "accept" ? "Convite aceito!" : "Convite recusado."));
+    } catch (err: any) {
+      handleApiError(err, "Erro ao responder convite.");
+    }
+  }
+
+  async function doRemoveGroupMember(groupId: string, targetUserId: string) {
+    try {
+      const res = await api.delete(`/activity-groups/${groupId}/members/${targetUserId}`);
+      await fetchClassesFromApi();
+      toast(res.data?.message || "Membro removido do grupo.");
+    } catch (err: any) {
+      handleApiError(err, "Erro ao remover membro do grupo.");
     }
   }
 
@@ -387,11 +517,10 @@ function MainApp() {
     try {
       const m = cls.members.find(mem => mem.id === memberId);
       if (m) await api.put(`/classes/${cls.id}/members/${m.userId}/promote`);
-      fetchClassesFromApi();
+      await fetchClassesFromApi();
       toast("Membro promovido a representante!");
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Erro ao promover membro.";
-      toast(msg, "error");
+      handleApiError(err, "Erro ao promover membro.");
     }
   }
 
@@ -399,11 +528,10 @@ function MainApp() {
     try {
       const m = cls.members.find(mem => mem.id === memberId);
       if (m) await api.put(`/classes/${cls.id}/members/${m.userId}/demote`);
-      fetchClassesFromApi();
+      await fetchClassesFromApi();
       toast("Membro rebaixado para aluno.");
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Erro ao rebaixar membro.";
-      toast(msg, "error");
+      handleApiError(err, "Erro ao rebaixar membro.");
     }
   }
 
@@ -411,20 +539,30 @@ function MainApp() {
     try {
       const m = cls.members.find(mem => mem.id === memberId);
       if (m) await api.delete(`/classes/${cls.id}/members/${m.userId}`);
-      fetchClassesFromApi();
+      await fetchClassesFromApi();
       toast("Membro removido da turma.");
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Erro ao remover membro.";
-      toast(msg, "error");
+      handleApiError(err, "Erro ao remover membro.");
     }
   }
 
-  // Progress & Notes
-  function doSaveStatus(actId: string, s: ActivityStatus) {
-    setStatuses(prev => ({ ...prev, [actId]: s }));
+  // Progress & Notes (Persisted to API)
+  async function doSaveStatus(actId: string, s: ActivityStatus) {
+    try {
+      await api.put(`/activities/${actId}/progress`, { status: s, personal_notes: notes[actId] ?? "" });
+      setStatuses(prev => ({ ...prev, [actId]: s }));
+    } catch (err: any) {
+      handleApiError(err, "Erro ao salvar status da atividade.");
+    }
   }
-  function doSaveNotes(actId: string, n: string) {
-    setNotes(prev => ({ ...prev, [actId]: n }));
+
+  async function doSaveNotes(actId: string, n: string) {
+    try {
+      await api.put(`/activities/${actId}/progress`, { status: statuses[actId] ?? "todo", personal_notes: n });
+      setNotes(prev => ({ ...prev, [actId]: n }));
+    } catch (err: any) {
+      handleApiError(err, "Erro ao salvar anotações.");
+    }
   }
 
   // Read announcements tracking
@@ -518,26 +656,59 @@ function MainApp() {
 
     if (screen === "classHome") return (
       <ClassHomeScreen cls={activeClass} user={appUser} statuses={statuses} readSet={readSet}
-        onNav={nav} onViewActivity={id => { setViewActId(id); nav("activityDetail"); }}
+        onNav={nav}
+        onViewActivity={id => { setViewActId(id); nav("activityDetail"); }}
+        onViewAnnouncement={id => { setViewAnnId(id); nav("announcementDetail"); }}
         onCopyCode={() => toast("Código copiado!")}
         onToggleOpen={() => doToggleOpenClass(activeClass)}
         onRepPanel={() => nav("repPanel")} onBack={() => nav("dashboard")} th={th}/>
     );
 
+    if (screen === "announcementDetail" && viewAnnId) {
+      const ann = activeClass.announcements.find(a => a.id === viewAnnId);
+      return (
+        <AnnouncementDetailScreen
+          announcement={ann}
+          user={appUser}
+          myRole={myRole}
+          onEdit={id => { setEditAnnId(id); nav("announcementForm"); }}
+          onDelete={async id => { if (await doDelAnn(activeClass, id)) nav("classHome"); }}
+          onBack={() => nav("classHome")}
+          th={th}
+        />
+      );
+    }
+
     if (screen === "activityDetail" && viewActId) {
       const act = activeClass.activities.find(a => a.id === viewActId);
       if (!act) return null;
       return (
-        <ActivityDetailScreen activity={act}
-          status={statuses[act.id] ?? "todo"} notes={notes[act.id] ?? ""}
-          onSaveStatus={doSaveStatus} onSaveNotes={doSaveNotes}
-          onBack={() => nav("classHome")} th={th}/>
+        <ActivityDetailScreen
+          activity={act}
+          status={statuses[act.id] ?? "todo"}
+          notes={notes[act.id] ?? ""}
+          user={appUser}
+          myRole={myRole}
+          classMembers={activeClass.members}
+          onSaveStatus={doSaveStatus}
+          onSaveNotes={doSaveNotes}
+          onJoinGroup={doJoinGroup}
+          onLeaveGroup={doLeaveGroup}
+          onUpdateGroupDesc={doUpdateGroupDesc}
+          onInviteMember={doInviteMember}
+          onRespondInvitation={doRespondInvitation}
+          onRemoveGroupMember={doRemoveGroupMember}
+          onBack={() => nav("classHome")}
+          th={th}
+        />
       );
     }
 
     if (screen === "notifications") return (
       <NotificationsScreen cls={activeClass} user={appUser} readSet={readSet}
-        onMarkRead={doMarkRead} onNav={nav} th={th}/>
+        onMarkRead={doMarkRead}
+        onViewAnnouncement={id => { setViewAnnId(id); nav("announcementDetail"); }}
+        onNav={nav} th={th}/>
     );
 
     if (screen === "events") return (
@@ -550,6 +721,7 @@ function MainApp() {
           onAddAnn={() => { setEditAnnId(null); nav("announcementForm"); }}
           onEditAnn={id => { setEditAnnId(id); nav("announcementForm"); }}
           onDelAnn={id => doDelAnn(activeClass, id)}
+          onViewAnn={id => { setViewAnnId(id); nav("announcementDetail"); }}
           onAddActivity={() => { setEditActId(null); nav("activityForm"); }}
           onEditActivity={id => { setEditActId(id); nav("activityForm"); }}
           onDelActivity={id => doDelActivity(activeClass, id)}
@@ -577,8 +749,11 @@ function MainApp() {
       const existing = editActId ? activeClass.activities.find(a => a.id === editActId) : undefined;
       return (
         <ActivityFormScreen existing={existing}
-          onSave={data => { doSaveActivity(activeClass, data, editActId ?? undefined); nav("repPanel"); }}
-          onDelete={existing ? () => { doDelActivity(activeClass, existing.id); nav("repPanel"); } : undefined}
+          onSave={async data => {
+            const ok = await doSaveActivity(activeClass, data, editActId ?? undefined);
+            if (ok) nav("repPanel");
+          }}
+          onDelete={existing ? async () => { if (await doDelActivity(activeClass, existing.id)) nav("repPanel"); } : undefined}
           onBack={() => nav("repPanel")} th={th}/>
       );
     }
@@ -587,15 +762,13 @@ function MainApp() {
       const existing = editAnnId ? activeClass.announcements.find(a => a.id === editAnnId) : undefined;
       return (
         <AnnouncementFormScreen existing={existing}
-          onSave={data => {
-            if (editAnnId) {
-              doEditAnn(activeClass, editAnnId, data);
-            } else {
-              doAddAnn(activeClass, data);
-            }
-            nav("repPanel");
+          onSave={async data => {
+            const ok = editAnnId
+              ? await doEditAnn(activeClass, editAnnId, data)
+              : await doAddAnn(activeClass, data);
+            if (ok) nav("repPanel");
           }}
-          onDelete={existing ? () => { doDelAnn(activeClass, existing.id); nav("repPanel"); } : undefined}
+          onDelete={existing ? async () => { if (await doDelAnn(activeClass, existing.id)) nav("repPanel"); } : undefined}
           onBack={() => nav("repPanel")} th={th}/>
       );
     }

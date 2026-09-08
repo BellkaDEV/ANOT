@@ -12,13 +12,25 @@ class MemberController extends Controller
 {
     public function index(Request $request, $classId)
     {
+        $currentUser = $request->user();
         $schoolClass = SchoolClass::find($classId);
         if (!$schoolClass) {
             return response()->json(['message' => 'Turma não encontrada.'], 404);
         }
 
+        $myMembership = ClassMember::where('class_id', $classId)
+            ->where('user_id', $currentUser->id)
+            ->first();
+
+        $myRole = $myMembership ? $myMembership->role : ($schoolClass->owner_id === $currentUser->id ? 'owner' : null);
+
+        if (!$myRole) {
+            return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
+        }
+
+        // O e-mail nunca faz parte da listagem de membros.
         $members = ClassMember::where('class_id', $classId)
-            ->with(['user:id,name,email,avatar_url'])
+            ->with(['user:id,name,avatar_url'])
             ->get();
 
         return response()->json([
@@ -63,7 +75,7 @@ class MemberController extends Controller
 
         return response()->json([
             'message' => 'Membro promovido a Representante com sucesso.',
-            'member' => $targetMembership->load('user:id,name,email,avatar_url'),
+            'member' => $targetMembership->load('user:id,name,avatar_url'),
         ]);
     }
 
@@ -101,7 +113,7 @@ class MemberController extends Controller
 
         return response()->json([
             'message' => 'Membro rebaixado a Aluno com sucesso.',
-            'member' => $targetMembership->load('user:id,name,email,avatar_url'),
+            'member' => $targetMembership->load('user:id,name,avatar_url'),
         ]);
     }
 
@@ -145,6 +157,38 @@ class MemberController extends Controller
         }
 
         $targetMembership->delete();
+
+        // Limpar membros de grupo e convites da pessoa removida da turma
+        $groups = \App\Models\ActivityGroup::whereHas('activity', function ($q) use ($classId) {
+            $q->where('class_id', $classId);
+        })->get();
+
+        foreach ($groups as $group) {
+            $groupMember = \App\Models\ActivityGroupMember::where('activity_group_id', $group->id)
+                ->where('user_id', $userId)
+                ->first();
+
+            if ($groupMember) {
+                $groupMember->delete();
+
+                if ($group->leader_user_id == $userId) {
+                    $oldest = \App\Models\ActivityGroupMember::where('activity_group_id', $group->id)
+                        ->orderBy('joined_at', 'asc')
+                        ->orderBy('id', 'asc')
+                        ->first();
+
+                    $group->leader_user_id = $oldest ? $oldest->user_id : null;
+                    $group->save();
+                }
+            }
+
+            \App\Models\ActivityGroupInvitation::where('activity_group_id', $group->id)
+                ->where(function ($q) use ($userId) {
+                    $q->where('invited_user_id', $userId)
+                      ->orWhere('invited_by_user_id', $userId);
+                })
+                ->delete();
+        }
 
         return response()->json([
             'message' => 'Membro removido da turma com sucesso.',

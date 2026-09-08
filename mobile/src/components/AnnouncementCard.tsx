@@ -1,5 +1,6 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import AppIcon from "./AppIcon";
 import type { AppTheme } from "../types";
 import { LIGHT } from "../constants";
 
@@ -7,17 +8,22 @@ interface AnnouncementCardProps {
   announcement: {
     id: number | string;
     title: string;
-    content: string;
+    content?: string;
+    desc?: string;
     priority: string;
-    created_at: string;
+    created_at?: string;
+    createdAt?: string;
+    date?: string;
+    authorName?: string;
     author?: {
       name: string;
     };
   };
+  onPress?: () => void;
   th?: AppTheme;
 }
 
-export default function AnnouncementCard({ announcement, th = LIGHT }: AnnouncementCardProps) {
+export default function AnnouncementCard({ announcement, onPress, th = LIGHT }: AnnouncementCardProps) {
   const getPriorityMeta = (priority: string) => {
     switch (priority) {
       case "alta":
@@ -29,9 +35,11 @@ export default function AnnouncementCard({ announcement, th = LIGHT }: Announcem
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return announcement.date || "Hoje";
     try {
       const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
       return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
     } catch {
       return dateString;
@@ -39,8 +47,11 @@ export default function AnnouncementCard({ announcement, th = LIGHT }: Announcem
   };
 
   const pm = getPriorityMeta(announcement.priority);
+  const textContent = announcement.content || announcement.desc || "";
+  const author = announcement.author?.name || announcement.authorName || "Sistema";
+  const dateStr = formatDate(announcement.created_at || announcement.createdAt);
 
-  return (
+  const cardContent = (
     <View style={[styles.card, { backgroundColor: th.card, borderColor: th.border }]}>
       <View style={[styles.accentLine, { backgroundColor: pm.color }]} />
       <View style={styles.content}>
@@ -52,15 +63,28 @@ export default function AnnouncementCard({ announcement, th = LIGHT }: Announcem
           </View>
         </View>
 
-        <Text style={[styles.desc, { color: th.muted }]}>{announcement.content}</Text>
+        <Text style={[styles.desc, { color: th.muted }]} numberOfLines={2}>{textContent}</Text>
 
         <View style={styles.footer}>
-          <Text style={[styles.author, { color: th.orange }]}>{announcement.author?.name || "Sistema"}</Text>
-          <Text style={[styles.date, { color: th.muted }]}>{formatDate(announcement.created_at)}</Text>
+          <Text style={[styles.author, { color: th.orange }]}>{author}</Text>
+          <View style={styles.footerRight}>
+            <Text style={[styles.date, { color: th.muted }]}>{dateStr}</Text>
+            {Boolean(onPress) && <AppIcon name="chevron-forward" size={14} color={th.muted} />}
+          </View>
         </View>
       </View>
     </View>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7} accessibilityLabel={announcement.title}>
+        {cardContent}
+      </TouchableOpacity>
+    );
+  }
+
+  return cardContent;
 }
 
 const styles = StyleSheet.create({
@@ -117,6 +141,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  footerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   author: {
     fontSize: 11,
