@@ -62,6 +62,39 @@ class GroupIntegrityAndAuthorizationTest extends TestCase
                  ->assertJsonStructure(['members']);
     }
 
+    public function test_member_moderation_responses_do_not_expose_email()
+    {
+        $owner = User::factory()->create();
+        $student = User::factory()->create();
+
+        $schoolClass = SchoolClass::create([
+            'name' => 'Física III',
+            'course' => 'Engenharia',
+            'institution' => 'UF',
+            'period' => '2026.1',
+            'modality' => 'presencial',
+            'code' => 'FIS304',
+            'owner_id' => $owner->id,
+        ]);
+
+        ClassMember::create([
+            'class_id' => $schoolClass->id,
+            'user_id' => $owner->id,
+            'role' => 'owner',
+        ]);
+        ClassMember::create([
+            'class_id' => $schoolClass->id,
+            'user_id' => $student->id,
+            'role' => 'student',
+        ]);
+
+        $promote = $this->actingAs($owner)->putJson("/api/classes/{$schoolClass->id}/members/{$student->id}/promote");
+        $promote->assertStatus(200)->assertJsonMissingPath('member.user.email');
+
+        $demote = $this->actingAs($owner)->putJson("/api/classes/{$schoolClass->id}/members/{$student->id}/demote");
+        $demote->assertStatus(200)->assertJsonMissingPath('member.user.email');
+    }
+
     public function test_owner_cannot_join_activity_group()
     {
         $owner = User::factory()->create();

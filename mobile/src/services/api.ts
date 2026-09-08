@@ -4,11 +4,11 @@ import { deleteToken, getToken } from './tokenStorage';
 const ENV_API_URL = process.env.EXPO_PUBLIC_API_URL;
 const DEFAULT_URL = 'http://localhost:8000';
 
-const API_URL = `${(ENV_API_URL || DEFAULT_URL).replace(/\/$/, '')}/api`;
-
-if (process.env.NODE_ENV === 'production' && !API_URL.startsWith('https://')) {
-  console.warn('SEGURANÇA: A URL da API em produção deve utilizar o protocolo HTTPS.');
+if (process.env.NODE_ENV === 'production' && !ENV_API_URL?.startsWith('https://')) {
+  throw new Error('A URL da API em produção deve ser configurada com HTTPS.');
 }
+
+const API_URL = `${(ENV_API_URL || DEFAULT_URL).replace(/\/$/, '')}/api`;
 
 const api = axios.create({
   baseURL: API_URL,

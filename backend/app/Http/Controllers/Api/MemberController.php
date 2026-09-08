@@ -75,7 +75,7 @@ class MemberController extends Controller
 
         return response()->json([
             'message' => 'Membro promovido a Representante com sucesso.',
-            'member' => $targetMembership->load('user:id,name,email,avatar_url'),
+            'member' => $targetMembership->load('user:id,name,avatar_url'),
         ]);
     }
 
@@ -113,7 +113,7 @@ class MemberController extends Controller
 
         return response()->json([
             'message' => 'Membro rebaixado a Aluno com sucesso.',
-            'member' => $targetMembership->load('user:id,name,email,avatar_url'),
+            'member' => $targetMembership->load('user:id,name,avatar_url'),
         ]);
     }
 

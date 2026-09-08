@@ -49,7 +49,7 @@ export default function JoinClassScreen({ onJoin, onBack, loading = false, th }:
 
   function handleBarcodeScanned({ data }: { data: string }) {
     if (scanned) return;
-    const match = data.trim().match(/^anot:\/\/join\?code=([^&]+)/i);
+    const match = data.trim().match(/^(?:anot:\/\/join\?code=|https:\/\/app\.anot\.com\/join\?code=)([^&]+)/i);
     if (!match?.[1]) {
       setScannerError("QR Code inválido. Use um convite gerado pelo ANOT.");
       return;
