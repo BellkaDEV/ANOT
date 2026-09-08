@@ -144,7 +144,7 @@ class GroupIntegrityAndAuthorizationTest extends TestCase
 
         // Tenta entrar no Grupo B
         $resB = $this->actingAs($student)->postJson("/api/activity-groups/{$groupB->id}/join");
-        $resB->assertStatus(422)
+        $resB->assertStatus(409)
              ->assertJson(['message' => 'Você já pertence a um grupo nesta atividade.']);
     }
 

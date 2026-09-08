@@ -11,13 +11,14 @@ services:
     environment:
       - APP_ENV=${APP_ENV:-production}
       - APP_DEBUG=${APP_DEBUG:-false}
-      - APP_KEY=${APP_KEY}
+      # Nunca versionar credenciais reais. Use .env ou segredos do provedor cloud.
+      - APP_KEY=${APP_KEY:?APP_KEY deve ser definido}
       - DB_CONNECTION=${DB_CONNECTION:-pgsql}
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_DATABASE=${DB_DATABASE:-anot}
-      - DB_USERNAME=${DB_USERNAME:-anot_user}
-      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_DATABASE=${DB_DATABASE:?DB_DATABASE deve ser definido}
+      - DB_USERNAME=${DB_USERNAME:?DB_USERNAME deve ser definido}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD deve ser definido}
     depends_on:
       db:
         condition: service_healthy
@@ -31,13 +32,14 @@ services:
     image: postgres:16-alpine
     restart: always
     environment:
-      - POSTGRES_DB=${DB_DATABASE:-anot}
-      - POSTGRES_USER=${DB_USERNAME:-anot_user}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      # Nunca versionar credenciais reais. Use .env ou segredos do provedor cloud.
+      - POSTGRES_DB=${DB_DATABASE:?DB_DATABASE deve ser definido}
+      - POSTGRES_USER=${DB_USERNAME:?DB_USERNAME deve ser definido}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:?DB_PASSWORD deve ser definido}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-anot_user} -d ${DB_DATABASE:-anot}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:?DB_USERNAME deve ser definido} -d ${DB_DATABASE:?DB_DATABASE deve ser definido}"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -92,15 +92,21 @@ class ActivityGroupController extends Controller
         }
 
         return DB::transaction(function () use ($groupId, $group, $user) {
-            $lockedGroup = ActivityGroup::where('id', $groupId)->lockForUpdate()->first();
+            // Trava todos os grupos da atividade para serializar entradas concorrentes.
+            $activityGroupIds = ActivityGroup::where('activity_id', $group->activity_id)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->pluck('id');
+            $lockedGroup = ActivityGroup::where('id', $groupId)->first();
 
             // Verificar se o usuário já pertence a um grupo nesta atividade
-            $alreadyInGroup = ActivityGroupMember::whereHas('group', function ($q) use ($group) {
-                $q->where('activity_id', $group->activity_id);
-            })->where('user_id', $user->id)->exists();
+            $alreadyInGroup = ActivityGroupMember::whereIn('activity_group_id', $activityGroupIds)
+                ->where('user_id', $user->id)
+                ->lockForUpdate()
+                ->exists();
 
             if ($alreadyInGroup) {
-                return response()->json(['message' => 'Você já pertence a um grupo nesta atividade.'], 422);
+                return response()->json(['message' => 'Você já pertence a um grupo nesta atividade.'], 409);
             }
 
             // Verificar capacidade

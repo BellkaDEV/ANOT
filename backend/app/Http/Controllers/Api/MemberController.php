@@ -28,11 +28,9 @@ class MemberController extends Controller
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        // Se for representante ou criador, inclui e-mail; caso contrário omite dados sensíveis como e-mail
-        $userFields = in_array($myRole, ['owner', 'rep']) ? 'id,name,email,avatar_url' : 'id,name,avatar_url';
-
+        // O e-mail nunca faz parte da listagem de membros.
         $members = ClassMember::where('class_id', $classId)
-            ->with(['user:' . $userFields])
+            ->with(['user:id,name,avatar_url'])
             ->get();
 
         return response()->json([
