@@ -11,6 +11,7 @@ use App\Models\ClassMember;
 use App\Models\Activity;
 use App\Models\Announcement;
 use App\Models\Event;
+use App\Models\ActivityGroup;
 use App\Models\UserActivityProgress;
 
 class ActivityAndEventTest extends TestCase
@@ -61,6 +62,106 @@ class ActivityAndEventTest extends TestCase
         // Non-member -> Forbidden (403)
         $this->actingAs($this->nonMember, 'sanctum')
             ->getJson("/api/classes/{$this->class->id}/activities")
+            ->assertStatus(403);
+    }
+
+    public function test_non_member_cannot_read_resources_by_direct_id()
+    {
+        $activity = Activity::create([
+            'class_id' => $this->class->id,
+            'title' => 'Atividade privada',
+            'type' => 'dever',
+            'due_date' => now()->addDays(2)->toDateString(),
+            'created_by' => $this->owner->id,
+        ]);
+
+        $announcement = Announcement::create([
+            'class_id' => $this->class->id,
+            'title' => 'Aviso privado',
+            'content' => 'Conteúdo privado',
+            'priority' => 'media',
+            'author_id' => $this->owner->id,
+        ]);
+
+        $event = Event::create([
+            'class_id' => $this->class->id,
+            'title' => 'Evento privado',
+            'event_date' => now()->addDays(3)->toDateString(),
+            'type' => 'evento',
+            'created_by' => $this->owner->id,
+        ]);
+
+        $group = ActivityGroup::create([
+            'activity_id' => $activity->id,
+            'name' => 'Grupo privado',
+            'capacity' => 2,
+        ]);
+
+        $this->actingAs($this->nonMember, 'sanctum')
+            ->getJson("/api/activities/{$activity->id}")
+            ->assertStatus(403);
+
+        $this->actingAs($this->nonMember, 'sanctum')
+            ->getJson("/api/announcements/{$announcement->id}")
+            ->assertStatus(403);
+
+        $this->actingAs($this->nonMember, 'sanctum')
+            ->getJson("/api/events/{$event->id}")
+            ->assertStatus(403);
+
+        $this->actingAs($this->nonMember, 'sanctum')
+            ->getJson("/api/activity-groups/{$group->id}")
+            ->assertStatus(403);
+    }
+
+    public function test_student_cannot_mutate_resources_reserved_for_representatives()
+    {
+        $activity = Activity::create([
+            'class_id' => $this->class->id,
+            'title' => 'Atividade protegida',
+            'type' => 'dever',
+            'due_date' => now()->addDays(2)->toDateString(),
+            'created_by' => $this->owner->id,
+        ]);
+
+        $announcement = Announcement::create([
+            'class_id' => $this->class->id,
+            'title' => 'Aviso protegido',
+            'content' => 'Conteúdo protegido',
+            'priority' => 'media',
+            'author_id' => $this->owner->id,
+        ]);
+
+        $event = Event::create([
+            'class_id' => $this->class->id,
+            'title' => 'Evento protegido',
+            'event_date' => now()->addDays(3)->toDateString(),
+            'type' => 'evento',
+            'created_by' => $this->owner->id,
+        ]);
+
+        $this->actingAs($this->student, 'sanctum')
+            ->putJson("/api/activities/{$activity->id}", ['title' => 'Tentativa'])
+            ->assertStatus(403);
+
+        $this->actingAs($this->student, 'sanctum')
+            ->deleteJson("/api/activities/{$activity->id}")
+            ->assertStatus(403);
+
+        $this->actingAs($this->student, 'sanctum')
+            ->putJson("/api/announcements/{$announcement->id}", ['title' => 'Tentativa'])
+            ->assertStatus(403);
+
+        $this->actingAs($this->student, 'sanctum')
+            ->deleteJson("/api/announcements/{$announcement->id}")
+            ->assertStatus(403);
+
+        $this->actingAs($this->student, 'sanctum')
+            ->putJson("/api/events/{$event->id}", ['title' => 'Tentativa'])
+            ->assertStatus(403);
+
+        $this->actingAs($this->student, 'sanctum')
+            ->deleteJson("/api/events/{$event->id}")
             ->assertStatus(403);
     }
 

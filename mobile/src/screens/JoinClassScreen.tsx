@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -6,15 +6,18 @@ import AppIcon from "../components/AppIcon";
 import KeyboardAwareScreen from "../components/KeyboardAwareScreen";
 import { Btn, FInput } from "../components/ui";
 import type { AppTheme } from "../types";
+import { extractInviteCode } from "../utils/inviteLinks";
 
 interface Props {
   onJoin: (code: string) => void;
   onBack: () => void;
   loading?: boolean;
   th: AppTheme;
+  initialCode?: string;
+  onInitialCodeApplied?: () => void;
 }
 
-export default function JoinClassScreen({ onJoin, onBack, loading = false, th }: Props) {
+export default function JoinClassScreen({ onJoin, onBack, loading = false, th, initialCode, onInitialCodeApplied }: Props) {
   const insets = useSafeAreaInsets();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -22,6 +25,14 @@ export default function JoinClassScreen({ onJoin, onBack, loading = false, th }:
   const [scannerError, setScannerError] = useState("");
   const [scanned, setScanned] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+
+  useEffect(() => {
+    const inviteCode = initialCode ? extractInviteCode(initialCode) || initialCode.trim().toUpperCase() : null;
+    if (!inviteCode) return;
+    setCode(inviteCode);
+    setError("");
+    onInitialCodeApplied?.();
+  }, [initialCode, onInitialCodeApplied]);
 
   function submit() {
     const clean = code.trim().toUpperCase();
@@ -49,14 +60,9 @@ export default function JoinClassScreen({ onJoin, onBack, loading = false, th }:
 
   function handleBarcodeScanned({ data }: { data: string }) {
     if (scanned) return;
-    const match = data.trim().match(/^(?:anot:\/\/join\?code=|https:\/\/app\.anot\.com\/join\?code=)([^&]+)/i);
-    if (!match?.[1]) {
-      setScannerError("QR Code inválido. Use um convite gerado pelo ANOT.");
-      return;
-    }
-    const scannedCode = decodeURIComponent(match[1]).trim().toUpperCase();
+    const scannedCode = extractInviteCode(data);
     if (!scannedCode) {
-      setScannerError("QR Code inválido. O convite não contém um código de turma.");
+      setScannerError("QR Code inválido. Use um convite gerado pelo ANOT.");
       return;
     }
     setScanned(true);
