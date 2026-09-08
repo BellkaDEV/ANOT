@@ -20,13 +20,13 @@ class AuthenticationHardeningAndAbuseTest extends TestCase
         RateLimiter::clear('join-class');
     }
 
-    public function test_rejects_weak_password_under_12_characters()
+    public function test_rejects_password_without_mixed_case()
     {
         $response = $this->postJson('/api/register', [
             'name' => 'Teste Senha Fraca',
             'email' => 'fraca@anot.app',
-            'password' => 'senha123', // apenas 8 chars
-            'password_confirmation' => 'senha123',
+            'password' => 'abc12345',
+            'password_confirmation' => 'abc12345',
         ]);
 
         $response->assertStatus(422)

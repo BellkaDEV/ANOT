@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -26,15 +26,15 @@ class AuthController extends Controller
                 'password' => [
                     'required',
                     'string',
-                    'min:12',
-                    'regex:/[a-zA-Z]/',
-                    'regex:/[0-9]/',
+                    Password::min(8)->mixedCase()->numbers(),
                     'confirmed',
                 ],
                 'avatar_url' => 'nullable|string|url',
             ], [
-                'password.min' => 'A senha deve conter no mínimo 12 caracteres.',
-                'password.regex' => 'A senha deve conter pelo menos uma letra e um número.',
+                'password' => 'A senha não atende aos requisitos mínimos.',
+                'password.min' => 'A senha não atende aos requisitos mínimos.',
+                'password.mixed' => 'A senha não atende aos requisitos mínimos.',
+                'password.numbers' => 'A senha não atende aos requisitos mínimos.',
             ]);
         } catch (ValidationException $e) {
             $errors = $e->errors();
@@ -80,7 +80,7 @@ class AuthController extends Controller
 
         if (!$user || !Hash::check($validated['password'], $user->password)) {
             return response()->json([
-                'message' => 'Usuário ou senha inválidos.'
+                'message' => 'Credenciais inválidas.',
             ], 401);
         }
 
