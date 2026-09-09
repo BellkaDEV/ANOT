@@ -18,7 +18,7 @@ if not exist "%MOBILE%\package.json" (
   exit /b 1
 )
 
-for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$ip = Get-NetIPAddress -InterfaceAlias 'Ethernet' -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } | Select-Object -First 1 -ExpandProperty IPAddress; if (-not $ip) { $ip = Get-NetIPAddress -InterfaceAlias 'Wi-Fi' -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } | Select-Object -First 1 -ExpandProperty IPAddress }; if (-not $ip) { $ip = '127.0.0.1' }; $ip"`) do set "LAN_IP=%%I"
+set "LAN_IP=192.168.1.196"
 
 echo.
 echo Encerrando processos anteriores do ANOT...
@@ -36,9 +36,6 @@ echo Expo:  porta 8081 (Metro)
 echo.
 
 start "ANOT - Backend 8000" powershell -NoProfile -NoExit -Command "Set-Location -LiteralPath '%BACKEND%'; php artisan serve --host=0.0.0.0 --port=8000"
-
-echo Preparando banco local...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-Location -LiteralPath '%BACKEND%'; php artisan db:seed --force"
 
 timeout /t 3 /nobreak >nul
 
