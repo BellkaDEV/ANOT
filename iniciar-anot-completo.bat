@@ -37,9 +37,12 @@ echo.
 
 start "ANOT - Backend 8000" powershell -NoProfile -NoExit -Command "Set-Location -LiteralPath '%BACKEND%'; php artisan serve --host=0.0.0.0 --port=8000"
 
+echo Preparando banco local...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-Location -LiteralPath '%BACKEND%'; php artisan db:seed --force"
+
 timeout /t 3 /nobreak >nul
 
-start "ANOT - Expo 8081" powershell -NoProfile -NoExit -Command "Set-Location -LiteralPath '%MOBILE%'; npx expo start --lan --port 8081 --clear"
+start "ANOT - Expo 8081" powershell -NoProfile -NoExit -Command "Set-Location -LiteralPath '%MOBILE%'; npx.cmd expo start --lan --port 8081 --clear"
 
 echo.
 echo ANOT iniciado.
