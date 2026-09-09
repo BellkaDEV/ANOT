@@ -18,7 +18,7 @@ if not exist "%MOBILE%\package.json" (
   exit /b 1
 )
 
-for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$config = Get-NetIPConfiguration -ErrorAction SilentlyContinue | Where-Object { $_.IPv4DefaultGateway -and $_.IPv4Address -and $_.IPv4Address.IPAddress -notlike '127.*' -and $_.IPv4Address.IPAddress -notlike '169.254.*' } | Select-Object -First 1; $ip = if ($config) { $config.IPv4Address.IPAddress } else { '127.0.0.1' }; $ip"`) do set "LAN_IP=%%I"
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$ip = Get-NetIPAddress -InterfaceAlias 'Ethernet' -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } | Select-Object -First 1 -ExpandProperty IPAddress; if (-not $ip) { $ip = Get-NetIPAddress -InterfaceAlias 'Wi-Fi' -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } | Select-Object -First 1 -ExpandProperty IPAddress }; if (-not $ip) { $ip = '127.0.0.1' }; $ip"`) do set "LAN_IP=%%I"
 
 echo.
 echo Encerrando processos anteriores do ANOT...
