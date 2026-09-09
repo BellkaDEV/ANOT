@@ -18,7 +18,16 @@ if not exist "%MOBILE%\package.json" (
   exit /b 1
 )
 
-set "LAN_IP=192.168.1.196"
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$ip = (Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias 'Wi-Fi' -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notlike '169.254.*' -and $_.IPAddress -ne '127.0.0.1' } | Select-Object -First 1 -ExpandProperty IPAddress); if (-not $ip) { $ip = (Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias 'Ethernet' -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notlike '169.254.*' -and $_.IPAddress -ne '127.0.0.1' } | Select-Object -First 1 -ExpandProperty IPAddress) }; $ip"`) do set "LAN_IP=%%I"
+
+if not defined LAN_IP (
+  echo ERRO: nao encontrei uma interface Wi-Fi/Ethernet fisica ativa.
+  pause
+  exit /b 1
+)
+
+echo Configurando acesso local do ANOT no Firewall do Windows...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$rules = @('ANOT API 8000','ANOT Expo 8081'); $missing = $rules | Where-Object { -not (Get-NetFirewallRule -DisplayName $_ -ErrorAction SilentlyContinue) }; if ($missing) { $args = '-NoProfile -ExecutionPolicy Bypass -Command "New-NetFirewallRule -DisplayName ''ANOT API 8000'' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8000 -Profile Private,Public; New-NetFirewallRule -DisplayName ''ANOT Expo 8081'' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8081 -Profile Private,Public"'; Start-Process powershell -Verb RunAs -Wait -ArgumentList $args }"
 
 echo.
 echo Encerrando processos anteriores do ANOT...
