@@ -7,7 +7,6 @@ O projeto é dividido em:
 - `mobile/`: aplicativo React Native + Expo + TypeScript para Android e iOS.
 - `backend/`: API REST Laravel 13 + Sanctum.
 - `docs/`: documentação operacional e de deploy.
-- `CODEX/`: histórico técnico e planejamento do projeto.
 
 ## Stack
 
