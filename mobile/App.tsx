@@ -284,6 +284,8 @@ function MainApp() {
       msg = "Ocorreu um erro no servidor. Tente novamente mais tarde.";
     } else if (err.response?.data?.message) {
       msg = err.response.data.message;
+    } else if (!err.response?.data && err.message) {
+      msg = err.message;
     }
     toast(msg, "error");
   }, [authLogout, toast]);

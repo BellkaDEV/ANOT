@@ -48,6 +48,14 @@ start "ANOT - Backend 8000" powershell -NoProfile -NoExit -Command "Set-Location
 
 timeout /t 3 /nobreak >nul
 
+echo Verificando disponibilidade da API antes de iniciar o Expo...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ok = $false; 1..15 | ForEach-Object { try { $response = Invoke-WebRequest -UseBasicParsing -Uri 'http://%LAN_IP%:8000/health' -TimeoutSec 2; if ($response.StatusCode -eq 200) { $ok = $true; break } } catch {}; Start-Sleep -Seconds 1 }; if (-not $ok) { Write-Error 'A API nao respondeu em http://%LAN_IP%:8000/health'; exit 1 }"
+if errorlevel 1 (
+  echo ERRO: o backend nao respondeu. O Expo nao sera iniciado.
+  pause
+  exit /b 1
+)
+
 start "ANOT - Expo 8081" powershell -NoProfile -NoExit -Command "Set-Location -LiteralPath '%MOBILE%'; npx.cmd expo start --lan --port 8081 --clear"
 
 echo.

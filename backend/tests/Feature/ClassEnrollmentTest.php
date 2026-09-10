@@ -137,6 +137,34 @@ class ClassEnrollmentTest extends TestCase
         $joinResponse->assertStatus(201);
     }
 
+    public function test_rejoining_class_is_idempotent_and_does_not_duplicate_membership()
+    {
+        $owner = User::factory()->create();
+        $student = User::factory()->create();
+
+        $createResponse = $this->actingAs($owner, 'sanctum')
+                               ->postJson('/api/classes', ['name' => 'Turma Idempotente']);
+
+        $classId = $createResponse->json('class.id');
+        $classCode = $createResponse->json('class.code');
+
+        $this->actingAs($student, 'sanctum')
+             ->postJson('/api/classes/join', ['code' => $classCode])
+             ->assertStatus(201);
+
+        $this->actingAs($student, 'sanctum')
+             ->postJson('/api/classes/join', ['code' => $classCode])
+             ->assertStatus(200)
+             ->assertJsonPath('message', 'Você já faz parte desta turma.');
+
+        $this->assertDatabaseCount('class_members', 2);
+        $this->assertDatabaseHas('class_members', [
+            'class_id' => $classId,
+            'user_id' => $student->id,
+            'role' => 'student',
+        ]);
+    }
+
     public function test_closed_class_prevents_new_student_enrollment()
     {
         $repUser = User::factory()->create();

@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import api, { subscribeToUnauthorized } from '../services/api';
+import api, { API_URL, subscribeToUnauthorized } from '../services/api';
 import { deleteToken, getToken, saveToken } from '../services/tokenStorage';
 
 export interface User {
@@ -75,7 +75,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(loggedUser);
     } catch (err: any) {
-      const message = err.response?.data?.message || 'Erro ao realizar login. Tente novamente.';
+      const message = err.response?.data?.message
+        || (!err.response
+          ? `Não foi possível conectar à API ANOT em ${API_URL}. Verifique se o celular está na mesma rede Wi-Fi.`
+          : 'Erro ao realizar login. Tente novamente.');
       setError(message);
       throw new Error(message);
     } finally {

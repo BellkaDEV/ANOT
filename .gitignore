@@ -28,3 +28,10 @@ Thumbs.db
 .vscode/
 .idea/
 *.log
+
+# Local tooling and generated project extras
+.skill-import-temp/
+SKILLS-INTEGRADAS.md
+desktop.ini
+ProtFigma/
+ProtFigma+/
