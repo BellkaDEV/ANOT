@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { View, ActivityIndicator, StyleSheet, useColorScheme } from "react-native";
+import { View, ActivityIndicator, StyleSheet, useColorScheme, Linking } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -19,6 +19,7 @@ import {
 
 import ToastLayer from "./src/components/ToastLayer";
 import MemberSheet from "./src/components/MemberSheet";
+import { extractInviteCode } from "./src/utils/inviteLinks";
 
 import WelcomeScreen      from "./src/screens/WelcomeScreen";
 import LoginScreen        from "./src/screens/LoginScreen";
@@ -148,6 +149,29 @@ function MainApp() {
   const [editAnnId, setEditAnnId] = useState<string | null>(null);
   const [isLoadingClasses, setIsLoadingClasses] = useState(false);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
+  const [pendingJoinCode, setPendingJoinCode] = useState<string | null>(null);
+
+  const receiveInviteUrl = useCallback((url: string) => {
+    const code = extractInviteCode(url);
+    if (code) setPendingJoinCode(code);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    Linking.getInitialURL().then((url) => {
+      if (mounted && url) receiveInviteUrl(url);
+    }).catch(() => {});
+
+    const subscription = Linking.addEventListener("url", ({ url }) => receiveInviteUrl(url));
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
+  }, [receiveInviteUrl]);
+
+  useEffect(() => {
+    if (signed && pendingJoinCode) setScreen("joinClass");
+  }, [signed, pendingJoinCode]);
 
   // Load preferences from AsyncStorage
   useEffect(() => {
@@ -260,6 +284,8 @@ function MainApp() {
       msg = "Ocorreu um erro no servidor. Tente novamente mais tarde.";
     } else if (err.response?.data?.message) {
       msg = err.response.data.message;
+    } else if (!err.response?.data && err.message) {
+      msg = err.message;
     }
     toast(msg, "error");
   }, [authLogout, toast]);
@@ -600,7 +626,14 @@ function MainApp() {
     );
 
     if (screen === "joinClass") return (
-      <JoinClassScreen onJoin={doJoin} onBack={() => nav("dashboard")} loading={isSubmittingForm} th={th}/>
+      <JoinClassScreen
+        onJoin={doJoin}
+        onBack={() => nav("dashboard")}
+        loading={isSubmittingForm}
+        th={th}
+        initialCode={pendingJoinCode ?? undefined}
+        onInitialCodeApplied={() => setPendingJoinCode(null)}
+      />
     );
 
     if (screen === "profile") return (

@@ -8,7 +8,7 @@ if (process.env.NODE_ENV === 'production' && !ENV_API_URL?.startsWith('https://'
   throw new Error('A URL da API em produção deve ser configurada com HTTPS.');
 }
 
-const API_URL = `${(ENV_API_URL || DEFAULT_URL).replace(/\/$/, '')}/api`;
+export const API_URL = `${(ENV_API_URL || DEFAULT_URL).replace(/\/$/, '')}/api`;
 
 const api = axios.create({
   baseURL: API_URL,
@@ -47,6 +47,9 @@ let isHandling401 = false;
 
 api.interceptors.request.use(
   async (config) => {
+    if (__DEV__) {
+      console.log(`[ANOT API] ${config.method?.toUpperCase() || 'REQUEST'} ${config.baseURL || ''}${config.url || ''}`);
+    }
     const token = await getToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;

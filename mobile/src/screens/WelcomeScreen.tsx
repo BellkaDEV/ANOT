@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Btn } from "../components/ui";
@@ -37,11 +37,6 @@ export default function WelcomeScreen({ onLogin, onRegister, th }: Props) {
             <Btn th={th} onPress={onLogin} full>Entrar na conta</Btn>
             <Btn th={th} variant="secondary" onPress={onRegister} full>Criar conta grátis</Btn>
           </View>
-          <TouchableOpacity style={S.demoBtn} onPress={onLogin}>
-            <Text style={[S.demoText, { color: th.muted }]}>
-              Demo rápido — use <Text style={{ color: th.orange, fontWeight: "700" }}>lucas@univ.edu.br</Text>
-            </Text>
-          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -61,6 +56,4 @@ const S = StyleSheet.create({
              shadowColor: "#000", shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.08, shadowRadius: 20, elevation: 10 },
   cardTitle: { fontSize: 22, fontWeight: "800", marginBottom: 4 },
   cardSub:   { fontSize: 14, lineHeight: 21, marginBottom: 12 },
-  demoBtn:   { alignItems: "center", marginTop: 12 },
-  demoText:  { fontSize: 12 },
 });

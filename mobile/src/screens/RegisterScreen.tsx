@@ -29,8 +29,8 @@ export default function RegisterScreen({ onRegister, onBack, loading = false, th
     if (!email.trim()) e.email = "E-mail obrigatório";
     else if (!isValidEmail(email)) e.email = "E-mail inválido";
     if (!pw) e.pw = "Senha obrigatória";
-    else if (pw.length < 12) e.pw = "A senha deve conter no mínimo 12 caracteres";
-    else if (!/[a-zA-Z]/.test(pw) || !/[0-9]/.test(pw)) e.pw = "A senha deve conter pelo menos uma letra e um número";
+    else if (pw.length < 8) e.pw = "A senha deve conter no mínimo 8 caracteres";
+    else if (!/[a-z]/.test(pw) || !/[A-Z]/.test(pw) || !/[0-9]/.test(pw)) e.pw = "A senha deve conter maiúsculas, minúsculas e números";
     if (pw !== confirmPw) e.confirmPw = "As senhas não coincidem";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -96,7 +96,7 @@ export default function RegisterScreen({ onRegister, onBack, loading = false, th
             label="Senha *"
             value={pw}
             onChange={setPw}
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Mínimo 8 caracteres, com maiúsculas e números"
             secure={!showPw}
             leftIcon="lock-closed-outline"
             rightIcon={showPw ? "eye-off-outline" : "eye-outline"}

@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Animated } from 'react-native';
 import api, { subscribeToConnection } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function OfflineBanner() {
+  const { signed } = useAuth();
   const [isOnline, setIsOnline] = useState(true);
   const [fadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
+    if (!signed) {
+      setIsOnline(true);
+      return;
+    }
+
     const unsubscribe = subscribeToConnection((status) => {
       setIsOnline(status);
     });
     return unsubscribe;
-  }, []);
+  }, [signed]);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -30,7 +37,10 @@ export default function OfflineBanner() {
     }
   };
 
-  if (isOnline) {
+  // Falha de rede durante boot/login não deve ocupar a tela pública.
+  // Depois de autenticado, o banner informa que as operações protegidas
+  // podem precisar ser repetidas.
+  if (!signed || isOnline) {
     return null;
   }
 
