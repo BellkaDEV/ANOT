@@ -45,4 +45,24 @@ class AdminWebTest extends TestCase
             'password' => 'senhaSegura123',
         ])->assertSessionHasErrors('email');
     }
+
+    public function test_admin_can_suspend_user_from_web_console_and_create_audit(): void
+    {
+        $admin = User::factory()->create(['is_platform_admin' => true]);
+        $user = User::factory()->create();
+
+        $this->actingAs($admin)
+            ->post(route('admin.users.suspend', $user))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'is_suspended' => true,
+        ]);
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'actor_user_id' => $admin->id,
+            'target_user_id' => $user->id,
+            'action' => 'user.suspended',
+        ]);
+    }
 }
