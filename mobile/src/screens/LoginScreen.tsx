@@ -11,11 +11,12 @@ interface Props {
   onLogin: (email: string, pw: string) => void;
   onBack: () => void;
   onRegister: () => void;
+  onForgotPassword: () => void;
   loading?: boolean;
   th: AppTheme;
 }
 
-export default function LoginScreen({ onLogin, onBack, onRegister, loading = false, th }: Props) {
+export default function LoginScreen({ onLogin, onBack, onRegister, onForgotPassword, loading = false, th }: Props) {
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
@@ -95,6 +96,9 @@ export default function LoginScreen({ onLogin, onBack, onRegister, loading = fal
         <Btn th={th} onPress={submit} loading={loading} full iconName="log-in-outline">
           Entrar na conta
         </Btn>
+        <TouchableOpacity onPress={onForgotPassword} accessibilityRole="button" accessibilityLabel="Esqueci minha senha">
+          <Text style={[S.forgotLink, { color: th.orange }]}>Esqueci minha senha</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={S.footerRow}>
@@ -126,4 +130,5 @@ const S = StyleSheet.create({
   footerRow: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 10 },
   footerText: { fontSize: 14 },
   registerLink: { fontSize: 14, fontWeight: "700" },
+  forgotLink: { fontSize: 13, fontWeight: "700", textAlign: "center", marginTop: -6 },
 });

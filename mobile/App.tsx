@@ -23,6 +23,7 @@ import { extractInviteCode } from "./src/utils/inviteLinks";
 
 import WelcomeScreen      from "./src/screens/WelcomeScreen";
 import LoginScreen        from "./src/screens/LoginScreen";
+import ForgotPasswordScreen from "./src/screens/ForgotPasswordScreen";
 import RegisterScreen     from "./src/screens/RegisterScreen";
 import DashboardScreen    from "./src/screens/DashboardScreen";
 import CreateClassScreen  from "./src/screens/CreateClassScreen";
@@ -128,7 +129,7 @@ function mapBackendClass(c: any): AppClass {
 }
 
 function MainApp() {
-  const { user: authUser, login: authLogin, register: authRegister, logout: authLogout, deleteAccount: authDeleteAccount, signed } = useAuth();
+  const { user: authUser, login: authLogin, register: authRegister, requestPasswordReset, logout: authLogout, deleteAccount: authDeleteAccount, signed } = useAuth();
   const systemScheme = useColorScheme();
 
   const [themeMode, setThemeModeState] = useState<ThemeMode>("system");
@@ -312,6 +313,19 @@ function MainApp() {
       toast("Conta criada com sucesso!");
     } catch (err: any) {
       handleApiError(err, "Erro ao criar conta. Verifique os dados.");
+    } finally {
+      setIsSubmittingForm(false);
+    }
+  }
+
+  async function doRequestPasswordReset(email: string): Promise<boolean> {
+    setIsSubmittingForm(true);
+    try {
+      await requestPasswordReset(email);
+      return true;
+    } catch (err: any) {
+      handleApiError(err, "Não foi possível solicitar a recuperação.");
+      return false;
     } finally {
       setIsSubmittingForm(false);
     }
@@ -603,8 +617,9 @@ function MainApp() {
   // Screen Rendering Router
   function renderInner(): React.ReactElement | null {
     if (screen === "welcome")  return <WelcomeScreen onLogin={() => nav("login")} onRegister={() => nav("register")} th={th}/>;
-    if (screen === "login")    return <LoginScreen onLogin={doLogin} onBack={() => nav("welcome")} onRegister={() => nav("register")} loading={isSubmittingForm} th={th}/>;
+    if (screen === "login")    return <LoginScreen onLogin={doLogin} onBack={() => nav("welcome")} onRegister={() => nav("register")} onForgotPassword={() => nav("forgotPassword")} loading={isSubmittingForm} th={th}/>;
     if (screen === "register") return <RegisterScreen onRegister={doRegister} onBack={() => nav("login")} loading={isSubmittingForm} th={th}/>;
+    if (screen === "forgotPassword") return <ForgotPasswordScreen onSubmit={doRequestPasswordReset} onBack={() => nav("login")} loading={isSubmittingForm} th={th}/>;
 
     if (!appUser) return <WelcomeScreen onLogin={() => nav("login")} onRegister={() => nav("register")} th={th}/>;
 

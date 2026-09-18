@@ -16,6 +16,7 @@ interface AuthContextData {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
   clearError: () => void;
@@ -111,6 +112,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const requestPasswordReset = async (email: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await api.post('/forgot-password', { email });
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Não foi possível solicitar a recuperação agora.';
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -151,6 +166,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error,
         login,
         register,
+        requestPasswordReset,
         logout,
         deleteAccount,
         clearError,

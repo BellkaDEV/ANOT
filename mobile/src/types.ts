@@ -8,7 +8,7 @@ export type WorkMode       = "individual" | "groups";
 export type AssessmentFormat = "fechada" | "aberta" | "mista" | "nao_informado";
 
 export type Screen =
-  | "welcome" | "login" | "register" | "dashboard"
+  | "welcome" | "login" | "register" | "forgotPassword" | "dashboard"
   | "createClass" | "classCreated" | "joinClass"
   | "classHome" | "activityDetail" | "announcementDetail" | "notifications"
   | "events" | "profile" | "settings" | "about"
