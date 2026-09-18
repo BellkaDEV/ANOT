@@ -2,13 +2,13 @@ name: ANOT CI Pipeline
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ "**" ]
   pull_request:
     branches: [ main, master, develop ]
 
 jobs:
-  mobile-typecheck:
-    name: Mobile TypeScript Check
+  mobile-quality:
+    name: Mobile TypeScript, Expo and dependency checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -25,7 +25,13 @@ jobs:
         run: cd mobile && npm ci
 
       - name: Run TypeScript Check
-        run: cd mobile && npx tsc --noEmit
+        run: cd mobile && npm run typecheck
+
+      - name: Run Expo Doctor
+        run: cd mobile && npm run doctor
+
+      - name: Audit production dependencies
+        run: cd mobile && npm audit --omit=dev --audit-level=high
 
   backend-tests:
     name: Backend PHPUnit & Audit
@@ -78,3 +84,22 @@ jobs:
           DB_CONNECTION: sqlite
           DB_DATABASE: ":memory:"
         run: cd backend && php vendor/bin/phpunit
+
+      - name: Validate cached routes
+        env:
+          APP_KEY: base64:ZYh7dbs969wT0qn7Ljglrebtzn6XXuB7G3L390AUdi0=
+          APP_URL: http://localhost
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
+        run: cd backend && php artisan route:cache
+
+  docker-build:
+    name: Backend production image build
+    needs: [mobile-quality, backend-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build --tag anot-backend:${{ github.sha }} backend

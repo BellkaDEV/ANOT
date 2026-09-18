@@ -1,11 +1,7 @@
 <?php
 
+use App\Http\Controllers\HealthController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return response()->json(['name' => 'ANOT API', 'status' => 'online']);
-});
-
-Route::get('/health', function () {
-    return response()->json(['status' => 'ok', 'timestamp' => now()->toIso8601String()]);
-});
+Route::get('/', [HealthController::class, 'index']);
+Route::get('/health', [HealthController::class, 'health']);
