@@ -17,6 +17,7 @@ interface AuthContextData {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -123,6 +124,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const deleteAccount = async (password: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await api.delete('/account', { data: { password } });
+      await deleteToken();
+      setUser(null);
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Não foi possível excluir a conta.';
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const clearError = () => setError(null);
 
   return (
@@ -135,6 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         logout,
+        deleteAccount,
         clearError,
       }}
     >

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
@@ -115,6 +116,30 @@ class AuthController extends Controller
     {
         return response()->json([
             'user' => $request->user(),
+        ]);
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        $validated = $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($validated['password'], $user->password)) {
+            return response()->json([
+                'message' => 'A senha informada está incorreta.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($user): void {
+            $user->tokens()->delete();
+            $user->delete();
+        });
+
+        return response()->json([
+            'message' => 'Conta excluída com sucesso.',
         ]);
     }
 }

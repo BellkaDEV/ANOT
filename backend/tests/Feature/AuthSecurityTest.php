@@ -127,4 +127,29 @@ class AuthSecurityTest extends TestCase
         $this->withToken($tokenOne)->getJson('/api/me')->assertUnauthorized();
         $this->withToken($tokenTwo)->getJson('/api/me')->assertUnauthorized();
     }
+
+    public function test_user_can_delete_account_only_with_current_password(): void
+    {
+        $user = User::factory()->create([
+            'password' => Hash::make('senhaSegura123'),
+        ]);
+        $token = $user->createToken('account-deletion')->plainTextToken;
+
+        $this->withToken($token)
+            ->deleteJson('/api/account', ['password' => 'senhaErrada999'])
+            ->assertStatus(422);
+
+        $this->assertDatabaseHas('users', ['id' => $user->id]);
+
+        $response = $this->withToken($token)
+            ->deleteJson('/api/account', ['password' => 'senhaSegura123']);
+
+        $response->assertOk()
+            ->assertJsonPath('message', 'Conta excluída com sucesso.');
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertDatabaseMissing('personal_access_tokens', ['tokenable_id' => $user->id]);
+
+        Auth::forgetGuards();
+        $this->withToken($token)->getJson('/api/me')->assertUnauthorized();
+    }
 }
