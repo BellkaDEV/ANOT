@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsurePlatformAdmin;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
@@ -18,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('sanctum:prune-expired --hours=720')->daily();
     })
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'platform.admin' => EnsurePlatformAdmin::class,
+        ]);
+
         $middleware->redirectGuestsTo(function (Request $request): ?string {
             return $request->is('api/*') ? null : route('login');
         });

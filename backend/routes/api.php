@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\ActivityGroupController;
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClassController;
@@ -20,6 +21,13 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::post('/logout-all', [AuthController::class, 'logoutAll']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::delete('/account', [AuthController::class, 'deleteAccount']);
+
+    Route::prefix('admin')->middleware('platform.admin')->group(function () {
+        Route::get('/users', [AdminController::class, 'users']);
+        Route::get('/classes', [AdminController::class, 'classes']);
+        Route::post('/users/{user}/suspend', [AdminController::class, 'suspend']);
+        Route::post('/users/{user}/unsuspend', [AdminController::class, 'unsuspend']);
+    });
 
     // Turmas (Classes)
     Route::get('/classes', [ClassController::class, 'index']);

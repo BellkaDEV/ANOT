@@ -85,6 +85,12 @@ class AuthController extends Controller
             ], 401);
         }
 
+        if ($user->is_suspended) {
+            return response()->json([
+                'message' => 'Esta conta está suspensa. Entre em contato com o suporte.',
+            ], 403);
+        }
+
         $token = $user->createToken('anot_auth_token')->plainTextToken;
 
         return response()->json([
