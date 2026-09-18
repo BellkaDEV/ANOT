@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Route;
 // Rotas públicas (sem autenticação)
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:login');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:login');
 
 // Rotas protegidas (com autenticação via Sanctum e rate limit de 60 req/min)
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {

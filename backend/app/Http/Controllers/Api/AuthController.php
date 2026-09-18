@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
@@ -97,6 +98,56 @@ class AuthController extends Controller
             'message' => 'Login realizado com sucesso.',
             'user' => $user,
             'token' => $token,
+        ]);
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|string|email',
+        ]);
+
+        PasswordBroker::sendResetLink(['email' => strtolower(trim($validated['email']))]);
+
+        return response()->json([
+            'message' => 'Se o e-mail estiver cadastrado, enviaremos instruções para redefinir a senha.',
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|string|email',
+            'password' => [
+                'required',
+                'string',
+                Password::min(8)->mixedCase()->numbers(),
+                'confirmed',
+            ],
+        ]);
+
+        $status = PasswordBroker::reset(
+            [
+                'email' => strtolower(trim($validated['email'])),
+                'password' => $validated['password'],
+                'password_confirmation' => $request->input('password_confirmation'),
+                'token' => $validated['token'],
+            ],
+            function (User $user, string $password): void {
+                $user->forceFill(['password' => Hash::make($password)])->save();
+                $user->tokens()->delete();
+            },
+        );
+
+        if ($status !== PasswordBroker::PASSWORD_RESET) {
+            return response()->json([
+                'message' => 'Não foi possível redefinir a senha com os dados informados.',
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Senha redefinida com sucesso. Faça login novamente.',
         ]);
     }
 

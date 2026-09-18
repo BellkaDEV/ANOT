@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password as PasswordBroker;
 use Tests\TestCase;
 
 class AuthSecurityTest extends TestCase
@@ -151,5 +154,50 @@ class AuthSecurityTest extends TestCase
 
         Auth::forgetGuards();
         $this->withToken($token)->getJson('/api/me')->assertUnauthorized();
+    }
+
+    public function test_forgot_password_has_generic_response_and_sends_notification_for_known_email(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create(['email' => 'recovery@anot.test']);
+
+        $response = $this->postJson('/api/forgot-password', ['email' => 'RECOVERY@ANOT.TEST']);
+
+        $response->assertOk()->assertJsonPath(
+            'message',
+            'Se o e-mail estiver cadastrado, enviaremos instruções para redefinir a senha.',
+        );
+        Notification::assertSentTo($user, ResetPassword::class);
+
+        $unknown = $this->postJson('/api/forgot-password', ['email' => 'missing@anot.test']);
+        $this->assertSame($response->json('message'), $unknown->json('message'));
+    }
+
+    public function test_reset_password_changes_password_and_revokes_old_tokens(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'reset@anot.test',
+            'password' => Hash::make('SenhaAntiga123'),
+        ]);
+        $oldToken = $user->createToken('old-device')->plainTextToken;
+        $resetToken = PasswordBroker::createToken($user);
+
+        $this->postJson('/api/reset-password', [
+            'token' => $resetToken,
+            'email' => 'RESET@ANOT.TEST',
+            'password' => 'SenhaNova123',
+            'password_confirmation' => 'SenhaNova123',
+        ])->assertOk()->assertJsonPath('message', 'Senha redefinida com sucesso. Faça login novamente.');
+
+        Auth::forgetGuards();
+        $this->withToken($oldToken)->getJson('/api/me')->assertUnauthorized();
+        $this->postJson('/api/login', [
+            'email' => 'reset@anot.test',
+            'password' => 'SenhaAntiga123',
+        ])->assertUnauthorized();
+        $this->postJson('/api/login', [
+            'email' => 'reset@anot.test',
+            'password' => 'SenhaNova123',
+        ])->assertOk();
     }
 }
