@@ -70,7 +70,13 @@ class AdminWebController extends Controller
             ->limit(10)
             ->get();
 
-        return view('admin.dashboard', compact('users', 'classes', 'search'));
+        $auditLogs = AdminAuditLog::query()
+            ->with(['actor:id,name,email', 'target:id,name,email'])
+            ->latest()
+            ->limit(20)
+            ->get();
+
+        return view('admin.dashboard', compact('users', 'classes', 'auditLogs', 'search'));
     }
 
     public function suspend(Request $request, User $user): RedirectResponse
