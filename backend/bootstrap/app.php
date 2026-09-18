@@ -24,7 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->redirectGuestsTo(function (Request $request): ?string {
-            return $request->is('api/*') ? null : route('login');
+            if ($request->is('api/*')) {
+                return null;
+            }
+
+            return $request->is('admin*') ? route('admin.login') : route('login');
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
