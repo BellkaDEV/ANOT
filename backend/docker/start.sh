@@ -3,10 +3,8 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-# Run migrations and setup cache
-echo "Running migrations..."
-php artisan migrate --force
-
+# Cache application configuration. Database migrations are a release step and
+# must be executed explicitly once, outside the concurrent container startup.
 echo "Caching configuration..."
 php artisan config:cache
 php artisan route:cache

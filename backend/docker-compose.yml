@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build:
@@ -11,6 +9,7 @@ services:
     environment:
       - APP_ENV=${APP_ENV:-production}
       - APP_DEBUG=${APP_DEBUG:-false}
+      - APP_URL=${APP_URL:?APP_URL deve ser definido}
       # Nunca versionar credenciais reais. Use .env ou segredos do provedor cloud.
       - APP_KEY=${APP_KEY:?APP_KEY deve ser definido}
       - DB_CONNECTION=${DB_CONNECTION:-pgsql}
@@ -19,6 +18,10 @@ services:
       - DB_DATABASE=${DB_DATABASE:?DB_DATABASE deve ser definido}
       - DB_USERNAME=${DB_USERNAME:?DB_USERNAME deve ser definido}
       - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD deve ser definido}
+      - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
+      - CACHE_STORE=${CACHE_STORE:-database}
+      - SESSION_DRIVER=${SESSION_DRIVER:-database}
+      - SANCTUM_EXPIRATION=${SANCTUM_EXPIRATION:-43200}
     depends_on:
       db:
         condition: service_healthy
