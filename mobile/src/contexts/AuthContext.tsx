@@ -17,6 +17,7 @@ interface AuthContextData {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
+  resetPassword: (token: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
   clearError: () => void;
@@ -126,6 +127,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resetPassword = async (token: string, email: string, password: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await api.post('/reset-password', {
+        token,
+        email,
+        password,
+        password_confirmation: password,
+      });
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Não foi possível redefinir a senha.';
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -167,6 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         requestPasswordReset,
+        resetPassword,
         logout,
         deleteAccount,
         clearError,

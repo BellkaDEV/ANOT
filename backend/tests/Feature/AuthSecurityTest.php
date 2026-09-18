@@ -167,7 +167,9 @@ class AuthSecurityTest extends TestCase
             'message',
             'Se o e-mail estiver cadastrado, enviaremos instruções para redefinir a senha.',
         );
-        Notification::assertSentTo($user, ResetPassword::class);
+        Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user): bool {
+            return str_starts_with($notification->toMail($user)->actionUrl, 'anot://reset-password');
+        });
 
         $unknown = $this->postJson('/api/forgot-password', ['email' => 'missing@anot.test']);
         $this->assertSame($response->json('message'), $unknown->json('message'));

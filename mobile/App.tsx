@@ -20,10 +20,12 @@ import {
 import ToastLayer from "./src/components/ToastLayer";
 import MemberSheet from "./src/components/MemberSheet";
 import { extractInviteCode } from "./src/utils/inviteLinks";
+import { extractPasswordReset, type PasswordResetLink } from "./src/utils/passwordResetLinks";
 
 import WelcomeScreen      from "./src/screens/WelcomeScreen";
 import LoginScreen        from "./src/screens/LoginScreen";
 import ForgotPasswordScreen from "./src/screens/ForgotPasswordScreen";
+import ResetPasswordScreen from "./src/screens/ResetPasswordScreen";
 import RegisterScreen     from "./src/screens/RegisterScreen";
 import DashboardScreen    from "./src/screens/DashboardScreen";
 import CreateClassScreen  from "./src/screens/CreateClassScreen";
@@ -129,7 +131,7 @@ function mapBackendClass(c: any): AppClass {
 }
 
 function MainApp() {
-  const { user: authUser, login: authLogin, register: authRegister, requestPasswordReset, logout: authLogout, deleteAccount: authDeleteAccount, signed } = useAuth();
+  const { user: authUser, login: authLogin, register: authRegister, requestPasswordReset, resetPassword, logout: authLogout, deleteAccount: authDeleteAccount, signed } = useAuth();
   const systemScheme = useColorScheme();
 
   const [themeMode, setThemeModeState] = useState<ThemeMode>("system");
@@ -151,28 +153,41 @@ function MainApp() {
   const [isLoadingClasses, setIsLoadingClasses] = useState(false);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [pendingJoinCode, setPendingJoinCode] = useState<string | null>(null);
+  const [pendingPasswordReset, setPendingPasswordReset] = useState<PasswordResetLink | null>(null);
 
   const receiveInviteUrl = useCallback((url: string) => {
     const code = extractInviteCode(url);
     if (code) setPendingJoinCode(code);
   }, []);
 
+  const receivePasswordResetUrl = useCallback((url: string) => {
+    const reset = extractPasswordReset(url);
+    if (reset) setPendingPasswordReset(reset);
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     Linking.getInitialURL().then((url) => {
       if (mounted && url) receiveInviteUrl(url);
+      if (mounted && url) receivePasswordResetUrl(url);
     }).catch(() => {});
 
     const subscription = Linking.addEventListener("url", ({ url }) => receiveInviteUrl(url));
+    const resetSubscription = Linking.addEventListener("url", ({ url }) => receivePasswordResetUrl(url));
     return () => {
       mounted = false;
       subscription.remove();
+      resetSubscription.remove();
     };
-  }, [receiveInviteUrl]);
+  }, [receiveInviteUrl, receivePasswordResetUrl]);
 
   useEffect(() => {
     if (signed && pendingJoinCode) setScreen("joinClass");
   }, [signed, pendingJoinCode]);
+
+  useEffect(() => {
+    if (pendingPasswordReset) setScreen("resetPassword");
+  }, [pendingPasswordReset]);
 
   // Load preferences from AsyncStorage
   useEffect(() => {
@@ -325,6 +340,21 @@ function MainApp() {
       return true;
     } catch (err: any) {
       handleApiError(err, "Não foi possível solicitar a recuperação.");
+      return false;
+    } finally {
+      setIsSubmittingForm(false);
+    }
+  }
+
+  async function doResetPassword(password: string): Promise<boolean> {
+    if (!pendingPasswordReset) return false;
+    setIsSubmittingForm(true);
+    try {
+      await resetPassword(pendingPasswordReset.token, pendingPasswordReset.email, password);
+      toast("Senha redefinida com sucesso!");
+      return true;
+    } catch (err: any) {
+      handleApiError(err, "Não foi possível redefinir a senha.");
       return false;
     } finally {
       setIsSubmittingForm(false);
@@ -620,6 +650,7 @@ function MainApp() {
     if (screen === "login")    return <LoginScreen onLogin={doLogin} onBack={() => nav("welcome")} onRegister={() => nav("register")} onForgotPassword={() => nav("forgotPassword")} loading={isSubmittingForm} th={th}/>;
     if (screen === "register") return <RegisterScreen onRegister={doRegister} onBack={() => nav("login")} loading={isSubmittingForm} th={th}/>;
     if (screen === "forgotPassword") return <ForgotPasswordScreen onSubmit={doRequestPasswordReset} onBack={() => nav("login")} loading={isSubmittingForm} th={th}/>;
+    if (screen === "resetPassword" && pendingPasswordReset) return <ResetPasswordScreen email={pendingPasswordReset.email} onSubmit={doResetPassword} onBack={() => { setPendingPasswordReset(null); nav("login"); }} loading={isSubmittingForm} th={th}/>;
 
     if (!appUser) return <WelcomeScreen onLogin={() => nav("login")} onRegister={() => nav("register")} th={th}/>;
 
