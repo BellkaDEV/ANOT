@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
-use App\Models\SchoolClass;
+use App\Models\ActivityGroup;
+use App\Models\ActivityGroupInvitation;
+use App\Models\ActivityGroupMember;
 use App\Models\ClassMember;
+use App\Models\SchoolClass;
+use Illuminate\Http\Request;
 
 class MemberController extends Controller
 {
@@ -14,7 +16,7 @@ class MemberController extends Controller
     {
         $currentUser = $request->user();
         $schoolClass = SchoolClass::find($classId);
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return response()->json(['message' => 'Turma não encontrada.'], 404);
         }
 
@@ -24,7 +26,7 @@ class MemberController extends Controller
 
         $myRole = $myMembership ? $myMembership->role : ($schoolClass->owner_id === $currentUser->id ? 'owner' : null);
 
-        if (!$myRole) {
+        if (! $myRole) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
@@ -43,7 +45,7 @@ class MemberController extends Controller
         $currentUser = $request->user();
         $schoolClass = SchoolClass::find($classId);
 
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return response()->json(['message' => 'Turma não encontrada.'], 404);
         }
 
@@ -54,7 +56,7 @@ class MemberController extends Controller
 
         $myRole = $myMembership ? $myMembership->role : ($schoolClass->owner_id === $currentUser->id ? 'owner' : null);
 
-        if (!in_array($myRole, ['owner', 'rep'])) {
+        if (! in_array($myRole, ['owner', 'rep'])) {
             return response()->json(['message' => 'Sem permissão para promover membros nesta turma.'], 403);
         }
 
@@ -62,7 +64,7 @@ class MemberController extends Controller
             ->where('user_id', $userId)
             ->first();
 
-        if (!$targetMembership) {
+        if (! $targetMembership) {
             return response()->json(['message' => 'Membro não encontrado na turma.'], 404);
         }
 
@@ -84,14 +86,14 @@ class MemberController extends Controller
         $currentUser = $request->user();
         $schoolClass = SchoolClass::find($classId);
 
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return response()->json(['message' => 'Turma não encontrada.'], 404);
         }
 
         // Trava 2: Apenas o Criador (Owner) pode rebaixar um Representante
         if ($schoolClass->owner_id !== $currentUser->id) {
             return response()->json([
-                'message' => 'Ação negada. Apenas o Criador da turma tem permissão para rebaixar representantes.'
+                'message' => 'Ação negada. Apenas o Criador da turma tem permissão para rebaixar representantes.',
             ], 403);
         }
 
@@ -99,7 +101,7 @@ class MemberController extends Controller
             ->where('user_id', $userId)
             ->first();
 
-        if (!$targetMembership) {
+        if (! $targetMembership) {
             return response()->json(['message' => 'Membro não encontrado na turma.'], 404);
         }
 
@@ -122,7 +124,7 @@ class MemberController extends Controller
         $currentUser = $request->user();
         $schoolClass = SchoolClass::find($classId);
 
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return response()->json(['message' => 'Turma não encontrada.'], 404);
         }
 
@@ -132,14 +134,14 @@ class MemberController extends Controller
 
         $myRole = $myMembership ? $myMembership->role : ($schoolClass->owner_id === $currentUser->id ? 'owner' : null);
 
-        if (!in_array($myRole, ['owner', 'rep'])) {
+        if (! in_array($myRole, ['owner', 'rep'])) {
             return response()->json(['message' => 'Sem permissão para expulsar membros nesta turma.'], 403);
         }
 
         // Trava 1: O Criador da turma NUNCA pode ser expulso
-        if ((int)$userId === (int)$schoolClass->owner_id) {
+        if ((int) $userId === (int) $schoolClass->owner_id) {
             return response()->json([
-                'message' => 'Trava de segurança: O Criador da turma NUNCA pode ser expulso.'
+                'message' => 'Trava de segurança: O Criador da turma NUNCA pode ser expulso.',
             ], 403);
         }
 
@@ -147,7 +149,7 @@ class MemberController extends Controller
             ->where('user_id', $userId)
             ->first();
 
-        if (!$targetMembership) {
+        if (! $targetMembership) {
             return response()->json(['message' => 'Membro não encontrado na turma.'], 404);
         }
 
@@ -159,12 +161,12 @@ class MemberController extends Controller
         $targetMembership->delete();
 
         // Limpar membros de grupo e convites da pessoa removida da turma
-        $groups = \App\Models\ActivityGroup::whereHas('activity', function ($q) use ($classId) {
+        $groups = ActivityGroup::whereHas('activity', function ($q) use ($classId) {
             $q->where('class_id', $classId);
         })->get();
 
         foreach ($groups as $group) {
-            $groupMember = \App\Models\ActivityGroupMember::where('activity_group_id', $group->id)
+            $groupMember = ActivityGroupMember::where('activity_group_id', $group->id)
                 ->where('user_id', $userId)
                 ->first();
 
@@ -172,7 +174,7 @@ class MemberController extends Controller
                 $groupMember->delete();
 
                 if ($group->leader_user_id == $userId) {
-                    $oldest = \App\Models\ActivityGroupMember::where('activity_group_id', $group->id)
+                    $oldest = ActivityGroupMember::where('activity_group_id', $group->id)
                         ->orderBy('joined_at', 'asc')
                         ->orderBy('id', 'asc')
                         ->first();
@@ -182,10 +184,10 @@ class MemberController extends Controller
                 }
             }
 
-            \App\Models\ActivityGroupInvitation::where('activity_group_id', $group->id)
+            ActivityGroupInvitation::where('activity_group_id', $group->id)
                 ->where(function ($q) use ($userId) {
                     $q->where('invited_user_id', $userId)
-                      ->orWhere('invited_by_user_id', $userId);
+                        ->orWhere('invited_by_user_id', $userId);
                 })
                 ->delete();
         }

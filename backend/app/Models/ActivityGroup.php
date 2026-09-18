@@ -32,8 +32,8 @@ class ActivityGroup extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'activity_group_members', 'activity_group_id', 'user_id')
-                    ->withPivot('joined_at')
-                    ->withTimestamps();
+            ->withPivot('joined_at')
+            ->withTimestamps();
     }
 
     public function invitations()

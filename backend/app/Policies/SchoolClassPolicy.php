@@ -2,9 +2,9 @@
 
 namespace App\Policies;
 
-use App\Models\User;
-use App\Models\SchoolClass;
 use App\Models\ClassMember;
+use App\Models\SchoolClass;
+use App\Models\User;
 
 class SchoolClassPolicy
 {

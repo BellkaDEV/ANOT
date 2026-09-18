@@ -2,11 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use App\Models\User;
-use App\Models\SchoolClass;
-use App\Models\ClassMember;
 
 class ClassEnrollmentTest extends TestCase
 {
@@ -22,15 +20,15 @@ class ClassEnrollmentTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-                 ->assertJsonStructure(['token', 'user']);
+            ->assertJsonStructure(['token', 'user']);
 
         $token = $response->json('token');
 
-        $classesResponse = $this->withHeader('Authorization', 'Bearer ' . $token)
-                                ->getJson('/api/classes');
+        $classesResponse = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/classes');
 
         $classesResponse->assertStatus(200)
-                        ->assertJsonCount(0, 'classes');
+            ->assertJsonCount(0, 'classes');
     }
 
     public function test_class_creator_is_enrolled_as_owner()
@@ -38,16 +36,16 @@ class ClassEnrollmentTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user, 'sanctum')
-                         ->postJson('/api/classes', [
-                             'name' => 'Engenharia de Software 2026',
-                             'course' => 'Ciência da Computação',
-                             'institution' => 'Universidade Federal',
-                             'period' => '2026.1',
-                             'modality' => 'presencial',
-                         ]);
+            ->postJson('/api/classes', [
+                'name' => 'Engenharia de Software 2026',
+                'course' => 'Ciência da Computação',
+                'institution' => 'Universidade Federal',
+                'period' => '2026.1',
+                'modality' => 'presencial',
+            ]);
 
         $response->assertStatus(201)
-                 ->assertJsonPath('class.my_role', 'owner');
+            ->assertJsonPath('class.my_role', 'owner');
 
         $classId = $response->json('class.id');
 
@@ -64,13 +62,13 @@ class ClassEnrollmentTest extends TestCase
         $repUser = User::factory()->create(['name' => 'Representante Lucas']);
 
         $createResponse = $this->actingAs($repUser, 'sanctum')
-                               ->postJson('/api/classes', [
-                                   'name' => 'Cálculo II - Turma B',
-                                   'course' => 'Engenharia',
-                                   'institution' => 'UFBR',
-                                   'period' => '2026.1',
-                                   'modality' => 'presencial',
-                               ]);
+            ->postJson('/api/classes', [
+                'name' => 'Cálculo II - Turma B',
+                'course' => 'Engenharia',
+                'institution' => 'UFBR',
+                'period' => '2026.1',
+                'modality' => 'presencial',
+            ]);
 
         $createResponse->assertStatus(201);
         $classCode = $createResponse->json('class.code');
@@ -80,12 +78,12 @@ class ClassEnrollmentTest extends TestCase
         $studentUser = User::factory()->create(['name' => 'Aluno Matheus']);
 
         $joinResponse = $this->actingAs($studentUser, 'sanctum')
-                             ->postJson('/api/classes/join', [
-                                 'code' => $classCode,
-                             ]);
+            ->postJson('/api/classes/join', [
+                'code' => $classCode,
+            ]);
 
         $joinResponse->assertStatus(201)
-                     ->assertJsonPath('class.my_role', 'student');
+            ->assertJsonPath('class.my_role', 'student');
 
         // Verifica banco de dados
         $this->assertDatabaseHas('class_members', [
@@ -96,33 +94,33 @@ class ClassEnrollmentTest extends TestCase
 
         // 3. Visão do Aluno: ao buscar a lista de turmas, a nova turma deve aparecer contendo 2 membros
         $studentClasses = $this->actingAs($studentUser, 'sanctum')
-                               ->getJson('/api/classes');
+            ->getJson('/api/classes');
 
         $studentClasses->assertStatus(200)
-                       ->assertJsonCount(1, 'classes')
-                       ->assertJsonCount(2, 'classes.0.members');
+            ->assertJsonCount(1, 'classes')
+            ->assertJsonCount(2, 'classes.0.members');
 
         // 4. Visão do Representante: ao buscar a lista de turmas, o novo aluno deve aparecer na lista de membros da turma
         $repClasses = $this->actingAs($repUser, 'sanctum')
-                           ->getJson('/api/classes');
+            ->getJson('/api/classes');
 
         $repClasses->assertStatus(200)
-                   ->assertJsonCount(1, 'classes')
-                   ->assertJsonCount(2, 'classes.0.members');
+            ->assertJsonCount(1, 'classes')
+            ->assertJsonCount(2, 'classes.0.members');
 
         $members = $repClasses->json('classes.0.members');
         $memberUserIds = collect($members)->pluck('user_id')->all();
 
-        $this->assertContains((string)$studentUser->id, array_map('strval', $memberUserIds));
+        $this->assertContains((string) $studentUser->id, array_map('strval', $memberUserIds));
     }
 
     public function test_student_joining_class_via_full_pasted_link_succeeds()
     {
         $repUser = User::factory()->create();
         $createResponse = $this->actingAs($repUser, 'sanctum')
-                               ->postJson('/api/classes', [
-                                   'name' => 'Física II',
-                               ]);
+            ->postJson('/api/classes', [
+                'name' => 'Física II',
+            ]);
 
         $classCode = $createResponse->json('class.code');
 
@@ -130,9 +128,9 @@ class ClassEnrollmentTest extends TestCase
 
         // Colando o link completo com protocolo anot://join?code=XXXXXX
         $joinResponse = $this->actingAs($studentUser, 'sanctum')
-                             ->postJson('/api/classes/join', [
-                                 'code' => 'anot://join?code=' . $classCode,
-                             ]);
+            ->postJson('/api/classes/join', [
+                'code' => 'anot://join?code='.$classCode,
+            ]);
 
         $joinResponse->assertStatus(201);
     }
@@ -143,19 +141,19 @@ class ClassEnrollmentTest extends TestCase
         $student = User::factory()->create();
 
         $createResponse = $this->actingAs($owner, 'sanctum')
-                               ->postJson('/api/classes', ['name' => 'Turma Idempotente']);
+            ->postJson('/api/classes', ['name' => 'Turma Idempotente']);
 
         $classId = $createResponse->json('class.id');
         $classCode = $createResponse->json('class.code');
 
         $this->actingAs($student, 'sanctum')
-             ->postJson('/api/classes/join', ['code' => $classCode])
-             ->assertStatus(201);
+            ->postJson('/api/classes/join', ['code' => $classCode])
+            ->assertStatus(201);
 
         $this->actingAs($student, 'sanctum')
-             ->postJson('/api/classes/join', ['code' => $classCode])
-             ->assertStatus(200)
-             ->assertJsonPath('message', 'Você já faz parte desta turma.');
+            ->postJson('/api/classes/join', ['code' => $classCode])
+            ->assertStatus(200)
+            ->assertJsonPath('message', 'Você já faz parte desta turma.');
 
         $this->assertDatabaseCount('class_members', 2);
         $this->assertDatabaseHas('class_members', [
@@ -169,47 +167,47 @@ class ClassEnrollmentTest extends TestCase
     {
         $repUser = User::factory()->create();
         $createResponse = $this->actingAs($repUser, 'sanctum')
-                               ->postJson('/api/classes', [
-                                   'name' => 'Álgebra Linear - Turma Fechada',
-                               ]);
+            ->postJson('/api/classes', [
+                'name' => 'Álgebra Linear - Turma Fechada',
+            ]);
 
         $classId = $createResponse->json('class.id');
         $classCode = $createResponse->json('class.code');
 
         // Representante fecha a turma para novos membros
         $toggleResponse = $this->actingAs($repUser, 'sanctum')
-                               ->putJson("/api/classes/{$classId}/toggle-open");
+            ->putJson("/api/classes/{$classId}/toggle-open");
 
         $toggleResponse->assertStatus(200)
-                       ->assertJsonPath('is_open', false);
+            ->assertJsonPath('is_open', false);
 
         // Novo aluno tenta entrar na turma fechada
         $studentUser = User::factory()->create();
         $joinResponse = $this->actingAs($studentUser, 'sanctum')
-                             ->postJson('/api/classes/join', [
-                                 'code' => $classCode,
-                             ]);
+            ->postJson('/api/classes/join', [
+                'code' => $classCode,
+            ]);
 
         $joinResponse->assertStatus(403)
-                     ->assertJsonPath('message', 'Esta turma está fechada para novos membros no momento.');
+            ->assertJsonPath('message', 'Esta turma está fechada para novos membros no momento.');
     }
 
     public function test_representative_can_regenerate_class_code()
     {
         $repUser = User::factory()->create();
         $createResponse = $this->actingAs($repUser, 'sanctum')
-                               ->postJson('/api/classes', [
-                                   'name' => 'Cálculo Numérico',
-                               ]);
+            ->postJson('/api/classes', [
+                'name' => 'Cálculo Numérico',
+            ]);
 
         $classId = $createResponse->json('class.id');
         $oldCode = $createResponse->json('class.code');
 
         $regenResponse = $this->actingAs($repUser, 'sanctum')
-                              ->putJson("/api/classes/{$classId}/regenerate-code");
+            ->putJson("/api/classes/{$classId}/regenerate-code");
 
         $regenResponse->assertStatus(200)
-                      ->assertJsonStructure(['message', 'code']);
+            ->assertJsonStructure(['message', 'code']);
 
         $newCode = $regenResponse->json('code');
 

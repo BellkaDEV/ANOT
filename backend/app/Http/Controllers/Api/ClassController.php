@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
-use App\Models\SchoolClass;
 use App\Models\ClassMember;
+use App\Models\SchoolClass;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -34,7 +33,8 @@ class ClassController extends Controller
                     ->where('user_id', $user->id)
                     ->first();
                 $class->my_role = $membership ? $membership->role : ($class->owner_id === $user->id ? 'owner' : null);
-                $class->qr_code_payload = 'anot://join?code=' . $class->code;
+                $class->qr_code_payload = 'anot://join?code='.$class->code;
+
                 return $class;
             });
 
@@ -88,7 +88,7 @@ class ClassController extends Controller
         ]);
 
         $schoolClass->my_role = 'owner';
-        $schoolClass->qr_code_payload = 'anot://join?code=' . $schoolClass->code;
+        $schoolClass->qr_code_payload = 'anot://join?code='.$schoolClass->code;
 
         return response()->json([
             'message' => 'Turma criada com sucesso!',
@@ -107,7 +107,7 @@ class ClassController extends Controller
             'events',
         ])->find($id);
 
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return response()->json(['message' => 'Turma não encontrada.'], 404);
         }
 
@@ -115,12 +115,12 @@ class ClassController extends Controller
             ->where('user_id', $user->id)
             ->first();
 
-        if (!$membership && $schoolClass->owner_id !== $user->id) {
+        if (! $membership && $schoolClass->owner_id !== $user->id) {
             return response()->json(['message' => 'Acesso negado. Você não é membro desta turma.'], 403);
         }
 
         $schoolClass->my_role = $membership ? $membership->role : 'owner';
-        $schoolClass->qr_code_payload = 'anot://join?code=' . $schoolClass->code;
+        $schoolClass->qr_code_payload = 'anot://join?code='.$schoolClass->code;
 
         return response()->json([
             'class' => $schoolClass,
@@ -132,7 +132,7 @@ class ClassController extends Controller
         $user = $request->user();
         $schoolClass = SchoolClass::find($id);
 
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return response()->json(['message' => 'Turma não encontrada.'], 404);
         }
 
@@ -142,7 +142,7 @@ class ClassController extends Controller
 
         $role = $membership ? $membership->role : ($schoolClass->owner_id === $user->id ? 'owner' : null);
 
-        if (!in_array($role, ['owner', 'rep'])) {
+        if (! in_array($role, ['owner', 'rep'])) {
             return response()->json(['message' => 'Apenas o Criador ou Representante podem editar a turma.'], 403);
         }
 
@@ -168,7 +168,7 @@ class ClassController extends Controller
         $user = $request->user();
         $schoolClass = SchoolClass::find($id);
 
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return response()->json(['message' => 'Turma não encontrada.'], 404);
         }
 
@@ -178,11 +178,11 @@ class ClassController extends Controller
 
         $role = $membership ? $membership->role : ($schoolClass->owner_id === $user->id ? 'owner' : null);
 
-        if (!in_array($role, ['owner', 'rep'])) {
+        if (! in_array($role, ['owner', 'rep'])) {
             return response()->json(['message' => 'Apenas o Criador ou Representante podem alterar a abertura da turma.'], 403);
         }
 
-        $schoolClass->is_open = !$schoolClass->is_open;
+        $schoolClass->is_open = ! $schoolClass->is_open;
         $schoolClass->save();
 
         $statusMsg = $schoolClass->is_open ? 'Inscrições abertas com sucesso!' : 'Turma fechada para novos membros com sucesso!';
@@ -199,7 +199,7 @@ class ClassController extends Controller
         $user = $request->user();
         $schoolClass = SchoolClass::find($id);
 
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return response()->json(['message' => 'Turma não encontrada.'], 404);
         }
 
@@ -209,7 +209,7 @@ class ClassController extends Controller
 
         $role = $membership ? $membership->role : ($schoolClass->owner_id === $user->id ? 'owner' : null);
 
-        if (!in_array($role, ['owner', 'rep'])) {
+        if (! in_array($role, ['owner', 'rep'])) {
             return response()->json(['message' => 'Apenas o Criador ou Representante podem regerar o código de acesso.'], 403);
         }
 
@@ -232,7 +232,7 @@ class ClassController extends Controller
         $user = $request->user();
         $schoolClass = SchoolClass::find($id);
 
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return response()->json(['message' => 'Turma não encontrada.'], 404);
         }
 
@@ -268,11 +268,11 @@ class ClassController extends Controller
             // em class_members continua sendo a última barreira de integridade.
             $schoolClass = SchoolClass::where('code', $code)->lockForUpdate()->first();
 
-            if (!$schoolClass) {
+            if (! $schoolClass) {
                 return response()->json(['message' => 'Código de turma inválido ou inexistente.'], 404);
             }
 
-            if (!$schoolClass->is_open) {
+            if (! $schoolClass->is_open) {
                 return response()->json(['message' => 'Esta turma está fechada para novos membros no momento.'], 403);
             }
 
@@ -289,7 +289,8 @@ class ClassController extends Controller
                     'events',
                 ]);
                 $schoolClass->setAttribute('my_role', $existingMember->role);
-                $schoolClass->setAttribute('qr_code_payload', 'anot://join?code=' . $schoolClass->code);
+                $schoolClass->setAttribute('qr_code_payload', 'anot://join?code='.$schoolClass->code);
+
                 return response()->json([
                     'message' => 'Você já faz parte desta turma.',
                     'class' => $schoolClass,
@@ -315,7 +316,7 @@ class ClassController extends Controller
             ]);
 
             $schoolClass->setAttribute('my_role', $role);
-            $schoolClass->setAttribute('qr_code_payload', 'anot://join?code=' . $schoolClass->code);
+            $schoolClass->setAttribute('qr_code_payload', 'anot://join?code='.$schoolClass->code);
 
             return response()->json([
                 'message' => 'Entrada na turma realizada com sucesso!',

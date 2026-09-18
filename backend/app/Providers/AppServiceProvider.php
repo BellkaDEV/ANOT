@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
 
             return [
                 Limit::perMinute(5)->by($request->ip()),
-                Limit::perMinute(3)->by($email . '|' . $request->ip()),
+                Limit::perMinute(3)->by($email.'|'.$request->ip()),
             ];
         });
 
@@ -41,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('join-class', function (Request $request) {
             $userId = $request->user()?->id ?: $request->ip();
+
             return Limit::perMinute(5)->by($userId);
         });
     }

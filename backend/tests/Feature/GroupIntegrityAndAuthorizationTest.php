@@ -2,15 +2,13 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\SchoolClass;
-use App\Models\ClassMember;
 use App\Models\Activity;
 use App\Models\ActivityGroup;
-use App\Models\ActivityGroupMember;
-use App\Models\ActivityGroupInvitation;
+use App\Models\ClassMember;
+use App\Models\SchoolClass;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class GroupIntegrityAndAuthorizationTest extends TestCase
 {
@@ -33,7 +31,7 @@ class GroupIntegrityAndAuthorizationTest extends TestCase
 
         $response = $this->actingAs($stranger)->getJson("/api/classes/{$schoolClass->id}/members");
         $response->assertStatus(403)
-                 ->assertJson(['message' => 'Você não tem permissão para acessar esta turma.']);
+            ->assertJson(['message' => 'Você não tem permissão para acessar esta turma.']);
     }
 
     public function test_class_member_can_list_members()
@@ -59,7 +57,7 @@ class GroupIntegrityAndAuthorizationTest extends TestCase
 
         $response = $this->actingAs($student)->getJson("/api/classes/{$schoolClass->id}/members");
         $response->assertStatus(200)
-                 ->assertJsonStructure(['members']);
+            ->assertJsonStructure(['members']);
     }
 
     public function test_member_moderation_responses_do_not_expose_email()
@@ -178,7 +176,7 @@ class GroupIntegrityAndAuthorizationTest extends TestCase
         // Tenta entrar no Grupo B
         $resB = $this->actingAs($student)->postJson("/api/activity-groups/{$groupB->id}/join");
         $resB->assertStatus(409)
-             ->assertJson(['message' => 'Você já pertence a um grupo nesta atividade.']);
+            ->assertJson(['message' => 'Você já pertence a um grupo nesta atividade.']);
     }
 
     public function test_group_capacity_limit()
@@ -224,7 +222,7 @@ class GroupIntegrityAndAuthorizationTest extends TestCase
         // Terceiro aluno tenta entrar em grupo com capacidade 2
         $res3 = $this->actingAs($student3)->postJson("/api/activity-groups/{$group->id}/join");
         $res3->assertStatus(422)
-             ->assertJson(['message' => 'Este grupo já atingiu a capacidade máxima.']);
+            ->assertJson(['message' => 'Este grupo já atingiu a capacidade máxima.']);
     }
 
     public function test_removed_class_member_loses_group_membership_and_invitations()

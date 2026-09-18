@@ -3,18 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
-use App\Models\SchoolClass;
 use App\Models\ClassMember;
 use App\Models\Event;
+use App\Models\SchoolClass;
+use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
     private function getMembership($classId, $user)
     {
         $schoolClass = SchoolClass::find($classId);
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return null;
         }
 
@@ -33,7 +32,7 @@ class EventController extends Controller
     {
         $user = $request->user();
         $role = $this->getMembership($classId, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
@@ -43,7 +42,7 @@ class EventController extends Controller
             ->get();
 
         return response()->json([
-            'events' => $events
+            'events' => $events,
         ]);
     }
 
@@ -51,11 +50,11 @@ class EventController extends Controller
     {
         $user = $request->user();
         $role = $this->getMembership($classId, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        if (!in_array($role, ['owner', 'rep'])) {
+        if (! in_array($role, ['owner', 'rep'])) {
             return response()->json(['message' => 'Apenas o criador ou representantes podem criar eventos.'], 403);
         }
 
@@ -77,7 +76,7 @@ class EventController extends Controller
 
         return response()->json([
             'message' => 'Evento criado com sucesso.',
-            'event' => $event
+            'event' => $event,
         ], 201);
     }
 
@@ -85,17 +84,17 @@ class EventController extends Controller
     {
         $user = $request->user();
         $event = Event::find($id);
-        if (!$event) {
+        if (! $event) {
             return response()->json(['message' => 'Evento não encontrado.'], 404);
         }
 
         $role = $this->getMembership($event->class_id, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
         return response()->json([
-            'event' => $event
+            'event' => $event,
         ]);
     }
 
@@ -103,23 +102,23 @@ class EventController extends Controller
     {
         $user = $request->user();
         $event = Event::find($id);
-        if (!$event) {
+        if (! $event) {
             return response()->json(['message' => 'Evento não encontrado.'], 404);
         }
 
         $role = $this->getMembership($event->class_id, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        if (!in_array($role, ['owner', 'rep'])) {
+        if (! in_array($role, ['owner', 'rep'])) {
             return response()->json(['message' => 'Apenas o criador ou representantes podem editar eventos.'], 403);
         }
 
         // Se o evento estiver vinculado a uma atividade, ele deve ser editado via atividade.
         if ($event->activity_id !== null) {
             return response()->json([
-                'message' => 'Este evento está vinculado a uma atividade e deve ser atualizado através dela.'
+                'message' => 'Este evento está vinculado a uma atividade e deve ser atualizado através dela.',
             ], 422);
         }
 
@@ -137,7 +136,7 @@ class EventController extends Controller
 
         return response()->json([
             'message' => 'Evento atualizado com sucesso.',
-            'event' => $event
+            'event' => $event,
         ]);
     }
 
@@ -145,30 +144,30 @@ class EventController extends Controller
     {
         $user = $request->user();
         $event = Event::find($id);
-        if (!$event) {
+        if (! $event) {
             return response()->json(['message' => 'Evento não encontrado.'], 404);
         }
 
         $role = $this->getMembership($event->class_id, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        if (!in_array($role, ['owner', 'rep'])) {
+        if (! in_array($role, ['owner', 'rep'])) {
             return response()->json(['message' => 'Apenas o criador ou representantes podem excluir eventos.'], 403);
         }
 
         // Se o evento estiver vinculado a uma atividade, ele deve ser excluído via atividade.
         if ($event->activity_id !== null) {
             return response()->json([
-                'message' => 'Este evento está vinculado a uma atividade e deve ser excluído através dela.'
+                'message' => 'Este evento está vinculado a uma atividade e deve ser excluído através dela.',
             ], 422);
         }
 
         $event->delete();
 
         return response()->json([
-            'message' => 'Evento excluído com sucesso.'
+            'message' => 'Evento excluído com sucesso.',
         ]);
     }
 }

@@ -2,26 +2,28 @@
 
 namespace Tests\Feature;
 
+use App\Models\Activity;
+use App\Models\ActivityGroup;
+use App\Models\Announcement;
+use App\Models\ClassMember;
+use App\Models\Event;
+use App\Models\SchoolClass;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-
-use App\Models\User;
-use App\Models\SchoolClass;
-use App\Models\ClassMember;
-use App\Models\Activity;
-use App\Models\Announcement;
-use App\Models\Event;
-use App\Models\ActivityGroup;
-use App\Models\UserActivityProgress;
 
 class ActivityAndEventTest extends TestCase
 {
     use RefreshDatabase;
 
     private $owner;
+
     private $rep;
+
     private $student;
+
     private $nonMember;
+
     private $class;
 
     protected function setUp(): void

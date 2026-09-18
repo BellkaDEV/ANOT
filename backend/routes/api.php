@@ -1,16 +1,13 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Api\ActivityController;
+use App\Http\Controllers\Api\ActivityGroupController;
+use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClassController;
-use App\Http\Controllers\Api\MemberController;
-use App\Http\Controllers\Api\ActivityController;
-use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\EventController;
-
-use App\Http\Controllers\Api\ActivityGroupController;
+use App\Http\Controllers\Api\MemberController;
+use Illuminate\Support\Facades\Route;
 
 // Rotas públicas (sem autenticação)
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');

@@ -2,17 +2,17 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\ActivityGroup;
-use App\Models\SchoolClass;
 use App\Models\ClassMember;
+use App\Models\SchoolClass;
+use App\Models\User;
 
 class ActivityGroupPolicy
 {
     private function getMembership($classId, User $user): ?string
     {
         $schoolClass = SchoolClass::find($classId);
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return null;
         }
 
@@ -30,7 +30,8 @@ class ActivityGroupPolicy
     public function view(User $user, ActivityGroup $group): bool
     {
         $role = $this->getMembership($group->activity->class_id, $user);
-        return !is_null($role);
+
+        return ! is_null($role);
     }
 
     public function join(User $user, ActivityGroup $group): bool
@@ -42,7 +43,8 @@ class ActivityGroupPolicy
         }
 
         $role = $this->getMembership($schoolClass->id, $user);
-        return !is_null($role);
+
+        return ! is_null($role);
     }
 
     public function manage(User $user, ActivityGroup $group): bool
@@ -54,6 +56,7 @@ class ActivityGroupPolicy
 
         // Criador/Owner ou Representante da turma podem moderar grupos
         $role = $this->getMembership($group->activity->class_id, $user);
+
         return in_array($role, ['owner', 'rep']);
     }
 }

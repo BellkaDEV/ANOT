@@ -3,22 +3,21 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-
-use App\Models\SchoolClass;
-use App\Models\ClassMember;
 use App\Models\Activity;
 use App\Models\ActivityGroup;
-use App\Models\ActivityGroupMember;
 use App\Models\ActivityGroupInvitation;
+use App\Models\ActivityGroupMember;
+use App\Models\ClassMember;
+use App\Models\SchoolClass;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ActivityGroupController extends Controller
 {
     private function getMembership($classId, $user)
     {
         $schoolClass = SchoolClass::find($classId);
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return null;
         }
 
@@ -37,12 +36,12 @@ class ActivityGroupController extends Controller
     {
         $user = $request->user();
         $activity = Activity::find($activityId);
-        if (!$activity) {
+        if (! $activity) {
             return response()->json(['message' => 'Atividade não encontrada.'], 404);
         }
 
         $role = $this->getMembership($activity->class_id, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
@@ -51,7 +50,7 @@ class ActivityGroupController extends Controller
             ->get();
 
         return response()->json([
-            'groups' => $groups
+            'groups' => $groups,
         ]);
     }
 
@@ -59,17 +58,17 @@ class ActivityGroupController extends Controller
     {
         $user = $request->user();
         $group = ActivityGroup::with(['activity', 'members.user:id,name,email,avatar_url', 'leader:id,name,email,avatar_url', 'invitations'])->find($groupId);
-        if (!$group) {
+        if (! $group) {
             return response()->json(['message' => 'Grupo não encontrado.'], 404);
         }
 
         $role = $this->getMembership($group->activity->class_id, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
         return response()->json([
-            'group' => $group
+            'group' => $group,
         ]);
     }
 
@@ -77,13 +76,13 @@ class ActivityGroupController extends Controller
     {
         $user = $request->user();
         $group = ActivityGroup::with('activity.schoolClass')->find($groupId);
-        if (!$group) {
+        if (! $group) {
             return response()->json(['message' => 'Grupo não encontrado.'], 404);
         }
 
         $schoolClass = $group->activity->schoolClass;
         $role = $this->getMembership($schoolClass->id, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
@@ -135,7 +134,7 @@ class ActivityGroupController extends Controller
 
             return response()->json([
                 'message' => 'Você entrou no grupo com sucesso.',
-                'group' => $lockedGroup->fresh(['members.user', 'leader', 'invitations'])
+                'group' => $lockedGroup->fresh(['members.user', 'leader', 'invitations']),
             ]);
         });
     }
@@ -144,18 +143,18 @@ class ActivityGroupController extends Controller
     {
         $user = $request->user();
         $group = ActivityGroup::find($groupId);
-        if (!$group) {
+        if (! $group) {
             return response()->json(['message' => 'Grupo não encontrado.'], 404);
         }
 
-        return DB::transaction(function () use ($groupId, $group, $user) {
+        return DB::transaction(function () use ($groupId, $user) {
             $lockedGroup = ActivityGroup::where('id', $groupId)->lockForUpdate()->first();
 
             $member = ActivityGroupMember::where('activity_group_id', $groupId)
                 ->where('user_id', $user->id)
                 ->first();
 
-            if (!$member) {
+            if (! $member) {
                 return response()->json(['message' => 'Você não é membro deste grupo.'], 422);
             }
 
@@ -174,7 +173,7 @@ class ActivityGroupController extends Controller
 
             return response()->json([
                 'message' => 'Você saiu do grupo.',
-                'group' => $lockedGroup->fresh(['members.user', 'leader', 'invitations'])
+                'group' => $lockedGroup->fresh(['members.user', 'leader', 'invitations']),
             ]);
         });
     }
@@ -183,7 +182,7 @@ class ActivityGroupController extends Controller
     {
         $user = $request->user();
         $group = ActivityGroup::find($groupId);
-        if (!$group) {
+        if (! $group) {
             return response()->json(['message' => 'Grupo não encontrado.'], 404);
         }
 
@@ -199,7 +198,7 @@ class ActivityGroupController extends Controller
 
         return response()->json([
             'message' => 'Descrição do grupo atualizada com sucesso.',
-            'group' => $group
+            'group' => $group,
         ]);
     }
 
@@ -207,7 +206,7 @@ class ActivityGroupController extends Controller
     {
         $user = $request->user();
         $group = ActivityGroup::with('activity.schoolClass')->find($groupId);
-        if (!$group) {
+        if (! $group) {
             return response()->json(['message' => 'Grupo não encontrado.'], 404);
         }
 
@@ -219,7 +218,7 @@ class ActivityGroupController extends Controller
             'invited_user_id' => 'required|integer|exists:users,id',
         ]);
 
-        $invitedUserId = (int)$validated['invited_user_id'];
+        $invitedUserId = (int) $validated['invited_user_id'];
         $schoolClass = $group->activity->schoolClass;
 
         if ($schoolClass->owner_id === $invitedUserId) {
@@ -230,7 +229,7 @@ class ActivityGroupController extends Controller
             ->where('user_id', $invitedUserId)
             ->exists();
 
-        if (!$isMember) {
+        if (! $isMember) {
             return response()->json(['message' => 'O usuário convidado não pertence a esta turma.'], 404);
         }
 
@@ -268,7 +267,7 @@ class ActivityGroupController extends Controller
 
         return response()->json([
             'message' => 'Convite enviado com sucesso.',
-            'invitation' => $invitation->load(['invitedUser:id,name,email', 'invitedBy:id,name,email'])
+            'invitation' => $invitation->load(['invitedUser:id,name,email', 'invitedBy:id,name,email']),
         ], 201);
     }
 
@@ -276,7 +275,7 @@ class ActivityGroupController extends Controller
     {
         $user = $request->user();
         $invitation = ActivityGroupInvitation::with('group.activity')->find($invitationId);
-        if (!$invitation) {
+        if (! $invitation) {
             return response()->json(['message' => 'Convite não encontrado.'], 404);
         }
 
@@ -298,7 +297,7 @@ class ActivityGroupController extends Controller
 
             return response()->json([
                 'message' => 'Convite recusado.',
-                'invitation' => $invitation
+                'invitation' => $invitation,
             ]);
         }
 
@@ -316,6 +315,7 @@ class ActivityGroupController extends Controller
             if ($alreadyInGroup) {
                 $invitation->status = 'cancelled';
                 $invitation->save();
+
                 return response()->json(['message' => 'Você já pertence a um grupo nesta atividade.'], 422);
             }
 
@@ -342,7 +342,7 @@ class ActivityGroupController extends Controller
             return response()->json([
                 'message' => 'Convite aceito com sucesso.',
                 'invitation' => $invitation,
-                'group' => $lockedGroup->fresh(['members.user', 'leader', 'invitations'])
+                'group' => $lockedGroup->fresh(['members.user', 'leader', 'invitations']),
             ]);
         });
     }
@@ -351,7 +351,7 @@ class ActivityGroupController extends Controller
     {
         $user = $request->user();
         $group = ActivityGroup::with('activity.schoolClass')->find($groupId);
-        if (!$group) {
+        if (! $group) {
             return response()->json(['message' => 'Grupo não encontrado.'], 404);
         }
 
@@ -361,19 +361,19 @@ class ActivityGroupController extends Controller
         $isLeader = $group->leader_user_id === $user->id;
         $isOwnerOrRep = in_array($myRole, ['owner', 'rep']);
 
-        if (!$isLeader && !$isOwnerOrRep) {
+        if (! $isLeader && ! $isOwnerOrRep) {
             return response()->json(['message' => 'Sem permissão para remover membros do grupo.'], 403);
         }
 
-        return DB::transaction(function () use ($groupId, $group, $targetUserId) {
-            $targetUserId = (int)$targetUserId;
+        return DB::transaction(function () use ($groupId, $targetUserId) {
+            $targetUserId = (int) $targetUserId;
             $lockedGroup = ActivityGroup::where('id', $groupId)->lockForUpdate()->first();
 
             $member = ActivityGroupMember::where('activity_group_id', $groupId)
                 ->where('user_id', $targetUserId)
                 ->first();
 
-            if (!$member) {
+            if (! $member) {
                 return response()->json(['message' => 'Membro não encontrado neste grupo.'], 404);
             }
 
@@ -391,7 +391,7 @@ class ActivityGroupController extends Controller
 
             return response()->json([
                 'message' => 'Membro removido do grupo com sucesso.',
-                'group' => $lockedGroup->fresh(['members.user', 'leader', 'invitations'])
+                'group' => $lockedGroup->fresh(['members.user', 'leader', 'invitations']),
             ]);
         });
     }

@@ -2,15 +2,13 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\SchoolClass;
-use App\Models\ClassMember;
 use App\Models\Activity;
 use App\Models\ActivityGroup;
-use App\Models\ActivityGroupMember;
-use App\Models\ActivityGroupInvitation;
+use App\Models\ClassMember;
+use App\Models\SchoolClass;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class GroupWorkTest extends TestCase
 {

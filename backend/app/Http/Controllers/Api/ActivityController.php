@@ -3,20 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
-use App\Models\SchoolClass;
-use App\Models\ClassMember;
 use App\Models\Activity;
 use App\Models\ActivityGroup;
+use App\Models\ActivityGroupMember;
+use App\Models\ClassMember;
+use App\Models\SchoolClass;
 use App\Models\UserActivityProgress;
+use Illuminate\Http\Request;
 
 class ActivityController extends Controller
 {
     private function getMembership($classId, $user)
     {
         $schoolClass = SchoolClass::find($classId);
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return null;
         }
 
@@ -35,7 +35,7 @@ class ActivityController extends Controller
     {
         $user = $request->user();
         $role = $this->getMembership($classId, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
@@ -51,7 +51,7 @@ class ActivityController extends Controller
         });
 
         return response()->json([
-            'activities' => $activities
+            'activities' => $activities,
         ]);
     }
 
@@ -59,16 +59,16 @@ class ActivityController extends Controller
     {
         $user = $request->user();
         $schoolClass = SchoolClass::find($classId);
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return response()->json(['message' => 'Turma não encontrada.'], 404);
         }
 
         $role = $this->getMembership($classId, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        if (!in_array($role, ['owner', 'rep'])) {
+        if (! in_array($role, ['owner', 'rep'])) {
             return response()->json(['message' => 'Apenas o criador ou representantes podem criar atividades.'], 403);
         }
 
@@ -126,7 +126,7 @@ class ActivityController extends Controller
 
         return response()->json([
             'message' => 'Atividade criada com sucesso.',
-            'activity' => $activity->load(['groups.members.user', 'groups.leader', 'groups.invitations'])
+            'activity' => $activity->load(['groups.members.user', 'groups.leader', 'groups.invitations']),
         ], 201);
     }
 
@@ -134,12 +134,12 @@ class ActivityController extends Controller
     {
         $user = $request->user();
         $activity = Activity::with(['groups.members.user', 'groups.leader', 'groups.invitations'])->find($id);
-        if (!$activity) {
+        if (! $activity) {
             return response()->json(['message' => 'Atividade não encontrada.'], 404);
         }
 
         $role = $this->getMembership($activity->class_id, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
@@ -149,7 +149,7 @@ class ActivityController extends Controller
         $activity->user_progress = $progress;
 
         return response()->json([
-            'activity' => $activity
+            'activity' => $activity,
         ]);
     }
 
@@ -157,16 +157,16 @@ class ActivityController extends Controller
     {
         $user = $request->user();
         $activity = Activity::find($id);
-        if (!$activity) {
+        if (! $activity) {
             return response()->json(['message' => 'Atividade não encontrada.'], 404);
         }
 
         $role = $this->getMembership($activity->class_id, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        if (!in_array($role, ['owner', 'rep'])) {
+        if (! in_array($role, ['owner', 'rep'])) {
             return response()->json(['message' => 'Apenas o criador ou representantes podem editar atividades.'], 403);
         }
 
@@ -187,7 +187,7 @@ class ActivityController extends Controller
 
         // Impedir alteração incoerente de modalidade ou tamanho de grupo se já houver alunos nos grupos
         if ($activity->type === 'trabalho' && $activity->work_mode === 'groups') {
-            $hasGroupMembers = \App\Models\ActivityGroupMember::whereHas('group', function ($q) use ($activity) {
+            $hasGroupMembers = ActivityGroupMember::whereHas('group', function ($q) use ($activity) {
                 $q->where('activity_id', $activity->id);
             })->exists();
 
@@ -195,7 +195,7 @@ class ActivityController extends Controller
                 if (isset($validated['work_mode']) && $validated['work_mode'] !== $activity->work_mode) {
                     return response()->json(['message' => 'Não é possível alterar a modalidade do trabalho pois já existem alunos cadastrados nos grupos desta atividade.'], 422);
                 }
-                if (isset($validated['group_size']) && (int)$validated['group_size'] !== (int)$activity->group_size) {
+                if (isset($validated['group_size']) && (int) $validated['group_size'] !== (int) $activity->group_size) {
                     return response()->json(['message' => 'Não é possível alterar o tamanho máximo dos grupos pois já existem alunos cadastrados nos grupos desta atividade.'], 422);
                 }
             }
@@ -215,7 +215,7 @@ class ActivityController extends Controller
 
         return response()->json([
             'message' => 'Atividade atualizada com sucesso.',
-            'activity' => $activity->load(['groups.members.user', 'groups.leader', 'groups.invitations'])
+            'activity' => $activity->load(['groups.members.user', 'groups.leader', 'groups.invitations']),
         ]);
     }
 
@@ -223,23 +223,23 @@ class ActivityController extends Controller
     {
         $user = $request->user();
         $activity = Activity::find($id);
-        if (!$activity) {
+        if (! $activity) {
             return response()->json(['message' => 'Atividade não encontrada.'], 404);
         }
 
         $role = $this->getMembership($activity->class_id, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        if (!in_array($role, ['owner', 'rep'])) {
+        if (! in_array($role, ['owner', 'rep'])) {
             return response()->json(['message' => 'Apenas o criador ou representantes podem excluir atividades.'], 403);
         }
 
         $activity->delete();
 
         return response()->json([
-            'message' => 'Atividade excluída com sucesso.'
+            'message' => 'Atividade excluída com sucesso.',
         ]);
     }
 
@@ -247,12 +247,12 @@ class ActivityController extends Controller
     {
         $user = $request->user();
         $activity = Activity::find($id);
-        if (!$activity) {
+        if (! $activity) {
             return response()->json(['message' => 'Atividade não encontrada.'], 404);
         }
 
         $role = $this->getMembership($activity->class_id, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
@@ -272,7 +272,7 @@ class ActivityController extends Controller
 
         return response()->json([
             'message' => 'Progresso atualizado com sucesso.',
-            'progress' => $progress
+            'progress' => $progress,
         ]);
     }
 }
