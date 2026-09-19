@@ -85,6 +85,7 @@ Em caso de falha crítica durante o deploy:
 - [ ] SMTP testado para recuperação de senha e verificação de e-mail.
 - [ ] Healthcheck `/health` validado externamente após o deploy.
 - [ ] Registrar o header `X-Request-ID` ao investigar falhas; o backend preserva UUIDs válidos e gera um identificador seguro quando o cliente envia valor inválido.
+- [ ] Para erros de validação da API, registrar `request_id` junto de `message` e `errors`; não registrar tokens, senhas ou payloads pessoais completos.
 - [ ] `docker compose config` validado com os secrets injetados; SMTP, deep link, versão e suporte repassados ao container.
 - [ ] Backup anterior e imagem anterior identificados antes da promoção.
 
