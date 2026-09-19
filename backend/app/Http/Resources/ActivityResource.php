@@ -12,8 +12,6 @@ class ActivityResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $progress = $this->user_progress;
-
         return [
             'id' => $this->id,
             'class_id' => $this->class_id,
@@ -29,13 +27,10 @@ class ActivityResource extends JsonResource
             'description' => $this->description,
             'created_by' => $this->created_by,
             'creator' => UserResource::make($this->whenLoaded('creator')),
-            'user_progress' => $progress ? [
-                'id' => $progress->id,
-                'status' => $progress->status,
-                'personal_notes' => $progress->personal_notes,
-                'score' => $progress->score,
-            ] : null,
-            'groups' => $this->whenLoaded('groups'),
+            'user_progress' => $this->user_progress
+                ? UserActivityProgressResource::make($this->user_progress)
+                : null,
+            'groups' => ActivityGroupResource::collection($this->whenLoaded('groups')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

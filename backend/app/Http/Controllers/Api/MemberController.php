@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ClassMemberResource;
 use App\Models\ActivityGroup;
 use App\Models\ActivityGroupInvitation;
 use App\Models\ActivityGroupMember;
@@ -36,7 +37,7 @@ class MemberController extends Controller
             ->get();
 
         return response()->json([
-            'members' => $members,
+            'members' => ClassMemberResource::collection($members),
         ]);
     }
 
@@ -77,7 +78,7 @@ class MemberController extends Controller
 
         return response()->json([
             'message' => 'Membro promovido a Representante com sucesso.',
-            'member' => $targetMembership->load('user:id,name,avatar_url'),
+            'member' => ClassMemberResource::make($targetMembership->load('user:id,name,avatar_url')),
         ]);
     }
 
@@ -115,7 +116,7 @@ class MemberController extends Controller
 
         return response()->json([
             'message' => 'Membro rebaixado a Aluno com sucesso.',
-            'member' => $targetMembership->load('user:id,name,avatar_url'),
+            'member' => ClassMemberResource::make($targetMembership->load('user:id,name,avatar_url')),
         ]);
     }
 

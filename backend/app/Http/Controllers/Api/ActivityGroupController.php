@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ActivityGroupInvitationResource;
+use App\Http\Resources\ActivityGroupResource;
 use App\Models\Activity;
 use App\Models\ActivityGroup;
 use App\Models\ActivityGroupInvitation;
@@ -50,7 +52,7 @@ class ActivityGroupController extends Controller
             ->get();
 
         return response()->json([
-            'groups' => $groups,
+            'groups' => ActivityGroupResource::collection($groups),
         ]);
     }
 
@@ -68,7 +70,7 @@ class ActivityGroupController extends Controller
         }
 
         return response()->json([
-            'group' => $group,
+            'group' => ActivityGroupResource::make($group),
         ]);
     }
 
@@ -134,7 +136,7 @@ class ActivityGroupController extends Controller
 
             return response()->json([
                 'message' => 'Você entrou no grupo com sucesso.',
-                'group' => $lockedGroup->fresh(['members.user', 'leader', 'invitations']),
+                'group' => ActivityGroupResource::make($lockedGroup->fresh(['members.user', 'leader', 'invitations'])),
             ]);
         });
     }
@@ -173,7 +175,7 @@ class ActivityGroupController extends Controller
 
             return response()->json([
                 'message' => 'Você saiu do grupo.',
-                'group' => $lockedGroup->fresh(['members.user', 'leader', 'invitations']),
+                'group' => ActivityGroupResource::make($lockedGroup->fresh(['members.user', 'leader', 'invitations'])),
             ]);
         });
     }
@@ -198,7 +200,7 @@ class ActivityGroupController extends Controller
 
         return response()->json([
             'message' => 'Descrição do grupo atualizada com sucesso.',
-            'group' => $group,
+            'group' => ActivityGroupResource::make($group),
         ]);
     }
 
@@ -267,7 +269,7 @@ class ActivityGroupController extends Controller
 
         return response()->json([
             'message' => 'Convite enviado com sucesso.',
-            'invitation' => $invitation->load(['invitedUser:id,name,email', 'invitedBy:id,name,email']),
+            'invitation' => ActivityGroupInvitationResource::make($invitation->load(['invitedUser:id,name,email', 'invitedBy:id,name,email'])),
         ], 201);
     }
 
@@ -297,7 +299,7 @@ class ActivityGroupController extends Controller
 
             return response()->json([
                 'message' => 'Convite recusado.',
-                'invitation' => $invitation,
+                'invitation' => ActivityGroupInvitationResource::make($invitation),
             ]);
         }
 
@@ -341,8 +343,8 @@ class ActivityGroupController extends Controller
 
             return response()->json([
                 'message' => 'Convite aceito com sucesso.',
-                'invitation' => $invitation,
-                'group' => $lockedGroup->fresh(['members.user', 'leader', 'invitations']),
+                'invitation' => ActivityGroupInvitationResource::make($invitation),
+                'group' => ActivityGroupResource::make($lockedGroup->fresh(['members.user', 'leader', 'invitations'])),
             ]);
         });
     }
@@ -391,7 +393,7 @@ class ActivityGroupController extends Controller
 
             return response()->json([
                 'message' => 'Membro removido do grupo com sucesso.',
-                'group' => $lockedGroup->fresh(['members.user', 'leader', 'invitations']),
+                'group' => ActivityGroupResource::make($lockedGroup->fresh(['members.user', 'leader', 'invitations'])),
             ]);
         });
     }

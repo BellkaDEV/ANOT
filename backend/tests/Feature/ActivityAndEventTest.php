@@ -269,7 +269,10 @@ class ActivityAndEventTest extends TestCase
         // Atualizar progresso
         $this->actingAs($this->student, 'sanctum')
             ->putJson("/api/activities/{$activity->id}/progress", $progressData)
-            ->assertStatus(200);
+            ->assertStatus(200)
+            ->assertJsonPath('progress.status', 'in_progress')
+            ->assertJsonMissingPath('progress.user_id')
+            ->assertJsonMissingPath('progress.activity_id');
 
         $this->assertDatabaseHas('user_activity_progress', [
             'user_id' => $this->student->id,

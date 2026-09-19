@@ -18,7 +18,13 @@ class ClassMemberResource extends JsonResource
             'user_id' => $this->user_id,
             'role' => $this->role,
             'joined_at' => $this->joined_at,
-            'user' => UserResource::make($this->whenLoaded('user')),
+            'user' => $this->whenLoaded('user', function () {
+                return [
+                    'id' => $this->user->id,
+                    'name' => $this->user->name,
+                    'avatar_url' => $this->user->avatar_url,
+                ];
+            }),
         ];
     }
 }

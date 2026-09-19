@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ActivityResource;
+use App\Http\Resources\UserActivityProgressResource;
 use App\Models\Activity;
 use App\Models\ActivityGroup;
 use App\Models\ActivityGroupMember;
@@ -44,11 +45,13 @@ class ActivityController extends Controller
             ->with(['groups.members.user', 'groups.leader', 'groups.invitations'])
             ->get();
 
-        $activities->each(function ($activity) use ($user) {
-            $progress = UserActivityProgress::where('activity_id', $activity->id)
-                ->where('user_id', $user->id)
-                ->first();
-            $activity->user_progress = $progress;
+        $progressByActivity = UserActivityProgress::whereIn('activity_id', $activities->pluck('id'))
+            ->where('user_id', $user->id)
+            ->get()
+            ->keyBy('activity_id');
+
+        $activities->each(function ($activity) use ($progressByActivity) {
+            $activity->setAttribute('user_progress', $progressByActivity->get($activity->id));
         });
 
         return response()->json([
@@ -273,7 +276,7 @@ class ActivityController extends Controller
 
         return response()->json([
             'message' => 'Progresso atualizado com sucesso.',
-            'progress' => $progress,
+            'progress' => UserActivityProgressResource::make($progress),
         ]);
     }
 }
