@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
@@ -63,7 +64,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Usuário registrado com sucesso.',
-            'user' => $user,
+            'user' => UserResource::make($user),
             'token' => $token,
         ], 201);
     }
@@ -99,7 +100,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login realizado com sucesso.',
-            'user' => $user,
+            'user' => UserResource::make($user),
             'token' => $token,
         ]);
     }
@@ -175,7 +176,7 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json([
-            'user' => $request->user(),
+            'user' => UserResource::make($request->user()),
         ]);
     }
 
