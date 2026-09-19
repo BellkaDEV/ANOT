@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\EventResource;
 use App\Models\ClassMember;
 use App\Models\Event;
 use App\Models\SchoolClass;
@@ -42,7 +43,7 @@ class EventController extends Controller
             ->get();
 
         return response()->json([
-            'events' => $events,
+            'events' => EventResource::collection($events),
         ]);
     }
 
@@ -76,7 +77,7 @@ class EventController extends Controller
 
         return response()->json([
             'message' => 'Evento criado com sucesso.',
-            'event' => $event,
+            'event' => EventResource::make($event),
         ], 201);
     }
 
@@ -94,7 +95,7 @@ class EventController extends Controller
         }
 
         return response()->json([
-            'event' => $event,
+            'event' => EventResource::make($event),
         ]);
     }
 
@@ -136,7 +137,7 @@ class EventController extends Controller
 
         return response()->json([
             'message' => 'Evento atualizado com sucesso.',
-            'event' => $event,
+            'event' => EventResource::make($event),
         ]);
     }
 

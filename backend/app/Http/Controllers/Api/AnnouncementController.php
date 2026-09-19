@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AnnouncementResource;
 use App\Models\Announcement;
 use App\Models\ClassMember;
 use App\Models\SchoolClass;
@@ -47,7 +48,7 @@ class AnnouncementController extends Controller
             ->get();
 
         return response()->json([
-            'announcements' => $announcements,
+            'announcements' => AnnouncementResource::collection($announcements),
         ]);
     }
 
@@ -77,7 +78,7 @@ class AnnouncementController extends Controller
 
         return response()->json([
             'message' => 'Aviso criado com sucesso.',
-            'announcement' => $announcement,
+            'announcement' => AnnouncementResource::make($announcement),
         ], 201);
     }
 
@@ -95,7 +96,7 @@ class AnnouncementController extends Controller
         }
 
         return response()->json([
-            'announcement' => $announcement->load('author:id,name,avatar_url'),
+            'announcement' => AnnouncementResource::make($announcement->load('author:id,name,avatar_url')),
         ]);
     }
 
@@ -127,7 +128,7 @@ class AnnouncementController extends Controller
 
         return response()->json([
             'message' => 'Aviso atualizado com sucesso.',
-            'announcement' => $announcement,
+            'announcement' => AnnouncementResource::make($announcement),
         ]);
     }
 
