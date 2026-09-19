@@ -56,6 +56,9 @@ return [
 
     'mobile_reset_url' => env('MOBILE_RESET_URL', 'anot://reset-password'),
 
+    'support_email' => env('SUPPORT_EMAIL', 'suporte@anot.app'),
+    'legal_updated_at' => env('LEGAL_UPDATED_AT', '18/09/2026'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
