@@ -36,6 +36,14 @@ jobs:
       - name: Export Android bundle
         run: cd mobile && npx expo export --platform android
 
+      - name: Upload Android export artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: anot-android-export-${{ github.sha }}
+          path: mobile/dist
+          if-no-files-found: error
+          retention-days: 14
+
   backend-tests:
     name: Backend PHPUnit & Audit
     runs-on: ubuntu-latest
@@ -81,6 +89,14 @@ jobs:
 
       - name: Build web assets
         run: cd backend && npm run build
+
+      - name: Upload web assets artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: anot-web-assets-${{ github.sha }}
+          path: backend/public/build
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Run Composer Audit
         run: cd backend && composer audit --locked
