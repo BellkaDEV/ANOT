@@ -77,6 +77,7 @@ Em caso de falha crítica durante o deploy:
 
 - [ ] CI verde: PHPUnit, Pint, Composer audit, TypeScript, Expo Doctor, bundle Android, assets web e Docker build.
 - [ ] `APP_DEBUG=false`, `APP_URL` HTTPS e `MOBILE_RESET_URL` apontando para o domínio/scheme aprovado.
+- [ ] Executar `php artisan app:validate-production` e corrigir qualquer `FAIL` antes de liberar o tráfego.
 - [ ] Migration executada uma única vez como etapa controlada.
 - [ ] Primeiro administrador configurado com `php artisan admin:promote <email> --yes`.
 - [ ] SMTP testado para recuperação de senha e verificação de e-mail.
