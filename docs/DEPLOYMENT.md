@@ -23,6 +23,8 @@ As variáveis de ambiente devem ser injetadas pelo cofre de segredos do seu prov
 | `DB_PASSWORD` | Senha forte do banco de dados | `*(Segredo gerado)*` |
 | `SANCTUM_EXPIRATION` | Duração do token em minutos (padrão: 30 dias = 43200 min) | `43200` |
 | `EXPO_PUBLIC_API_URL` | URL apontada no app mobile (HTTPS) | `https://api.anot.app/api` |
+| `MAIL_*` | Credenciais SMTP para confirmação de e-mail e recuperação de senha | `*(Segredos do provedor)*` |
+| `SUPPORT_EMAIL` | Canal público de suporte e solicitações de conta | `suporte@anot.app` |
 
 > ⚠️ **ATENÇÃO — Rotação de Segredos**: Qualquer chave (`APP_KEY` ou `DB_PASSWORD`) que tenha sido previamente exposta em commits legados deve ser rotacionada imediatamente no ambiente de nuvem.
 
@@ -82,6 +84,7 @@ Em caso de falha crítica durante o deploy:
 - [ ] Primeiro administrador configurado com `php artisan admin:promote <email> --yes`.
 - [ ] SMTP testado para recuperação de senha e verificação de e-mail.
 - [ ] Healthcheck `/health` validado externamente após o deploy.
+- [ ] `docker compose config` validado com os secrets injetados; SMTP, deep link, versão e suporte repassados ao container.
 - [ ] Backup anterior e imagem anterior identificados antes da promoção.
 
 ### Build Android
