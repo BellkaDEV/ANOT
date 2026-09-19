@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\SchoolClassResource;
 use App\Models\ClassMember;
 use App\Models\SchoolClass;
 use Illuminate\Http\Request;
@@ -39,7 +40,7 @@ class ClassController extends Controller
             });
 
         return response()->json([
-            'classes' => $classes,
+            'classes' => SchoolClassResource::collection($classes),
         ]);
     }
 
@@ -92,7 +93,7 @@ class ClassController extends Controller
 
         return response()->json([
             'message' => 'Turma criada com sucesso!',
-            'class' => $schoolClass,
+            'class' => SchoolClassResource::make($schoolClass),
         ], 201);
     }
 
@@ -123,7 +124,7 @@ class ClassController extends Controller
         $schoolClass->qr_code_payload = 'anot://join?code='.$schoolClass->code;
 
         return response()->json([
-            'class' => $schoolClass,
+            'class' => SchoolClassResource::make($schoolClass),
         ]);
     }
 
@@ -159,7 +160,7 @@ class ClassController extends Controller
 
         return response()->json([
             'message' => 'Turma atualizada com sucesso.',
-            'class' => $schoolClass,
+            'class' => SchoolClassResource::make($schoolClass),
         ]);
     }
 
@@ -190,7 +191,7 @@ class ClassController extends Controller
         return response()->json([
             'message' => $statusMsg,
             'is_open' => $schoolClass->is_open,
-            'class' => $schoolClass,
+            'class' => SchoolClassResource::make($schoolClass),
         ]);
     }
 
@@ -223,7 +224,7 @@ class ClassController extends Controller
         return response()->json([
             'message' => 'Novo código de acesso gerado com sucesso!',
             'code' => $newCode,
-            'class' => $schoolClass,
+            'class' => SchoolClassResource::make($schoolClass),
         ]);
     }
 
@@ -293,7 +294,7 @@ class ClassController extends Controller
 
                 return response()->json([
                     'message' => 'Você já faz parte desta turma.',
-                    'class' => $schoolClass,
+                    'class' => SchoolClassResource::make($schoolClass),
                     'role' => $existingMember->role,
                 ]);
             }
@@ -320,7 +321,7 @@ class ClassController extends Controller
 
             return response()->json([
                 'message' => 'Entrada na turma realizada com sucesso!',
-                'class' => $schoolClass,
+                'class' => SchoolClassResource::make($schoolClass),
                 'role' => $role,
             ], 201);
         });
