@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Mail\BrevoApiTransport;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Mail::extend('brevo', fn (array $config) => new BrevoApiTransport($config['api_key']));
+
         ResetPassword::createUrlUsing(function (object $notifiable, string $token): string {
             return config('app.mobile_reset_url').'?token='.urlencode($token).'&email='.urlencode($notifiable->getEmailForPasswordReset());
         });
