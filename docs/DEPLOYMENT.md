@@ -84,6 +84,7 @@ Em caso de falha crítica durante o deploy:
 - [ ] Primeiro administrador configurado com `php artisan admin:promote <email> --yes`.
 - [ ] SMTP testado para recuperação de senha e verificação de e-mail.
 - [ ] Healthcheck `/health` validado externamente após o deploy.
+- [ ] Registrar o header `X-Request-ID` ao investigar falhas; o backend preserva UUIDs válidos e gera um identificador seguro quando o cliente envia valor inválido.
 - [ ] `docker compose config` validado com os secrets injetados; SMTP, deep link, versão e suporte repassados ao container.
 - [ ] Backup anterior e imagem anterior identificados antes da promoção.
 
