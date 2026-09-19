@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClassController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\MemberController;
+use App\Http\Controllers\EmailVerificationController;
 use Illuminate\Support\Facades\Route;
 
 // Rotas públicas (sem autenticação)
@@ -23,6 +24,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::post('/logout-all', [AuthController::class, 'logoutAll']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::delete('/account', [AuthController::class, 'deleteAccount']);
+    Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])->middleware('throttle:login');
 
     Route::prefix('admin')->middleware('platform.admin')->group(function () {
         Route::get('/users', [AdminController::class, 'users']);

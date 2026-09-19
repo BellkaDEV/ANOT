@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password as PasswordBroker;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class AuthSecurityTest extends TestCase
@@ -201,5 +203,59 @@ class AuthSecurityTest extends TestCase
             'email' => 'reset@anot.test',
             'password' => 'SenhaNova123',
         ])->assertOk();
+    }
+
+    public function test_registration_sends_email_verification_notification(): void
+    {
+        Notification::fake();
+
+        $this->postJson('/api/register', [
+            'name' => 'Usuário Verificável',
+            'email' => 'verify@anot.test',
+            'password' => 'SenhaSegura123',
+            'password_confirmation' => 'SenhaSegura123',
+        ])->assertCreated();
+
+        $user = User::where('email', 'verify@anot.test')->firstOrFail();
+        Notification::assertSentTo($user, VerifyEmail::class);
+    }
+
+    public function test_signed_email_verification_marks_account_as_verified(): void
+    {
+        $user = User::factory()->create(['email' => 'verify-link@anot.test', 'email_verified_at' => null]);
+        $url = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(30),
+            ['id' => $user->id, 'hash' => sha1($user->getEmailForVerification())],
+        );
+
+        $this->get($url)->assertOk()->assertSee('E-mail verificado');
+        $this->assertNotNull($user->fresh()->email_verified_at);
+    }
+
+    public function test_tampered_email_verification_link_is_rejected(): void
+    {
+        $user = User::factory()->create(['email' => 'verify-safe@anot.test', 'email_verified_at' => null]);
+        $url = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(30),
+            ['id' => $user->id, 'hash' => sha1('attacker@anot.test')],
+        );
+
+        $this->get($url)->assertForbidden();
+        $this->assertNull($user->fresh()->email_verified_at);
+    }
+
+    public function test_authenticated_user_can_resend_email_verification(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create(['email' => 'resend@anot.test', 'email_verified_at' => null]);
+        $token = $user->createToken('verification')->plainTextToken;
+
+        $this->withToken($token)
+            ->postJson('/api/email/verification-notification')
+            ->assertStatus(202);
+
+        Notification::assertSentTo($user, VerifyEmail::class);
     }
 }

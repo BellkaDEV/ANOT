@@ -1,11 +1,15 @@
 <?php
 
 use App\Http\Controllers\AdminWebController;
+use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\HealthController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HealthController::class, 'index']);
 Route::get('/health', [HealthController::class, 'health']);
+Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+    ->middleware('signed')
+    ->name('verification.verify');
 
 Route::get('/admin/login', [AdminWebController::class, 'loginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminWebController::class, 'login'])->name('admin.login.submit')->middleware('throttle:login');

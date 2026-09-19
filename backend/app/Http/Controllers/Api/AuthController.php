@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -55,6 +56,8 @@ class AuthController extends Controller
             'password' => Hash::make($validated['password']),
             'avatar_url' => $validated['avatar_url'] ?? null,
         ]);
+
+        event(new Registered($user));
 
         $token = $user->createToken('anot_auth_token')->plainTextToken;
 
