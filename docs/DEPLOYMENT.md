@@ -34,6 +34,7 @@ As variáveis de ambiente devem ser injetadas pelo cofre de segredos do seu prov
    ```bash
    docker build -t anot-backend:v2.0.0 ./backend
    ```
+   O Dockerfile usa build multi-stage: compila os assets do console administrativo com Node 20 e entrega apenas o resultado junto da imagem PHP final.
 2. **Execução de Containers**:
    - Utilize a configuração [docker-compose.yml](file:///C:/Users/User/ANOT/backend/docker-compose.yml) limpa.
    - O banco PostgreSQL opera isolado dentro da rede Docker fechada (sem bind port `5432:5432` externa).
@@ -71,6 +72,28 @@ Em caso de falha crítica durante o deploy:
 1. Reverter o tráfego para a versão anterior da imagem Docker: `anot-backend:v1.9.0`.
 2. Caso a migration de release tenha alterado esquemas sem breaking changes (ex: adição de tabelas/colunas nulas), os containers anteriores continuarão operantes.
 3. Se necessário restaurar estado de dados pré-release, execute o procedimento de restore utilizando o último backup realizado imediatamente antes do deploy.
+
+### Checklist mínimo antes de promover uma release
+
+- [ ] CI verde: PHPUnit, Pint, Composer audit, TypeScript, Expo Doctor, bundle Android, assets web e Docker build.
+- [ ] `APP_DEBUG=false`, `APP_URL` HTTPS e `MOBILE_RESET_URL` apontando para o domínio/scheme aprovado.
+- [ ] Migration executada uma única vez como etapa controlada.
+- [ ] Primeiro administrador configurado com `php artisan admin:promote <email> --yes`.
+- [ ] SMTP testado para recuperação de senha e verificação de e-mail.
+- [ ] Healthcheck `/health` validado externamente após o deploy.
+- [ ] Backup anterior e imagem anterior identificados antes da promoção.
+
+### Build Android
+
+O APK interno e o AAB de produção são gerados pelo EAS, fora do runner de deploy do backend:
+
+```bash
+cd mobile
+npx eas build --profile preview --platform android
+npx eas build --profile production --platform android
+```
+
+O `EXPO_TOKEN` deve existir somente nos secrets do provedor/EAS. Keystore de distribuição nunca deve ser versionado.
 
 ---
 
