@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ActivityResource;
 use App\Models\Activity;
 use App\Models\ActivityGroup;
 use App\Models\ActivityGroupMember;
@@ -51,7 +52,7 @@ class ActivityController extends Controller
         });
 
         return response()->json([
-            'activities' => $activities,
+            'activities' => ActivityResource::collection($activities),
         ]);
     }
 
@@ -126,7 +127,7 @@ class ActivityController extends Controller
 
         return response()->json([
             'message' => 'Atividade criada com sucesso.',
-            'activity' => $activity->load(['groups.members.user', 'groups.leader', 'groups.invitations']),
+            'activity' => ActivityResource::make($activity->load(['groups.members.user', 'groups.leader', 'groups.invitations'])),
         ], 201);
     }
 
@@ -149,7 +150,7 @@ class ActivityController extends Controller
         $activity->user_progress = $progress;
 
         return response()->json([
-            'activity' => $activity,
+            'activity' => ActivityResource::make($activity),
         ]);
     }
 
@@ -215,7 +216,7 @@ class ActivityController extends Controller
 
         return response()->json([
             'message' => 'Atividade atualizada com sucesso.',
-            'activity' => $activity->load(['groups.members.user', 'groups.leader', 'groups.invitations']),
+            'activity' => ActivityResource::make($activity->load(['groups.members.user', 'groups.leader', 'groups.invitations'])),
         ]);
     }
 
