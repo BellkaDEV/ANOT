@@ -16,6 +16,9 @@ interface Props {
   onToggleReduceMotion: (v: boolean) => void;
   onClearCache: () => void;
   onDeleteAccount: (password: string) => Promise<void>;
+  email?: string;
+  emailVerifiedAt?: string | null;
+  onResendEmailVerification: () => Promise<void>;
   onBack: () => void;
   th: AppTheme;
 }
@@ -27,6 +30,9 @@ export default function SettingsScreen({
   onToggleReduceMotion,
   onClearCache,
   onDeleteAccount,
+  email,
+  emailVerifiedAt,
+  onResendEmailVerification,
   onBack,
   th,
 }: Props) {
@@ -38,6 +44,7 @@ export default function SettingsScreen({
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [verificationSubmitting, setVerificationSubmitting] = useState(false);
 
   const themeLabelMap: Record<ThemeMode, string> = {
     system: "Sistema",
@@ -69,6 +76,28 @@ export default function SettingsScreen({
         {/* Aparência */}
         <Text style={[S.sLabel, { color: th.muted }]}>APARÊNCIA</Text>
         <View style={[S.card, { backgroundColor: th.card, borderColor: th.border }]}>
+          {email && !emailVerifiedAt && <>
+            <SettingRow
+              icon="mail-unread-outline"
+              label="Confirmar e-mail"
+              sub={`Reenviar confirmação para ${email}`}
+              badge="Pendente"
+              onPress={async () => {
+                setVerificationSubmitting(true);
+                try {
+                  await onResendEmailVerification();
+                  showInfo("E-mail enviado", "Confira sua caixa de entrada e a pasta de spam para confirmar seu endereço.");
+                } catch (error: any) {
+                  showInfo("Não foi possível enviar", error.message || "Tente novamente em alguns instantes.");
+                } finally {
+                  setVerificationSubmitting(false);
+                }
+              }}
+              disabled={verificationSubmitting}
+              th={th}
+            />
+            <HDivider th={th} />
+          </>}
           <SettingRow
             icon="color-palette-outline"
             label="Tema do aplicativo"

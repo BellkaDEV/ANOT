@@ -7,6 +7,7 @@ export interface User {
   name: string;
   email: string;
   avatar_url?: string;
+  email_verified_at?: string | null;
 }
 
 interface AuthContextData {
@@ -18,6 +19,7 @@ interface AuthContextData {
   register: (name: string, email: string, password: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   resetPassword: (token: string, email: string, password: string) => Promise<void>;
+  resendEmailVerification: () => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
   clearError: () => void;
@@ -146,6 +148,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resendEmailVerification = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await api.post('/email/verification-notification');
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Não foi possível reenviar a verificação.';
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -188,6 +204,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         requestPasswordReset,
         resetPassword,
+        resendEmailVerification,
         logout,
         deleteAccount,
         clearError,

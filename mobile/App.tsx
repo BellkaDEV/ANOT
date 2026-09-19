@@ -131,7 +131,7 @@ function mapBackendClass(c: any): AppClass {
 }
 
 function MainApp() {
-  const { user: authUser, login: authLogin, register: authRegister, requestPasswordReset, resetPassword, logout: authLogout, deleteAccount: authDeleteAccount, signed } = useAuth();
+  const { user: authUser, login: authLogin, register: authRegister, requestPasswordReset, resetPassword, resendEmailVerification, logout: authLogout, deleteAccount: authDeleteAccount, signed } = useAuth();
   const systemScheme = useColorScheme();
 
   const [themeMode, setThemeModeState] = useState<ThemeMode>("system");
@@ -696,6 +696,9 @@ function MainApp() {
         onToggleReduceMotion={setReduceMotion}
         onClearCache={handleClearCache}
         onDeleteAccount={authDeleteAccount}
+        email={authUser?.email}
+        emailVerifiedAt={authUser?.email_verified_at}
+        onResendEmailVerification={resendEmailVerification}
         onBack={() => nav("profile")}
         th={th}
       />
