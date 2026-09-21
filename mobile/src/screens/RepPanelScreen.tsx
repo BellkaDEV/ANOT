@@ -27,9 +27,8 @@ interface Props {
   onDemote: (id: string) => void;
   onExpel: (id: string) => void;
   onViewMember: (m: Member) => void;
-  onUpdateClass: (data: Partial<AppClass>) => void;
   onDeleteClass: () => void;
-  onCopyCode?: () => void;
+  onCopyCode?: (copied: boolean) => void;
   onToggleOpen?: () => void;
   onRegenerateCode?: () => void;
   onBack: () => void;
@@ -189,8 +188,8 @@ export default function RepPanelScreen({
           <View style={{ flexDirection: "row", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
             <TouchableOpacity
               onPress={async () => {
-                await copyToClipboard(cls.code);
-                if (onCopyCode) onCopyCode();
+                const copied = await copyToClipboard(cls.code);
+                onCopyCode?.(copied);
               }}
               style={[S.shareBtn, { backgroundColor: th.navyLight, borderColor: th.navy + "30" }]}
             >

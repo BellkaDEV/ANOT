@@ -14,11 +14,13 @@ interface Props {
   onProfile: () => void;
   onSettings: () => void;
   loading?: boolean;
+  loadError?: boolean;
+  onRetry?: () => void;
   th: AppTheme;
 }
 
 export default function DashboardScreen({
-  user, classes, onSelectClass, onCreateClass, onJoinClass, onProfile, onSettings, loading, th,
+  user, classes, onSelectClass, onCreateClass, onJoinClass, onProfile, onSettings, loading, loadError, onRetry, th,
 }: Props) {
   const insets = useSafeAreaInsets();
   return (
@@ -62,6 +64,9 @@ export default function DashboardScreen({
         <Text style={[S.sectionTitle, { color: th.muted }]}>SUAS TURMAS</Text>
         {loading ? (
           [1, 2].map(i => <SkelCard key={i} th={th}/>)
+        ) : loadError ? (
+          <Empty th={th} icon="cloud-offline-outline" title="Não foi possível carregar as turmas"
+            sub="Verifique sua conexão e tente novamente." cta="Tentar novamente" onCta={onRetry}/>
         ) : classes.length === 0 ? (
           <Empty th={th} icon="school-outline" title="Nenhuma turma ainda"
             sub="Crie ou entre em uma turma para começar"/>

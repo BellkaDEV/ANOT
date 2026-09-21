@@ -22,6 +22,7 @@ interface AuthContextData {
   resendEmailVerification: () => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
+  changePassword: (currentPassword: string, password: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -191,6 +192,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const changePassword = async (currentPassword: string, password: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await api.put('/account/password', {
+        current_password: currentPassword,
+        password,
+        password_confirmation: password,
+      });
+      await deleteToken();
+      setUser(null);
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Não foi possível alterar a senha.';
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const clearError = () => setError(null);
 
   return (
@@ -207,6 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resendEmailVerification,
         logout,
         deleteAccount,
+        changePassword,
         clearError,
       }}
     >

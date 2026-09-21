@@ -85,6 +85,10 @@ class AdminWebController extends Controller
             return back()->withErrors(['admin' => 'A própria conta não pode ser suspensa.']);
         }
 
+        if ($user->is_platform_admin) {
+            return back()->withErrors(['admin' => 'Administradores da plataforma não podem ser suspensos.']);
+        }
+
         $user->forceFill(['is_suspended' => true])->save();
         $user->tokens()->delete();
         AdminAuditLog::create([

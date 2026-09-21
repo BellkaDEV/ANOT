@@ -53,6 +53,12 @@ class AdminController extends Controller
             ], 422);
         }
 
+        if ($user->is_platform_admin) {
+            return response()->json([
+                'message' => 'Administradores da plataforma não podem ser suspensos.',
+            ], 422);
+        }
+
         $user->forceFill(['is_suspended' => true])->save();
         $user->tokens()->delete();
 

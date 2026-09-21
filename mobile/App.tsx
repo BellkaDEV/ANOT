@@ -21,6 +21,7 @@ import ToastLayer from "./src/components/ToastLayer";
 import MemberSheet from "./src/components/MemberSheet";
 import { extractInviteCode } from "./src/utils/inviteLinks";
 import { extractPasswordReset, type PasswordResetLink } from "./src/utils/passwordResetLinks";
+import { copyToClipboard } from "./src/utils/clipboard";
 
 import WelcomeScreen      from "./src/screens/WelcomeScreen";
 import LoginScreen        from "./src/screens/LoginScreen";
@@ -89,6 +90,10 @@ function mapBackendClass(c: any): AppClass {
       description: act.description || "",
       createdById: String(act.created_by_id || act.created_by || ""),
       createdByName: act.creator?.name || act.createdByName || "Criador",
+      userProgress: act.user_progress ? {
+        status: act.user_progress.status,
+        personalNotes: act.user_progress.personal_notes,
+      } : null,
       groups: (act.groups || []).map((g: any) => ({
         id: String(g.id),
         activityId: String(g.activity_id),
@@ -131,7 +136,7 @@ function mapBackendClass(c: any): AppClass {
 }
 
 function MainApp() {
-  const { user: authUser, login: authLogin, register: authRegister, requestPasswordReset, resetPassword, resendEmailVerification, logout: authLogout, deleteAccount: authDeleteAccount, signed } = useAuth();
+  const { user: authUser, login: authLogin, register: authRegister, requestPasswordReset, resetPassword, resendEmailVerification, logout: authLogout, deleteAccount: authDeleteAccount, changePassword: authChangePassword, isLoading: isAuthLoading, signed } = useAuth();
   const systemScheme = useColorScheme();
 
   const [themeMode, setThemeModeState] = useState<ThemeMode>("system");
@@ -151,6 +156,7 @@ function MainApp() {
   const [memberSheet, setMemberSheet] = useState<Member | null>(null);
   const [editAnnId, setEditAnnId] = useState<string | null>(null);
   const [isLoadingClasses, setIsLoadingClasses] = useState(false);
+  const [classLoadError, setClassLoadError] = useState(false);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [pendingJoinCode, setPendingJoinCode] = useState<string | null>(null);
   const [pendingPasswordReset, setPendingPasswordReset] = useState<PasswordResetLink | null>(null);
@@ -253,14 +259,26 @@ function MainApp() {
   const fetchClassesFromApi = useCallback(async () => {
     if (!signed) return;
     setIsLoadingClasses(true);
+    setClassLoadError(false);
 
     try {
       const response = await api.get('/classes');
       const backendClasses = Array.isArray(response.data) ? response.data : (response.data.classes || []);
-      const mapped = backendClasses.map(mapBackendClass);
+      const mapped: AppClass[] = backendClasses.map(mapBackendClass);
       setClasses(mapped);
+      const persistedStatuses: Record<string, ActivityStatus> = {};
+      const persistedNotes: Record<string, string> = {};
+      mapped.forEach((schoolClass) => schoolClass.activities.forEach((activity) => {
+        if (activity.userProgress) {
+          persistedStatuses[activity.id] = activity.userProgress.status;
+          persistedNotes[activity.id] = activity.userProgress.personalNotes || "";
+        }
+      }));
+      setStatuses(persistedStatuses);
+      setNotes(persistedNotes);
     } catch (err: any) {
       console.log('Error fetching classes:', err);
+      setClassLoadError(true);
       toast("Erro ao carregar turmas", "error");
     } finally {
       setIsLoadingClasses(false);
@@ -367,6 +385,11 @@ function MainApp() {
     setActiveId(null);
     setScreen("welcome");
     toast("Você saiu da conta.");
+  }
+
+  async function doCopyClassCode(code: string) {
+    const copied = await copyToClipboard(code);
+    toast(copied ? "Código copiado!" : "Não foi possível copiar o código.", copied ? "success" : "error");
   }
 
   // Class CRUD Handlers
@@ -655,7 +678,7 @@ function MainApp() {
     if (!appUser) return <WelcomeScreen onLogin={() => nav("login")} onRegister={() => nav("register")} th={th}/>;
 
     if (screen === "dashboard") return (
-      <DashboardScreen user={appUser} classes={classes} loading={isLoadingClasses}
+      <DashboardScreen user={appUser} classes={classes} loading={isLoadingClasses} loadError={classLoadError} onRetry={fetchClassesFromApi}
         onSelectClass={id => { setActiveId(id); nav("classHome"); }}
         onCreateClass={() => nav("createClass")} onJoinClass={() => nav("joinClass")}
         onProfile={() => nav("profile")} onSettings={() => nav("settings")} th={th}/>
@@ -696,6 +719,7 @@ function MainApp() {
         onToggleReduceMotion={setReduceMotion}
         onClearCache={handleClearCache}
         onDeleteAccount={authDeleteAccount}
+        onChangePassword={authChangePassword}
         email={authUser?.email}
         emailVerifiedAt={authUser?.email_verified_at}
         onResendEmailVerification={resendEmailVerification}
@@ -742,7 +766,7 @@ function MainApp() {
         onNav={nav}
         onViewActivity={id => { setViewActId(id); nav("activityDetail"); }}
         onViewAnnouncement={id => { setViewAnnId(id); nav("announcementDetail"); }}
-        onCopyCode={() => toast("Código copiado!")}
+        onCopyCode={() => doCopyClassCode(activeClass.code)}
         onToggleOpen={() => doToggleOpenClass(activeClass)}
         onRepPanel={() => nav("repPanel")} onBack={() => nav("dashboard")} th={th}/>
     );
@@ -812,9 +836,8 @@ function MainApp() {
           onDemote={id => doDemote(activeClass, id)}
           onExpel={id => doExpel(activeClass, id)}
           onViewMember={m => setMemberSheet(m)}
-          onUpdateClass={() => {}}
           onDeleteClass={doDeleteClass}
-          onCopyCode={() => toast("Código copiado!")}
+          onCopyCode={(copied) => toast(copied ? "Código copiado!" : "Não foi possível copiar o código.", copied ? "success" : "error")}
           onToggleOpen={() => doToggleOpenClass(activeClass)}
           onRegenerateCode={() => doRegenerateCode(activeClass)}
           onBack={goClassHome} th={th}/>
@@ -859,6 +882,14 @@ function MainApp() {
     return null;
   }
 
+  if (isAuthLoading) {
+    return (
+      <View style={[S.authLoading, { backgroundColor: th.bg }]} accessibilityLabel="Restaurando sessão">
+        <ActivityIndicator size="large" color={th.orange} />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <StatusBar style="light" animated />
@@ -869,6 +900,14 @@ function MainApp() {
     </SafeAreaProvider>
   );
 }
+
+const S = StyleSheet.create({
+  authLoading: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
 
 export default function App() {
   return (

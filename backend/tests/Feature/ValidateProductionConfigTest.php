@@ -46,4 +46,24 @@ class ValidateProductionConfigTest extends TestCase
             ->expectsOutputToContain('"status": "ok"')
             ->assertSuccessful();
     }
+
+    public function test_command_accepts_brevo_with_a_real_api_key(): void
+    {
+        config([
+            'app.env' => 'production',
+            'app.debug' => false,
+            'app.url' => 'https://api.anot.app',
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+            'app.support_email' => 'suporte@anot.app',
+            'database.default' => 'pgsql',
+            'database.connections.pgsql.password' => 'strong-secret',
+            'queue.default' => 'database',
+            'session.driver' => 'database',
+            'cache.default' => 'database',
+            'mail.default' => 'brevo',
+            'mail.mailers.brevo.api_key' => 'brevo-secret',
+        ]);
+
+        $this->artisan('app:validate-production')->assertSuccessful();
+    }
 }

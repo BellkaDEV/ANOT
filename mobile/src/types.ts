@@ -85,7 +85,10 @@ export interface Activity {
   description?: string;
   createdById: string;
   createdByName: string;
-  user_progress?: ActivityStatus | null;
+  userProgress?: {
+    status: ActivityStatus;
+    personalNotes?: string | null;
+  } | null;
   groups?: ActivityGroup[];
 }
 

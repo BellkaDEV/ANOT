@@ -39,8 +39,8 @@ class ValidateProductionConfig extends Command
                 'message' => 'DB_PASSWORD deve ser definido fora do repositório.',
             ],
             'MAIL' => [
-                'ok' => in_array((string) config('mail.default'), ['smtp', 'ses', 'mailgun', 'postmark'], true),
-                'message' => 'MAIL_MAILER deve apontar para um transporte de produção.',
+                'ok' => $this->hasProductionMailer(),
+                'message' => 'MAIL_MAILER deve apontar para um transporte de produção com credencial válida.',
             ],
             'QUEUE_CONNECTION' => [
                 'ok' => in_array((string) config('queue.default'), ['database', 'redis'], true),
@@ -88,5 +88,19 @@ class ValidateProductionConfig extends Command
     private function hasRealValue(string $value, string $placeholder): bool
     {
         return $value !== '' && $value !== $placeholder && ! str_contains($value, 'GERE_COM');
+    }
+
+    private function hasProductionMailer(): bool
+    {
+        $mailer = (string) config('mail.default');
+
+        if ($mailer === 'brevo') {
+            return $this->hasRealValue(
+                (string) config('mail.mailers.brevo.api_key'),
+                'sua-chave-api-da-brevo',
+            );
+        }
+
+        return in_array($mailer, ['smtp', 'ses', 'mailgun', 'postmark'], true);
     }
 }

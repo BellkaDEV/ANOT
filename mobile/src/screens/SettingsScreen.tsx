@@ -16,6 +16,7 @@ interface Props {
   onToggleReduceMotion: (v: boolean) => void;
   onClearCache: () => void;
   onDeleteAccount: (password: string) => Promise<void>;
+  onChangePassword: (currentPassword: string, password: string) => Promise<void>;
   email?: string;
   emailVerifiedAt?: string | null;
   onResendEmailVerification: () => Promise<void>;
@@ -30,6 +31,7 @@ export default function SettingsScreen({
   onToggleReduceMotion,
   onClearCache,
   onDeleteAccount,
+  onChangePassword,
   email,
   emailVerifiedAt,
   onResendEmailVerification,
@@ -44,6 +46,12 @@ export default function SettingsScreen({
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [changePasswordVisible, setChangePasswordVisible] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changePasswordError, setChangePasswordError] = useState<string | null>(null);
+  const [changePasswordSubmitting, setChangePasswordSubmitting] = useState(false);
   const [verificationSubmitting, setVerificationSubmitting] = useState(false);
 
   const themeLabelMap: Record<ThemeMode, string> = {
@@ -194,7 +202,13 @@ export default function SettingsScreen({
             icon="lock-closed-outline"
             label="Alterar senha"
             sub="Atualizar suas credenciais de segurança"
-            onPress={() => showInfo("Alterar senha", "O fluxo seguro de alteração de senha pode ser solicitado diretamente no suporte ou portal web.")}
+            onPress={() => {
+              setCurrentPassword("");
+              setNewPassword("");
+              setConfirmPassword("");
+              setChangePasswordError(null);
+              setChangePasswordVisible(true);
+            }}
             th={th}
           />
           <HDivider th={th} />
@@ -361,6 +375,48 @@ export default function SettingsScreen({
         onCancel={() => setConfirmClearCache(false)}
         th={th}
       />
+
+      <Modal
+        visible={changePasswordVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !changePasswordSubmitting && setChangePasswordVisible(false)}
+      >
+        <View style={S.modalOverlay}>
+          <View style={[S.modalCard, { backgroundColor: th.card, borderColor: th.border }]}>
+            <Text style={[S.modalTitle, { color: th.fg }]}>Alterar senha</Text>
+            <Text style={[S.modalSub, { color: th.muted, textAlign: "center" }]}>Você sairá da conta em todos os dispositivos.</Text>
+            <TextInput value={currentPassword} onChangeText={setCurrentPassword} placeholder="Senha atual" placeholderTextColor={th.muted} secureTextEntry style={[S.deleteInput, { color: th.fg, borderColor: changePasswordError ? "#dc2626" : th.border, backgroundColor: th.card2 }]} accessibilityLabel="Senha atual" />
+            <TextInput value={newPassword} onChangeText={setNewPassword} placeholder="Nova senha" placeholderTextColor={th.muted} secureTextEntry style={[S.deleteInput, { color: th.fg, borderColor: changePasswordError ? "#dc2626" : th.border, backgroundColor: th.card2 }]} accessibilityLabel="Nova senha" />
+            <TextInput value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Confirmar nova senha" placeholderTextColor={th.muted} secureTextEntry style={[S.deleteInput, { color: th.fg, borderColor: changePasswordError ? "#dc2626" : th.border, backgroundColor: th.card2 }]} accessibilityLabel="Confirmar nova senha" />
+            {changePasswordError && <Text style={S.deleteError}>{changePasswordError}</Text>}
+            <TouchableOpacity
+              style={[S.closeBtn, { backgroundColor: th.orange, opacity: changePasswordSubmitting || !currentPassword || !newPassword || !confirmPassword ? 0.55 : 1 }]}
+              disabled={changePasswordSubmitting || !currentPassword || !newPassword || !confirmPassword}
+              onPress={async () => {
+                if (newPassword !== confirmPassword) {
+                  setChangePasswordError("A confirmação da nova senha não confere.");
+                  return;
+                }
+                setChangePasswordSubmitting(true);
+                try {
+                  await onChangePassword(currentPassword, newPassword);
+                  setChangePasswordVisible(false);
+                } catch (error: any) {
+                  setChangePasswordError(error.message || "Não foi possível alterar a senha.");
+                } finally {
+                  setChangePasswordSubmitting(false);
+                }
+              }}
+            >
+              {changePasswordSubmitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={S.closeBtnText}>Alterar senha</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity style={[S.cancelBtn, { borderColor: th.border }]} onPress={() => setChangePasswordVisible(false)} disabled={changePasswordSubmitting}>
+              <Text style={[S.cancelBtnText, { color: th.fg }]}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <Modal
         visible={deleteAccountVisible}
