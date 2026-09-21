@@ -158,6 +158,31 @@ class AuthSecurityTest extends TestCase
         $this->withToken($token)->getJson('/api/me')->assertUnauthorized();
     }
 
+    public function test_user_can_change_password_and_revoke_all_sessions(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'password-change@anot.test',
+            'password' => Hash::make('SenhaAntiga123'),
+        ]);
+        $token = $user->createToken('current-device')->plainTextToken;
+        $otherToken = $user->createToken('other-device')->plainTextToken;
+
+        $this->withToken($token)
+            ->putJson('/api/account/password', [
+                'current_password' => 'SenhaAntiga123',
+                'password' => 'SenhaNova123',
+                'password_confirmation' => 'SenhaNova123',
+            ])
+            ->assertOk()
+            ->assertJsonPath('message', 'Senha alterada. Faça login novamente em todos os dispositivos.');
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+        Auth::forgetGuards();
+        $this->withToken($token)->getJson('/api/me')->assertUnauthorized();
+        $this->withToken($otherToken)->getJson('/api/me')->assertUnauthorized();
+        $this->postJson('/api/login', ['email' => $user->email, 'password' => 'SenhaNova123'])->assertOk();
+    }
+
     public function test_forgot_password_has_generic_response_and_sends_notification_for_known_email(): void
     {
         Notification::fake();

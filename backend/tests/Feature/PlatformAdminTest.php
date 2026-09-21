@@ -88,4 +88,31 @@ class PlatformAdminTest extends TestCase
             'target_user_id' => $user->id,
         ]);
     }
+
+    public function test_suspended_platform_admin_loses_api_and_web_console_access(): void
+    {
+        $admin = User::factory()->create([
+            'is_platform_admin' => true,
+            'is_suspended' => true,
+        ]);
+        $token = $admin->createToken('admin')->plainTextToken;
+
+        $this->withToken($token)->getJson('/api/admin/users')->assertForbidden();
+        $this->actingAs($admin)->get('/admin')->assertForbidden();
+    }
+
+    public function test_admin_cannot_suspend_another_platform_admin(): void
+    {
+        $admin = User::factory()->create(['is_platform_admin' => true]);
+        $target = User::factory()->create(['is_platform_admin' => true]);
+        $token = $admin->createToken('admin')->plainTextToken;
+
+        $this->withToken($token)
+            ->postJson("/api/admin/users/{$target->id}/suspend")
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Administradores da plataforma não podem ser suspensos.');
+
+        $this->assertDatabaseHas('users', ['id' => $target->id, 'is_suspended' => false]);
+        $this->assertDatabaseMissing('admin_audit_logs', ['target_user_id' => $target->id]);
+    }
 }

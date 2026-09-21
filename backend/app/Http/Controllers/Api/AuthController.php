@@ -180,6 +180,31 @@ class AuthController extends Controller
         ]);
     }
 
+    public function changePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', Password::min(8)->mixedCase()->numbers(), 'confirmed'],
+        ], [
+            'password' => 'A nova senha não atende aos requisitos mínimos.',
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            return response()->json([
+                'message' => 'A senha atual está incorreta.',
+            ], 422);
+        }
+
+        $user->forceFill(['password' => Hash::make($validated['password'])])->save();
+        $user->tokens()->delete();
+
+        return response()->json([
+            'message' => 'Senha alterada. Faça login novamente em todos os dispositivos.',
+        ]);
+    }
+
     public function deleteAccount(Request $request)
     {
         $validated = $request->validate([

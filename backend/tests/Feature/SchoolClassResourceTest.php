@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Activity;
 use App\Models\SchoolClass;
 use App\Models\User;
+use App\Models\UserActivityProgress;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,6 +29,20 @@ class SchoolClassResourceTest extends TestCase
         ]);
         $schoolClass->members()->create(['user_id' => $owner->id, 'role' => 'owner', 'joined_at' => now()]);
         $schoolClass->members()->create(['user_id' => $student->id, 'role' => 'student', 'joined_at' => now()]);
+        $activity = Activity::create([
+            'class_id' => $schoolClass->id,
+            'title' => 'Atividade persistida',
+            'type' => 'dever',
+            'subject' => 'Engenharia',
+            'due_date' => '2026-10-10',
+            'created_by' => $owner->id,
+        ]);
+        UserActivityProgress::create([
+            'activity_id' => $activity->id,
+            'user_id' => $student->id,
+            'status' => 'in_progress',
+            'personal_notes' => 'Revisar material.',
+        ]);
 
         $token = $student->createToken('class-resource-test')->plainTextToken;
 
@@ -41,6 +57,8 @@ class SchoolClassResourceTest extends TestCase
                 ],
             ])
             ->assertJsonPath('class.my_role', 'student')
+            ->assertJsonPath('class.activities.0.user_progress.status', 'in_progress')
+            ->assertJsonPath('class.activities.0.user_progress.personal_notes', 'Revisar material.')
             ->assertJsonMissingPath('class.owner.password')
             ->assertJsonMissingPath('class.members.0.user.is_platform_admin')
             ->assertJsonMissingPath('class.members.0.user.is_suspended');

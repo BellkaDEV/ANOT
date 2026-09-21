@@ -27,11 +27,7 @@ services:
       - SESSION_DRIVER=${SESSION_DRIVER:-database}
       - SANCTUM_EXPIRATION=${SANCTUM_EXPIRATION:-43200}
       - MAIL_MAILER=${MAIL_MAILER:?MAIL_MAILER deve ser definido}
-      - MAIL_SCHEME=${MAIL_SCHEME:-null}
-      - MAIL_HOST=${MAIL_HOST:?MAIL_HOST deve ser definido}
-      - MAIL_PORT=${MAIL_PORT:-587}
-      - MAIL_USERNAME=${MAIL_USERNAME:?MAIL_USERNAME deve ser definido}
-      - MAIL_PASSWORD=${MAIL_PASSWORD:?MAIL_PASSWORD deve ser definido}
+      - BREVO_API_KEY=${BREVO_API_KEY:?BREVO_API_KEY deve ser definido}
       - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:?MAIL_FROM_ADDRESS deve ser definido}
       - MAIL_FROM_NAME=${MAIL_FROM_NAME:-ANOT}
     depends_on:

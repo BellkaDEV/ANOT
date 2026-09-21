@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\SchoolClassResource;
 use App\Models\ClassMember;
 use App\Models\SchoolClass;
+use App\Models\UserActivityProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -25,10 +26,17 @@ class ClassController extends Controller
                 'members.user:id,name,email,avatar_url',
                 'announcements.author:id,name,email,avatar_url',
                 'activities.creator:id,name,email',
+                'activities.groups.members.user:id,name,email,avatar_url',
+                'activities.groups.leader:id,name,email,avatar_url',
+                'activities.groups.invitations',
                 'events',
             ])
             ->withCount('members')
-            ->get()
+            ->get();
+
+        $this->attachUserProgress($classes, $user);
+
+        $classes = $classes
             ->map(function ($class) use ($user) {
                 $membership = ClassMember::where('class_id', $class->id)
                     ->where('user_id', $user->id)
@@ -105,6 +113,9 @@ class ClassController extends Controller
             'members.user:id,name,email,avatar_url',
             'announcements.author:id,name,email,avatar_url',
             'activities.creator:id,name,email',
+            'activities.groups.members.user:id,name,email,avatar_url',
+            'activities.groups.leader:id,name,email,avatar_url',
+            'activities.groups.invitations',
             'events',
         ])->find($id);
 
@@ -119,6 +130,8 @@ class ClassController extends Controller
         if (! $membership && $schoolClass->owner_id !== $user->id) {
             return response()->json(['message' => 'Acesso negado. Você não é membro desta turma.'], 403);
         }
+
+        $this->attachUserProgress(collect([$schoolClass]), $user);
 
         $schoolClass->my_role = $membership ? $membership->role : 'owner';
         $schoolClass->qr_code_payload = 'anot://join?code='.$schoolClass->code;
@@ -324,6 +337,20 @@ class ClassController extends Controller
                 'class' => SchoolClassResource::make($schoolClass),
                 'role' => $role,
             ], 201);
+        });
+    }
+
+    private function attachUserProgress($classes, $user): void
+    {
+        $activities = $classes->flatMap(fn ($schoolClass) => $schoolClass->activities);
+        $progressByActivity = UserActivityProgress::query()
+            ->whereIn('activity_id', $activities->pluck('id'))
+            ->where('user_id', $user->id)
+            ->get()
+            ->keyBy('activity_id');
+
+        $activities->each(function ($activity) use ($progressByActivity): void {
+            $activity->setAttribute('user_progress', $progressByActivity->get($activity->id));
         });
     }
 }

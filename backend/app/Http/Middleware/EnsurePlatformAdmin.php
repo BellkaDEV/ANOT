@@ -10,7 +10,13 @@ class EnsurePlatformAdmin
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user()?->is_platform_admin) {
+        $user = $request->user();
+
+        if (! $user?->is_platform_admin || $user->is_suspended) {
+            if (! $request->expectsJson()) {
+                abort(403);
+            }
+
             return response()->json([
                 'message' => 'Acesso restrito à administração da plataforma.',
             ], 403);
