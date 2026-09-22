@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build:
@@ -11,14 +9,27 @@ services:
     environment:
       - APP_ENV=${APP_ENV:-production}
       - APP_DEBUG=${APP_DEBUG:-false}
+      - APP_URL=${APP_URL:?APP_URL deve ser definido}
       # Nunca versionar credenciais reais. Use .env ou segredos do provedor cloud.
       - APP_KEY=${APP_KEY:?APP_KEY deve ser definido}
+      - APP_VERSION=${APP_VERSION:-1.0.0}
+      - MOBILE_RESET_URL=${MOBILE_RESET_URL:?MOBILE_RESET_URL deve ser definido}
+      - SUPPORT_EMAIL=${SUPPORT_EMAIL:?SUPPORT_EMAIL deve ser definido}
+      - LEGAL_UPDATED_AT=${LEGAL_UPDATED_AT:-18/09/2026}
       - DB_CONNECTION=${DB_CONNECTION:-pgsql}
       - DB_HOST=${DB_HOST:-db}
       - DB_PORT=${DB_PORT:-5432}
       - DB_DATABASE=${DB_DATABASE:?DB_DATABASE deve ser definido}
       - DB_USERNAME=${DB_USERNAME:?DB_USERNAME deve ser definido}
       - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD deve ser definido}
+      - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
+      - CACHE_STORE=${CACHE_STORE:-database}
+      - SESSION_DRIVER=${SESSION_DRIVER:-database}
+      - SANCTUM_EXPIRATION=${SANCTUM_EXPIRATION:-43200}
+      - MAIL_MAILER=${MAIL_MAILER:?MAIL_MAILER deve ser definido}
+      - BREVO_API_KEY=${BREVO_API_KEY:?BREVO_API_KEY deve ser definido}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:?MAIL_FROM_ADDRESS deve ser definido}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME:-ANOT}
     depends_on:
       db:
         condition: service_healthy

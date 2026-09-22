@@ -2,17 +2,17 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\Activity;
-use App\Models\SchoolClass;
 use App\Models\ClassMember;
+use App\Models\SchoolClass;
+use App\Models\User;
 
 class ActivityPolicy
 {
     private function getMembership($classId, User $user): ?string
     {
         $schoolClass = SchoolClass::find($classId);
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return null;
         }
 
@@ -30,12 +30,14 @@ class ActivityPolicy
     public function view(User $user, Activity $activity): bool
     {
         $role = $this->getMembership($activity->class_id, $user);
-        return !is_null($role);
+
+        return ! is_null($role);
     }
 
     public function manage(User $user, Activity $activity): bool
     {
         $role = $this->getMembership($activity->class_id, $user);
+
         return in_array($role, ['owner', 'rep']);
     }
 }

@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
@@ -54,11 +58,13 @@ class AuthController extends Controller
             'avatar_url' => $validated['avatar_url'] ?? null,
         ]);
 
+        event(new Registered($user));
+
         $token = $user->createToken('anot_auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Usuário registrado com sucesso.',
-            'user' => $user,
+            'user' => UserResource::make($user),
             'token' => $token,
         ], 201);
     }
@@ -78,18 +84,74 @@ class AuthController extends Controller
 
         $user = User::where('email', $validated['email'])->first();
 
-        if (!$user || !Hash::check($validated['password'], $user->password)) {
+        if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return response()->json([
                 'message' => 'Credenciais inválidas.',
             ], 401);
+        }
+
+        if ($user->is_suspended) {
+            return response()->json([
+                'message' => 'Esta conta está suspensa. Entre em contato com o suporte.',
+            ], 403);
         }
 
         $token = $user->createToken('anot_auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Login realizado com sucesso.',
-            'user' => $user,
+            'user' => UserResource::make($user),
             'token' => $token,
+        ]);
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|string|email',
+        ]);
+
+        PasswordBroker::sendResetLink(['email' => strtolower(trim($validated['email']))]);
+
+        return response()->json([
+            'message' => 'Se o e-mail estiver cadastrado, enviaremos instruções para redefinir a senha.',
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|string|email',
+            'password' => [
+                'required',
+                'string',
+                Password::min(8)->mixedCase()->numbers(),
+                'confirmed',
+            ],
+        ]);
+
+        $status = PasswordBroker::reset(
+            [
+                'email' => strtolower(trim($validated['email'])),
+                'password' => $validated['password'],
+                'password_confirmation' => $request->input('password_confirmation'),
+                'token' => $validated['token'],
+            ],
+            function (User $user, string $password): void {
+                $user->forceFill(['password' => Hash::make($password)])->save();
+                $user->tokens()->delete();
+            },
+        );
+
+        if ($status !== PasswordBroker::PASSWORD_RESET) {
+            return response()->json([
+                'message' => 'Não foi possível redefinir a senha com os dados informados.',
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Senha redefinida com sucesso. Faça login novamente.',
         ]);
     }
 
@@ -114,7 +176,56 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json([
-            'user' => $request->user(),
+            'user' => UserResource::make($request->user()),
+        ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', Password::min(8)->mixedCase()->numbers(), 'confirmed'],
+        ], [
+            'password' => 'A nova senha não atende aos requisitos mínimos.',
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            return response()->json([
+                'message' => 'A senha atual está incorreta.',
+            ], 422);
+        }
+
+        $user->forceFill(['password' => Hash::make($validated['password'])])->save();
+        $user->tokens()->delete();
+
+        return response()->json([
+            'message' => 'Senha alterada. Faça login novamente em todos os dispositivos.',
+        ]);
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        $validated = $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($validated['password'], $user->password)) {
+            return response()->json([
+                'message' => 'A senha informada está incorreta.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($user): void {
+            $user->tokens()->delete();
+            $user->delete();
+        });
+
+        return response()->json([
+            'message' => 'Conta excluída com sucesso.',
         ]);
     }
 }

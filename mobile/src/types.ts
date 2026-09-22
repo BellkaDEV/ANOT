@@ -8,7 +8,7 @@ export type WorkMode       = "individual" | "groups";
 export type AssessmentFormat = "fechada" | "aberta" | "mista" | "nao_informado";
 
 export type Screen =
-  | "welcome" | "login" | "register" | "dashboard"
+  | "welcome" | "login" | "register" | "forgotPassword" | "resetPassword" | "dashboard"
   | "createClass" | "classCreated" | "joinClass"
   | "classHome" | "activityDetail" | "announcementDetail" | "notifications"
   | "events" | "profile" | "settings" | "about"
@@ -85,7 +85,10 @@ export interface Activity {
   description?: string;
   createdById: string;
   createdByName: string;
-  user_progress?: ActivityStatus | null;
+  userProgress?: {
+    status: ActivityStatus;
+    personalNotes?: string | null;
+  } | null;
   groups?: ActivityGroup[];
 }
 

@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Announcement;
+use App\Models\ClassMember;
+use App\Models\SchoolClass;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use App\Models\User;
-use App\Models\SchoolClass;
-use App\Models\ClassMember;
-use App\Models\Announcement;
 
 class AnnouncementTest extends TestCase
 {

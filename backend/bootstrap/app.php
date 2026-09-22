@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\EnsurePlatformAdmin;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
-use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,8 +21,18 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('sanctum:prune-expired --hours=720')->daily();
     })
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(AssignRequestId::class);
+
+        $middleware->alias([
+            'platform.admin' => EnsurePlatformAdmin::class,
+        ]);
+
         $middleware->redirectGuestsTo(function (Request $request): ?string {
-            return $request->is('api/*') ? null : route('login');
+            if ($request->is('api/*')) {
+                return null;
+            }
+
+            return $request->is('admin*') ? route('admin.login') : route('login');
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -29,7 +42,20 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (AuthenticationException $exception, Request $request) {
             if ($request->is('api/*')) {
-                return response()->json(['message' => 'Não autenticado.'], 401);
+                return response()->json([
+                    'message' => 'Não autenticado.',
+                    'request_id' => $request->attributes->get('request_id'),
+                ], 401);
+            }
+        });
+
+        $exceptions->render(function (ValidationException $exception, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Dados inválidos.',
+                    'errors' => $exception->errors(),
+                    'request_id' => $request->attributes->get('request_id'),
+                ], 422);
             }
         });
     })->create();

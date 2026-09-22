@@ -1,3 +1,14 @@
+FROM node:20-alpine AS frontend-assets
+
+WORKDIR /build
+
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+
+COPY resources ./resources
+COPY vite.config.js ./
+RUN npm run build
+
 FROM php:8.3-fpm-alpine
 
 # Install system dependencies and PHP extensions
@@ -22,6 +33,9 @@ WORKDIR /var/www
 
 # Copy codebase
 COPY . .
+
+# Assets do console web compilados fora da imagem final.
+COPY --from=frontend-assets /build/public/build ./public/build
 
 # Install PHP dependencies
 RUN composer install --no-interaction --optimize-autoloader --no-dev

@@ -3,18 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
-use App\Models\SchoolClass;
-use App\Models\ClassMember;
+use App\Http\Resources\AnnouncementResource;
 use App\Models\Announcement;
+use App\Models\ClassMember;
+use App\Models\SchoolClass;
+use Illuminate\Http\Request;
 
 class AnnouncementController extends Controller
 {
     private function getMembership($classId, $user)
     {
         $schoolClass = SchoolClass::find($classId);
-        if (!$schoolClass) {
+        if (! $schoolClass) {
             return null;
         }
 
@@ -33,7 +33,7 @@ class AnnouncementController extends Controller
     {
         $user = $request->user();
         $role = $this->getMembership($classId, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
@@ -41,14 +41,14 @@ class AnnouncementController extends Controller
         $announcements = Announcement::where('class_id', $classId)
             ->where(function ($query) {
                 $query->where('expires_at', '>', now())
-                      ->orWhereNull('expires_at');
+                    ->orWhereNull('expires_at');
             })
             ->with('author:id,name,avatar_url')
             ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json([
-            'announcements' => $announcements
+            'announcements' => AnnouncementResource::collection($announcements),
         ]);
     }
 
@@ -56,11 +56,11 @@ class AnnouncementController extends Controller
     {
         $user = $request->user();
         $role = $this->getMembership($classId, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        if (!in_array($role, ['owner', 'rep'])) {
+        if (! in_array($role, ['owner', 'rep'])) {
             return response()->json(['message' => 'Apenas o criador ou representantes podem criar avisos.'], 403);
         }
 
@@ -78,7 +78,7 @@ class AnnouncementController extends Controller
 
         return response()->json([
             'message' => 'Aviso criado com sucesso.',
-            'announcement' => $announcement
+            'announcement' => AnnouncementResource::make($announcement),
         ], 201);
     }
 
@@ -86,17 +86,17 @@ class AnnouncementController extends Controller
     {
         $user = $request->user();
         $announcement = Announcement::find($id);
-        if (!$announcement) {
+        if (! $announcement) {
             return response()->json(['message' => 'Aviso não encontrado.'], 404);
         }
 
         $role = $this->getMembership($announcement->class_id, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
         return response()->json([
-            'announcement' => $announcement->load('author:id,name,avatar_url')
+            'announcement' => AnnouncementResource::make($announcement->load('author:id,name,avatar_url')),
         ]);
     }
 
@@ -104,16 +104,16 @@ class AnnouncementController extends Controller
     {
         $user = $request->user();
         $announcement = Announcement::find($id);
-        if (!$announcement) {
+        if (! $announcement) {
             return response()->json(['message' => 'Aviso não encontrado.'], 404);
         }
 
         $role = $this->getMembership($announcement->class_id, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        if (!in_array($role, ['owner', 'rep'])) {
+        if (! in_array($role, ['owner', 'rep'])) {
             return response()->json(['message' => 'Apenas o criador ou representantes podem editar avisos.'], 403);
         }
 
@@ -128,7 +128,7 @@ class AnnouncementController extends Controller
 
         return response()->json([
             'message' => 'Aviso atualizado com sucesso.',
-            'announcement' => $announcement
+            'announcement' => AnnouncementResource::make($announcement),
         ]);
     }
 
@@ -136,23 +136,23 @@ class AnnouncementController extends Controller
     {
         $user = $request->user();
         $announcement = Announcement::find($id);
-        if (!$announcement) {
+        if (! $announcement) {
             return response()->json(['message' => 'Aviso não encontrado.'], 404);
         }
 
         $role = $this->getMembership($announcement->class_id, $user);
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        if (!in_array($role, ['owner', 'rep'])) {
+        if (! in_array($role, ['owner', 'rep'])) {
             return response()->json(['message' => 'Apenas o criador ou representantes podem excluir avisos.'], 403);
         }
 
         $announcement->delete();
 
         return response()->json([
-            'message' => 'Aviso excluído com sucesso.'
+            'message' => 'Aviso excluído com sucesso.',
         ]);
     }
 }

@@ -26,7 +26,7 @@ class Announcement extends Model
     {
         // Regra de Negócio: Todo aviso criado calcula automaticamente 21 dias para expiração (expires_at)
         static::creating(function ($announcement) {
-            if (!$announcement->expires_at) {
+            if (! $announcement->expires_at) {
                 $announcement->expires_at = now()->addDays(21);
             }
         });

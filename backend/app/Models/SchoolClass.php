@@ -34,8 +34,8 @@ class SchoolClass extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'class_members', 'class_id', 'user_id')
-                    ->withPivot('role', 'joined_at')
-                    ->withTimestamps();
+            ->withPivot('role', 'joined_at')
+            ->withTimestamps();
     }
 
     public function announcements()

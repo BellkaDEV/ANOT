@@ -1,13 +1,15 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import type { AppTheme } from "../types";
+import { API_URL } from "../services/api";
 
 interface Props { onBack: () => void; th: AppTheme }
 
 export default function AboutScreen({ onBack, th }: Props) {
   const insets = useSafeAreaInsets();
+  const publicBaseUrl = API_URL.replace(/\/api\/?$/, "");
   const features = [
     { icon: "people-outline",       title: "Gestão de turmas",     desc: "Crie ou entre em turmas com um código único" },
     { icon: "notifications-outline",title: "Avisos em tempo real", desc: "Representantes postam, alunos recebem notificações" },
@@ -77,7 +79,30 @@ export default function AboutScreen({ onBack, th }: Props) {
           ))}
         </View>
 
-        <View style={[S.footer, { borderColor: th.border }]}>
+        <Text style={[S.sLabel, { color: th.muted }]}>INFORMAÇÕES E SUPORTE</Text>
+        <View style={[S.card, { backgroundColor: th.card, borderColor: th.border }]}>
+          {[
+            { icon: "shield-checkmark-outline", label: "Política de privacidade", path: "/privacy" },
+            { icon: "document-text-outline", label: "Termos de uso", path: "/terms" },
+            { icon: "help-circle-outline", label: "Central de suporte", path: "/support" },
+          ].map((item, i, arr) => (
+            <React.Fragment key={item.path}>
+              <TouchableOpacity
+                accessibilityRole="link"
+                accessibilityLabel={item.label}
+                style={S.linkRow}
+                onPress={() => Linking.openURL(`${publicBaseUrl}${item.path}`)}
+              >
+                <Ionicons name={item.icon as any} size={20} color={th.orange} />
+                <Text style={[S.linkLabel, { color: th.fg }]}>{item.label}</Text>
+                <Ionicons name="open-outline" size={17} color={th.muted} />
+              </TouchableOpacity>
+              {i < arr.length - 1 && <View style={[S.div, { backgroundColor: th.border }]} />}
+            </React.Fragment>
+          ))}
+        </View>
+
+        <View style={[S.footer, { borderColor: th.border }]}> 
           <Text style={[S.footerText, { color: th.muted }]}>
             Feito com ❤️ para universitários brasileiros
           </Text>
@@ -108,6 +133,8 @@ const S = StyleSheet.create({
   techRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14 },
   techKey:    { fontSize: 13, fontWeight: "600" },
   techVal:    { fontSize: 13 },
+  linkRow:    { flexDirection: "row", alignItems: "center", gap: 12, padding: 15 },
+  linkLabel:  { flex: 1, fontSize: 14, fontWeight: "600" },
   footer:     { borderTopWidth: 1, paddingTop: 16, alignItems: "center" },
   footerText: { fontSize: 13, textAlign: "center" },
 });

@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use App\Mail\BrevoApiTransport;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +25,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Mail::extend('brevo', fn (array $config) => new BrevoApiTransport($config['api_key']));
+
+        ResetPassword::createUrlUsing(function (object $notifiable, string $token): string {
+            return config('app.mobile_reset_url').'?token='.urlencode($token).'&email='.urlencode($notifiable->getEmailForPasswordReset());
+        });
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
@@ -31,7 +40,7 @@ class AppServiceProvider extends ServiceProvider
 
             return [
                 Limit::perMinute(5)->by($request->ip()),
-                Limit::perMinute(3)->by($email . '|' . $request->ip()),
+                Limit::perMinute(3)->by($email.'|'.$request->ip()),
             ];
         });
 
@@ -41,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('join-class', function (Request $request) {
             $userId = $request->user()?->id ?: $request->ip();
+
             return Limit::perMinute(5)->by($userId);
         });
     }

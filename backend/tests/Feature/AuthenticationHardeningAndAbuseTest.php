@@ -3,10 +3,8 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\SchoolClass;
 use Illuminate\Support\Facades\RateLimiter;
+use Tests\TestCase;
 
 class AuthenticationHardeningAndAbuseTest extends TestCase
 {
@@ -30,7 +28,7 @@ class AuthenticationHardeningAndAbuseTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-                 ->assertJsonValidationErrors(['password']);
+            ->assertJsonValidationErrors(['password']);
     }
 
     public function test_normalizes_email_with_trim_and_lowercase()
@@ -54,7 +52,7 @@ class AuthenticationHardeningAndAbuseTest extends TestCase
         ]);
 
         $loginRes->assertStatus(200)
-                 ->assertJsonStructure(['token', 'user']);
+            ->assertJsonStructure(['token', 'user']);
     }
 
     public function test_protected_route_requires_authentication()

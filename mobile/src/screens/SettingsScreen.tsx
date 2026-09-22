@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppIcon from "../components/AppIcon";
 import SettingRow from "../components/SettingRow";
@@ -15,6 +15,11 @@ interface Props {
   reduceMotion: boolean;
   onToggleReduceMotion: (v: boolean) => void;
   onClearCache: () => void;
+  onDeleteAccount: (password: string) => Promise<void>;
+  onChangePassword: (currentPassword: string, password: string) => Promise<void>;
+  email?: string;
+  emailVerifiedAt?: string | null;
+  onResendEmailVerification: () => Promise<void>;
   onBack: () => void;
   th: AppTheme;
 }
@@ -25,6 +30,11 @@ export default function SettingsScreen({
   reduceMotion,
   onToggleReduceMotion,
   onClearCache,
+  onDeleteAccount,
+  onChangePassword,
+  email,
+  emailVerifiedAt,
+  onResendEmailVerification,
   onBack,
   th,
 }: Props) {
@@ -32,6 +42,17 @@ export default function SettingsScreen({
   const [themeModalVisible, setThemeModalVisible] = useState(false);
   const [confirmClearCache, setConfirmClearCache] = useState(false);
   const [infoModalContent, setInfoModalContent] = useState<{ title: string; desc: string } | null>(null);
+  const [deleteAccountVisible, setDeleteAccountVisible] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [changePasswordVisible, setChangePasswordVisible] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changePasswordError, setChangePasswordError] = useState<string | null>(null);
+  const [changePasswordSubmitting, setChangePasswordSubmitting] = useState(false);
+  const [verificationSubmitting, setVerificationSubmitting] = useState(false);
 
   const themeLabelMap: Record<ThemeMode, string> = {
     system: "Sistema",
@@ -63,6 +84,28 @@ export default function SettingsScreen({
         {/* Aparência */}
         <Text style={[S.sLabel, { color: th.muted }]}>APARÊNCIA</Text>
         <View style={[S.card, { backgroundColor: th.card, borderColor: th.border }]}>
+          {email && !emailVerifiedAt && <>
+            <SettingRow
+              icon="mail-unread-outline"
+              label="Confirmar e-mail"
+              sub={`Reenviar confirmação para ${email}`}
+              badge="Pendente"
+              onPress={async () => {
+                setVerificationSubmitting(true);
+                try {
+                  await onResendEmailVerification();
+                  showInfo("E-mail enviado", "Confira sua caixa de entrada e a pasta de spam para confirmar seu endereço.");
+                } catch (error: any) {
+                  showInfo("Não foi possível enviar", error.message || "Tente novamente em alguns instantes.");
+                } finally {
+                  setVerificationSubmitting(false);
+                }
+              }}
+              disabled={verificationSubmitting}
+              th={th}
+            />
+            <HDivider th={th} />
+          </>}
           <SettingRow
             icon="color-palette-outline"
             label="Tema do aplicativo"
@@ -78,6 +121,19 @@ export default function SettingsScreen({
             sub="Diminui efeitos de transição visual"
             value={reduceMotion}
             onToggle={onToggleReduceMotion}
+            th={th}
+          />
+          <HDivider th={th} />
+          <SettingRow
+            icon="trash-outline"
+            label="Excluir minha conta"
+            sub="Remove sua conta e os dados associados permanentemente"
+            isDestructive
+            onPress={() => {
+              setDeletePassword("");
+              setDeleteError(null);
+              setDeleteAccountVisible(true);
+            }}
             th={th}
           />
         </View>
@@ -146,7 +202,13 @@ export default function SettingsScreen({
             icon="lock-closed-outline"
             label="Alterar senha"
             sub="Atualizar suas credenciais de segurança"
-            onPress={() => showInfo("Alterar senha", "O fluxo seguro de alteração de senha pode ser solicitado diretamente no suporte ou portal web.")}
+            onPress={() => {
+              setCurrentPassword("");
+              setNewPassword("");
+              setConfirmPassword("");
+              setChangePasswordError(null);
+              setChangePasswordVisible(true);
+            }}
             th={th}
           />
           <HDivider th={th} />
@@ -313,6 +375,106 @@ export default function SettingsScreen({
         onCancel={() => setConfirmClearCache(false)}
         th={th}
       />
+
+      <Modal
+        visible={changePasswordVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !changePasswordSubmitting && setChangePasswordVisible(false)}
+      >
+        <View style={S.modalOverlay}>
+          <View style={[S.modalCard, { backgroundColor: th.card, borderColor: th.border }]}>
+            <Text style={[S.modalTitle, { color: th.fg }]}>Alterar senha</Text>
+            <Text style={[S.modalSub, { color: th.muted, textAlign: "center" }]}>Você sairá da conta em todos os dispositivos.</Text>
+            <TextInput value={currentPassword} onChangeText={setCurrentPassword} placeholder="Senha atual" placeholderTextColor={th.muted} secureTextEntry style={[S.deleteInput, { color: th.fg, borderColor: changePasswordError ? "#dc2626" : th.border, backgroundColor: th.card2 }]} accessibilityLabel="Senha atual" />
+            <TextInput value={newPassword} onChangeText={setNewPassword} placeholder="Nova senha" placeholderTextColor={th.muted} secureTextEntry style={[S.deleteInput, { color: th.fg, borderColor: changePasswordError ? "#dc2626" : th.border, backgroundColor: th.card2 }]} accessibilityLabel="Nova senha" />
+            <TextInput value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Confirmar nova senha" placeholderTextColor={th.muted} secureTextEntry style={[S.deleteInput, { color: th.fg, borderColor: changePasswordError ? "#dc2626" : th.border, backgroundColor: th.card2 }]} accessibilityLabel="Confirmar nova senha" />
+            {changePasswordError && <Text style={S.deleteError}>{changePasswordError}</Text>}
+            <TouchableOpacity
+              style={[S.closeBtn, { backgroundColor: th.orange, opacity: changePasswordSubmitting || !currentPassword || !newPassword || !confirmPassword ? 0.55 : 1 }]}
+              disabled={changePasswordSubmitting || !currentPassword || !newPassword || !confirmPassword}
+              onPress={async () => {
+                if (newPassword !== confirmPassword) {
+                  setChangePasswordError("A confirmação da nova senha não confere.");
+                  return;
+                }
+                setChangePasswordSubmitting(true);
+                try {
+                  await onChangePassword(currentPassword, newPassword);
+                  setChangePasswordVisible(false);
+                } catch (error: any) {
+                  setChangePasswordError(error.message || "Não foi possível alterar a senha.");
+                } finally {
+                  setChangePasswordSubmitting(false);
+                }
+              }}
+            >
+              {changePasswordSubmitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={S.closeBtnText}>Alterar senha</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity style={[S.cancelBtn, { borderColor: th.border }]} onPress={() => setChangePasswordVisible(false)} disabled={changePasswordSubmitting}>
+              <Text style={[S.cancelBtnText, { color: th.fg }]}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={deleteAccountVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !deleteSubmitting && setDeleteAccountVisible(false)}
+      >
+        <View style={S.modalOverlay}>
+          <View style={[S.modalCard, { backgroundColor: th.card, borderColor: th.border }]}>
+            <View style={[S.infoIconWrap, { backgroundColor: "rgba(220, 38, 38, 0.12)" }]}>
+              <AppIcon name="warning-outline" size={32} color="#dc2626" />
+            </View>
+            <Text style={[S.modalTitle, { color: th.fg }]}>Excluir conta?</Text>
+            <Text style={[S.modalSub, { color: th.muted, textAlign: "center" }]}>
+              Esta ação é permanente e removerá sua conta e os dados associados. Digite sua senha para confirmar.
+            </Text>
+            <TextInput
+              value={deletePassword}
+              onChangeText={(value) => {
+                setDeletePassword(value);
+                setDeleteError(null);
+              }}
+              placeholder="Senha atual"
+              placeholderTextColor={th.muted}
+              secureTextEntry
+              autoCapitalize="none"
+              style={[S.deleteInput, { color: th.fg, borderColor: deleteError ? "#dc2626" : th.border, backgroundColor: th.card2 }]}
+              accessibilityLabel="Senha atual para excluir a conta"
+            />
+            {deleteError && <Text style={S.deleteError}>{deleteError}</Text>}
+            <TouchableOpacity
+              style={[S.closeBtn, { backgroundColor: "#dc2626", opacity: deleteSubmitting || !deletePassword ? 0.55 : 1 }]}
+              disabled={deleteSubmitting || !deletePassword}
+              onPress={async () => {
+                setDeleteSubmitting(true);
+                try {
+                  await onDeleteAccount(deletePassword);
+                  setDeleteAccountVisible(false);
+                } catch (error: any) {
+                  setDeleteError(error.message || "Não foi possível excluir a conta.");
+                } finally {
+                  setDeleteSubmitting(false);
+                }
+              }}
+              activeOpacity={0.8}
+            >
+              {deleteSubmitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={S.closeBtnText}>Excluir permanentemente</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[S.cancelBtn, { borderColor: th.border }]}
+              onPress={() => setDeleteAccountVisible(false)}
+              disabled={deleteSubmitting}
+            >
+              <Text style={[S.cancelBtnText, { color: th.fg }]}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -416,6 +578,34 @@ const S = StyleSheet.create({
   },
   closeBtnText: {
     color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  deleteInput: {
+    width: "100%",
+    height: 48,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    marginBottom: 8,
+    fontSize: 15,
+  },
+  deleteError: {
+    color: "#dc2626",
+    fontSize: 12,
+    alignSelf: "flex-start",
+    marginBottom: 8,
+  },
+  cancelBtn: {
+    marginTop: 10,
+    width: "100%",
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cancelBtnText: {
     fontSize: 14,
     fontWeight: "700",
   },

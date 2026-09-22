@@ -23,6 +23,8 @@ As variáveis de ambiente devem ser injetadas pelo cofre de segredos do seu prov
 | `DB_PASSWORD` | Senha forte do banco de dados | `*(Segredo gerado)*` |
 | `SANCTUM_EXPIRATION` | Duração do token em minutos (padrão: 30 dias = 43200 min) | `43200` |
 | `EXPO_PUBLIC_API_URL` | URL apontada no app mobile (HTTPS) | `https://api.anot.app/api` |
+| `MAIL_*` | Credenciais SMTP para confirmação de e-mail e recuperação de senha | `*(Segredos do provedor)*` |
+| `SUPPORT_EMAIL` | Canal público de suporte e solicitações de conta | `suporte@anot.app` |
 
 > ⚠️ **ATENÇÃO — Rotação de Segredos**: Qualquer chave (`APP_KEY` ou `DB_PASSWORD`) que tenha sido previamente exposta em commits legados deve ser rotacionada imediatamente no ambiente de nuvem.
 
@@ -34,6 +36,7 @@ As variáveis de ambiente devem ser injetadas pelo cofre de segredos do seu prov
    ```bash
    docker build -t anot-backend:v2.0.0 ./backend
    ```
+   O Dockerfile usa build multi-stage: compila os assets do console administrativo com Node 20 e entrega apenas o resultado junto da imagem PHP final.
 2. **Execução de Containers**:
    - Utilize a configuração [docker-compose.yml](file:///C:/Users/User/ANOT/backend/docker-compose.yml) limpa.
    - O banco PostgreSQL opera isolado dentro da rede Docker fechada (sem bind port `5432:5432` externa).
@@ -71,6 +74,32 @@ Em caso de falha crítica durante o deploy:
 1. Reverter o tráfego para a versão anterior da imagem Docker: `anot-backend:v1.9.0`.
 2. Caso a migration de release tenha alterado esquemas sem breaking changes (ex: adição de tabelas/colunas nulas), os containers anteriores continuarão operantes.
 3. Se necessário restaurar estado de dados pré-release, execute o procedimento de restore utilizando o último backup realizado imediatamente antes do deploy.
+
+### Checklist mínimo antes de promover uma release
+
+- [ ] CI verde: PHPUnit, Pint, Composer audit, TypeScript, Expo Doctor, bundle Android, assets web e Docker build.
+- [ ] `APP_DEBUG=false`, `APP_URL` HTTPS e `MOBILE_RESET_URL` apontando para o domínio/scheme aprovado.
+- [ ] Executar `php artisan app:validate-production` e corrigir qualquer `FAIL` antes de liberar o tráfego.
+- [ ] Migration executada uma única vez como etapa controlada.
+- [ ] Primeiro administrador configurado com `php artisan admin:promote <email> --yes`.
+- [ ] SMTP testado para recuperação de senha e verificação de e-mail.
+- [ ] Healthcheck `/health` validado externamente após o deploy.
+- [ ] Registrar o header `X-Request-ID` ao investigar falhas; o backend preserva UUIDs válidos e gera um identificador seguro quando o cliente envia valor inválido.
+- [ ] Para erros de validação da API, registrar `request_id` junto de `message` e `errors`; não registrar tokens, senhas ou payloads pessoais completos.
+- [ ] `docker compose config` validado com os secrets injetados; SMTP, deep link, versão e suporte repassados ao container.
+- [ ] Backup anterior e imagem anterior identificados antes da promoção.
+
+### Build Android
+
+O APK interno e o AAB de produção são gerados pelo EAS, fora do runner de deploy do backend:
+
+```bash
+cd mobile
+npx eas build --profile preview --platform android
+npx eas build --profile production --platform android
+```
+
+O `EXPO_TOKEN` deve existir somente nos secrets do provedor/EAS. Keystore de distribuição nunca deve ser versionado.
 
 ---
 

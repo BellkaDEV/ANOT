@@ -1,20 +1,21 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Api\ActivityController;
+use App\Http\Controllers\Api\ActivityGroupController;
+use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClassController;
-use App\Http\Controllers\Api\MemberController;
-use App\Http\Controllers\Api\ActivityController;
-use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\EventController;
-
-use App\Http\Controllers\Api\ActivityGroupController;
+use App\Http\Controllers\Api\MemberController;
+use App\Http\Controllers\EmailVerificationController;
+use Illuminate\Support\Facades\Route;
 
 // Rotas públicas (sem autenticação)
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:login');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:login');
 
 // Rotas protegidas (com autenticação via Sanctum e rate limit de 60 req/min)
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
@@ -22,6 +23,16 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/logout-all', [AuthController::class, 'logoutAll']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::put('/account/password', [AuthController::class, 'changePassword']);
+    Route::delete('/account', [AuthController::class, 'deleteAccount']);
+    Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])->middleware('throttle:login');
+
+    Route::prefix('admin')->middleware('platform.admin')->group(function () {
+        Route::get('/users', [AdminController::class, 'users']);
+        Route::get('/classes', [AdminController::class, 'classes']);
+        Route::post('/users/{user}/suspend', [AdminController::class, 'suspend']);
+        Route::post('/users/{user}/unsuspend', [AdminController::class, 'unsuspend']);
+    });
 
     // Turmas (Classes)
     Route::get('/classes', [ClassController::class, 'index']);

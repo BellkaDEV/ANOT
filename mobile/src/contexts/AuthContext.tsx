@@ -7,6 +7,7 @@ export interface User {
   name: string;
   email: string;
   avatar_url?: string;
+  email_verified_at?: string | null;
 }
 
 interface AuthContextData {
@@ -16,7 +17,12 @@ interface AuthContextData {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
+  resetPassword: (token: string, email: string, password: string) => Promise<void>;
+  resendEmailVerification: () => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
+  changePassword: (currentPassword: string, password: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -110,6 +116,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const requestPasswordReset = async (email: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await api.post('/forgot-password', { email });
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Não foi possível solicitar a recuperação agora.';
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetPassword = async (token: string, email: string, password: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await api.post('/reset-password', {
+        token,
+        email,
+        password,
+        password_confirmation: password,
+      });
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Não foi possível redefinir a senha.';
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resendEmailVerification = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await api.post('/email/verification-notification');
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Não foi possível reenviar a verificação.';
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -119,6 +172,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       await deleteToken();
       setUser(null);
+      setIsLoading(false);
+    }
+  };
+
+  const deleteAccount = async (password: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await api.delete('/account', { data: { password } });
+      await deleteToken();
+      setUser(null);
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Não foi possível excluir a conta.';
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const changePassword = async (currentPassword: string, password: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await api.put('/account/password', {
+        current_password: currentPassword,
+        password,
+        password_confirmation: password,
+      });
+      await deleteToken();
+      setUser(null);
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Não foi possível alterar a senha.';
+      setError(message);
+      throw new Error(message);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -134,7 +223,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error,
         login,
         register,
+        requestPasswordReset,
+        resetPassword,
+        resendEmailVerification,
         logout,
+        deleteAccount,
+        changePassword,
         clearError,
       }}
     >
