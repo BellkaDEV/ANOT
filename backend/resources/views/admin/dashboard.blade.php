@@ -18,13 +18,74 @@
     <main class="mx-auto max-w-7xl space-y-8 px-6 py-8">
         @if (session('status'))<div class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">{{ session('status') }}</div>@endif
         @if ($errors->any())<div class="rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-800">{{ $errors->first() }}</div>@endif
+
+        @if (!empty($metrics))
+        <section aria-label="Métricas" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            @php $m = $metrics; @endphp
+            <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><p class="text-xs uppercase tracking-wide text-slate-500">Usuários totais</p><p class="mt-2 text-3xl font-bold">{{ $m['total_users'] ?? 0 }}</p></article>
+            <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><p class="text-xs uppercase tracking-wide text-slate-500">Usuários ativos</p><p class="mt-2 text-3xl font-bold text-emerald-700">{{ $m['active_users'] ?? 0 }}</p></article>
+            <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><p class="text-xs uppercase tracking-wide text-slate-500">Usuários suspensos</p><p class="mt-2 text-3xl font-bold text-rose-700">{{ $m['suspended_users'] ?? 0 }}</p></article>
+            <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><p class="text-xs uppercase tracking-wide text-slate-500">Turmas totais</p><p class="mt-2 text-3xl font-bold">{{ $m['total_classes'] ?? 0 }}</p></article>
+            <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"><p class="text-xs uppercase tracking-wide text-slate-500">Logs de auditoria</p><p class="mt-2 text-3xl font-bold">{{ $m['total_audit_logs'] ?? 0 }}</p></article>
+        </section>
+        @endif
+
         <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-            <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center"><div><h2 class="text-xl font-bold">Usuários</h2><p class="text-sm text-slate-500">Controle de acesso e estado das contas.</p></div><form method="GET" class="flex gap-2"><input name="search" value="{{ $search }}" placeholder="Nome ou e-mail" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white">Buscar</button></form></div>
+            <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                <div>
+                    <h2 class="text-xl font-bold">Usuários</h2>
+                    <p class="text-sm text-slate-500">Controle de acesso e estado das contas.</p>
+                </div>
+                <form method="GET" class="flex flex-wrap items-center gap-2">
+                    <input type="hidden" name="action" value="{{ $actionFilter ?? '' }}">
+                    <input name="search" value="{{ $search ?? '' }}" placeholder="Nome ou e-mail" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <select name="status" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" aria-label="Filtrar por estado">
+                        <option value="todos" {{ ($userStatusFilter ?? 'todos') === 'todos' ? 'selected' : '' }}>Todos os estados</option>
+                        <option value="ativos" {{ ($userStatusFilter ?? '') === 'ativos' ? 'selected' : '' }}>Ativo</option>
+                        <option value="suspensos" {{ ($userStatusFilter ?? '') === 'suspensos' ? 'selected' : '' }}>Suspenso</option>
+                    </select>
+                    <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white">Filtrar</button>
+                </form>
+            </div>
             <div class="mt-6 overflow-x-auto"><table class="w-full min-w-[680px] text-left text-sm"><thead class="border-b border-slate-200 text-xs uppercase text-slate-500"><tr><th class="px-3 py-3">Usuário</th><th class="px-3 py-3">Cadastro</th><th class="px-3 py-3">Estado</th><th class="px-3 py-3 text-right">Ação</th></tr></thead><tbody class="divide-y divide-slate-100">@forelse ($users as $user)<tr><td class="px-3 py-4"><div class="font-semibold">{{ $user->name }}</div><div class="text-slate-500">{{ $user->email }}</div></td><td class="px-3 py-4 text-slate-500">{{ $user->created_at?->format('d/m/Y') }}</td><td class="px-3 py-4">@if ($user->is_suspended)<span class="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700">Suspenso</span>@else<span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">Ativo</span>@endif</td><td class="px-3 py-4 text-right">@if (! auth()->user()->is($user))<form method="POST" action="{{ route($user->is_suspended ? 'admin.users.unsuspend' : 'admin.users.suspend', $user) }}">@csrf<button class="rounded-lg border px-3 py-2 text-xs font-semibold {{ $user->is_suspended ? 'border-emerald-300 text-emerald-700' : 'border-rose-300 text-rose-700' }}">{{ $user->is_suspended ? 'Reativar' : 'Suspender' }}</button></form>@else<span class="text-xs text-slate-400">Sua conta</span>@endif</td></tr>@empty<tr><td colspan="4" class="px-3 py-8 text-center text-slate-500">Nenhum usuário encontrado.</td></tr>@endforelse</tbody></table></div>
             <div class="mt-5">{{ $users->links() }}</div>
         </section>
         <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200"><h2 class="text-xl font-bold">Turmas recentes</h2><div class="mt-4 grid gap-3 md:grid-cols-2">@forelse ($classes as $class)<article class="rounded-xl border border-slate-200 p-4"><div class="flex items-start justify-between gap-4"><div><h3 class="font-semibold">{{ $class->name }}</h3><p class="mt-1 text-sm text-slate-500">{{ $class->course }} · {{ $class->institution }}</p></div><span class="text-sm font-semibold text-cyan-700">{{ $class->members_count }} membros</span></div><p class="mt-3 text-xs text-slate-500">Responsável: {{ $class->owner?->name ?? 'N/A' }}</p></article>@empty<p class="text-sm text-slate-500">Nenhuma turma cadastrada.</p>@endforelse</div></section>
-        <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200"><div class="flex items-center justify-between"><div><h2 class="text-xl font-bold">Auditoria recente</h2><p class="text-sm text-slate-500">Ações críticas executadas no console.</p></div><span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{{ $auditLogs->count() }} registros</span></div><div class="mt-4 divide-y divide-slate-100">@forelse ($auditLogs as $log)<div class="flex flex-col gap-1 py-3 text-sm md:flex-row md:items-center md:justify-between"><span><strong>{{ $log->action }}</strong> · {{ $log->target?->email ?? 'conta removida' }}</span><span class="text-xs text-slate-500">por {{ $log->actor?->email ?? 'sistema' }} · {{ $log->created_at?->format('d/m/Y H:i') }}</span></div>@empty<p class="py-4 text-sm text-slate-500">Nenhuma ação administrativa registrada.</p>@endforelse</div></section>
+        <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200" aria-label="Auditoria">
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="text-xl font-bold">Auditoria recente</h2>
+                    <p class="text-sm text-slate-500">Ações críticas executadas no console.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <form method="GET" class="flex items-center gap-2">
+                        <input type="hidden" name="search" value="{{ $search ?? '' }}">
+                        <input type="hidden" name="status" value="{{ $userStatusFilter ?? 'todos' }}">
+                        <label for="auditAction" class="sr-only">Filtrar ação</label>
+                        <select id="auditAction" name="action" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" aria-label="Filtrar por ação da auditoria">
+                            <option value="">Todas as ações</option>
+                            <option value="user.suspended" {{ ($actionFilter ?? '') === 'user.suspended' ? 'selected' : '' }}>user.suspended</option>
+                            <option value="user.unsuspended" {{ ($actionFilter ?? '') === 'user.unsuspended' ? 'selected' : '' }}>user.unsuspended</option>
+                        </select>
+                        <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white">Filtrar</button>
+                    </form>
+                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{{ method_exists($auditLogs ?? null, 'total') ? $auditLogs->total() : ($auditLogs->count() ?? 0) }} registros</span>
+                </div>
+            </div>
+            <div class="mt-4 divide-y divide-slate-100">
+                @forelse ($auditLogs as $log)
+                    <div class="flex flex-col gap-1 py-3 text-sm md:flex-row md:items-center md:justify-between">
+                        <span><strong class="font-semibold">{{ $log->action }}</strong> <span class="text-slate-500">· {{ $log->target?->email ?? 'conta removida' }}</span></span>
+                        <span class="text-xs text-slate-500">por {{ $log->actor?->email ?? 'sistema' }} · {{ $log->created_at?->format('d/m/Y H:i') }}</span>
+                    </div>
+                @empty
+                    <p class="py-8 text-center text-sm text-slate-500" role="status">Nenhuma ação administrativa registrada para os filtros selecionados.</p>
+                @endforelse
+            </div>
+            @if (method_exists($auditLogs ?? null, 'links'))
+                <div class="mt-5">{{ $auditLogs->appends(request()->query())->links() }}</div>
+            @endif
+        </section>
     </main>
 </body>
 </html>
