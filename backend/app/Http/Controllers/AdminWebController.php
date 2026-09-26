@@ -51,6 +51,15 @@ class AdminWebController extends Controller
     public function dashboard(Request $request): View
     {
         $search = trim((string) $request->query('search', ''));
+
+        $allowedStatuses = ['todos', 'ativos', 'suspensos'];
+        $rawStatus = (string) $request->query('status', 'todos');
+        $userStatusFilter = in_array($rawStatus, $allowedStatuses, true) ? $rawStatus : 'todos';
+
+        $allowedActions = ['user.suspended', 'user.unsuspended'];
+        $rawAction = (string) $request->query('action', '');
+        $actionFilter = in_array($rawAction, $allowedActions, true) ? $rawAction : '';
+
         $users = User::query()
             ->select(['id', 'name', 'email', 'is_suspended', 'created_at'])
             ->when($search !== '', function ($query) use ($search): void {
@@ -59,8 +68,14 @@ class AdminWebController extends Controller
                         ->orWhere('email', 'like', "%{$search}%");
                 });
             })
+            ->when($userStatusFilter === 'ativos', function ($query): void {
+                $query->where('is_suspended', false);
+            })
+            ->when($userStatusFilter === 'suspensos', function ($query): void {
+                $query->where('is_suspended', true);
+            })
             ->latest()
-            ->paginate(20)
+            ->paginate(20, ['*'], 'page')
             ->withQueryString();
 
         $classes = SchoolClass::query()
@@ -72,11 +87,30 @@ class AdminWebController extends Controller
 
         $auditLogs = AdminAuditLog::query()
             ->with(['actor:id,name,email', 'target:id,name,email'])
+            ->when($actionFilter !== '', function ($query) use ($actionFilter): void {
+                $query->where('action', $actionFilter);
+            })
             ->latest()
-            ->limit(20)
-            ->get();
+            ->paginate(20, ['*'], 'audit_page')
+            ->withQueryString();
 
-        return view('admin.dashboard', compact('users', 'classes', 'auditLogs', 'search'));
+        $metrics = [
+            'total_users' => User::count(),
+            'active_users' => User::where('is_suspended', false)->count(),
+            'suspended_users' => User::where('is_suspended', true)->count(),
+            'total_classes' => SchoolClass::count(),
+            'total_audit_logs' => AdminAuditLog::count(),
+        ];
+
+        return view('admin.dashboard', compact(
+            'users',
+            'classes',
+            'auditLogs',
+            'search',
+            'metrics',
+            'userStatusFilter',
+            'actionFilter'
+        ));
     }
 
     public function suspend(Request $request, User $user): RedirectResponse
