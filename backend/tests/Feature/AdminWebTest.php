@@ -150,4 +150,18 @@ class AdminWebTest extends TestCase
         $this->assertEquals('', $resInvalidAction->viewData('actionFilter'));
         $this->assertEquals(2, $resInvalidAction->viewData('auditLogs')->total());
     }
+
+    public function test_dashboard_validates_query_filter_types_and_search_length(): void
+    {
+        $admin = User::factory()->create(['is_platform_admin' => true]);
+
+        $this->actingAs($admin)
+            ->get('/admin?status%5B%5D=ativos&action%5B%5D=user.suspended&search%5B%5D=test')
+            ->assertSessionHasErrors(['search', 'status', 'action']);
+
+        $longSearch = str_repeat('a', 256);
+        $this->actingAs($admin)
+            ->get('/admin?search='.$longSearch)
+            ->assertSessionHasErrors('search');
+    }
 }

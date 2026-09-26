@@ -50,14 +50,20 @@ class AdminWebController extends Controller
 
     public function dashboard(Request $request): View
     {
-        $search = trim((string) $request->query('search', ''));
+        $filters = $request->validate([
+            'search' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'status' => ['sometimes', 'string'],
+            'action' => ['sometimes', 'string'],
+        ]);
+
+        $search = trim($filters['search'] ?? '');
 
         $allowedStatuses = ['todos', 'ativos', 'suspensos'];
-        $rawStatus = (string) $request->query('status', 'todos');
+        $rawStatus = $filters['status'] ?? 'todos';
         $userStatusFilter = in_array($rawStatus, $allowedStatuses, true) ? $rawStatus : 'todos';
 
         $allowedActions = ['user.suspended', 'user.unsuspended'];
-        $rawAction = (string) $request->query('action', '');
+        $rawAction = $filters['action'] ?? '';
         $actionFilter = in_array($rawAction, $allowedActions, true) ? $rawAction : '';
 
         $users = User::query()
