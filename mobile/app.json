@@ -1,5 +1,6 @@
 {
   "expo": {
+    "EXPO_PUBLIC_API_URL": "https://eaxmykxgjzmceibmdarg.supabase.co/api",
     "name": "ANOT",
     "slug": "anot",
     "scheme": "anot",
