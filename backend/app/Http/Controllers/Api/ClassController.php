@@ -36,16 +36,19 @@ class ClassController extends Controller
 
         $this->attachUserProgress($classes, $user);
 
-        $classes = $classes
-            ->map(function ($class) use ($user) {
-                $membership = ClassMember::where('class_id', $class->id)
-                    ->where('user_id', $user->id)
-                    ->first();
-                $class->my_role = $membership ? $membership->role : ($class->owner_id === $user->id ? 'owner' : null);
-                $class->qr_code_payload = 'anot://join?code='.$class->code;
+        $classIds = $classes->pluck('id');
+        $memberships = ClassMember::whereIn('class_id', $classIds)
+            ->where('user_id', $user->id)
+            ->get()
+            ->keyBy('class_id');
 
-                return $class;
-            });
+        $classes->transform(function ($class) use ($user, $memberships) {
+            $membership = $memberships->get($class->id);
+            $class->my_role = $membership ? $membership->role : ($class->owner_id === $user->id ? 'owner' : null);
+            $class->qr_code_payload = 'anot://join?code='.$class->code;
+
+            return $class;
+        });
 
         return response()->json([
             'classes' => SchoolClassResource::collection($classes),
