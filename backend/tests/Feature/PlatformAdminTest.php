@@ -42,12 +42,12 @@ class PlatformAdminTest extends TestCase
         $this->withToken($token)
             ->getJson('/api/admin/users?search=Operacional')
             ->assertOk()
-            ->assertJsonPath('data.data.0.name', 'Aluno Operacional');
+            ->assertJsonPath('data.0.name', 'Aluno Operacional');
 
         $this->withToken($token)
             ->getJson('/api/admin/classes')
             ->assertOk()
-            ->assertJsonCount(1, 'data.data');
+            ->assertJsonCount(1, 'data');
     }
 
     public function test_admin_can_suspend_and_reactivate_user_with_audit_log(): void
