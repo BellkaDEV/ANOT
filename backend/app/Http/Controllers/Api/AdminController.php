@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AdminUserResource;
 use App\Http\Resources\SchoolClassResource;
-use App\Http\Resources\UserResource;
 use App\Models\AdminAuditLog;
 use App\Models\SchoolClass;
 use App\Models\User;
@@ -31,7 +31,7 @@ class AdminController extends Controller
 
         $paginated = $query->paginate(25);
 
-        return UserResource::collection($paginated);
+        return AdminUserResource::collection($paginated);
     }
 
     public function classes()

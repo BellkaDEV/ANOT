@@ -42,7 +42,9 @@ class PlatformAdminTest extends TestCase
         $this->withToken($token)
             ->getJson('/api/admin/users?search=Operacional')
             ->assertOk()
-            ->assertJsonPath('data.0.name', 'Aluno Operacional');
+            ->assertJsonPath('data.0.name', 'Aluno Operacional')
+            ->assertJsonPath('data.0.is_suspended', false)
+            ->assertJsonPath('data.0.created_at', $user->created_at->toISOString());
 
         $this->withToken($token)
             ->getJson('/api/admin/classes')
