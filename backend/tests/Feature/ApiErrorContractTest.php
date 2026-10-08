@@ -29,4 +29,16 @@ class ApiErrorContractTest extends TestCase
             ->assertJsonPath('errors.email.0', 'The email field is required.')
             ->assertHeader('X-Request-ID', $response->json('request_id'));
     }
+
+    public function test_not_found_api_error_contains_request_id(): void
+    {
+        $requestId = (string) Str::uuid();
+
+        $this->withHeader('X-Request-ID', $requestId)
+            ->getJson('/api/non-existent-endpoint')
+            ->assertNotFound()
+            ->assertJsonPath('message', 'Recurso não encontrado.')
+            ->assertJsonPath('request_id', $requestId)
+            ->assertHeader('X-Request-ID', $requestId);
+    }
 }

@@ -13,6 +13,7 @@ class HealthCheckTest extends TestCase
         $response
             ->assertOk()
             ->assertJsonPath('status', 'ok')
-            ->assertJsonPath('checks.database', 'ok');
+            ->assertJsonPath('checks.database', 'ok')
+            ->assertJsonPath('checks.cache', 'ok');
     }
 }

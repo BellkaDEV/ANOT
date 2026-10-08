@@ -58,6 +58,7 @@ return [
 
     'support_email' => env('SUPPORT_EMAIL', 'suporte@anot.app'),
     'legal_updated_at' => env('LEGAL_UPDATED_AT', '18/09/2026'),
+    'version' => env('APP_VERSION', '1.0.0'),
 
     /*
     |--------------------------------------------------------------------------
