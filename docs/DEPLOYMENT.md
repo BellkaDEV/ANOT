@@ -22,7 +22,7 @@ As variáveis de ambiente devem ser injetadas pelo cofre de segredos do seu prov
 | `DB_USERNAME` | Usuário do banco de dados | `anot_user` |
 | `DB_PASSWORD` | Senha forte do banco de dados | `*(Segredo gerado)*` |
 | `SANCTUM_EXPIRATION` | Duração do token em minutos (padrão: 30 dias = 43200 min) | `43200` |
-| `EXPO_PUBLIC_API_URL` | URL apontada no app mobile (HTTPS) | `https://api.anot.app/api` |
+| `EXPO_PUBLIC_API_URL` | URL base HTTPS da API mobile, sem `/api` (o app acrescenta o caminho) | `https://api.anot.app` |
 | `MAIL_*` | Credenciais SMTP para confirmação de e-mail e recuperação de senha | `*(Segredos do provedor)*` |
 | `SUPPORT_EMAIL` | Canal público de suporte e solicitações de conta | `suporte@anot.app` |
 
@@ -38,7 +38,7 @@ As variáveis de ambiente devem ser injetadas pelo cofre de segredos do seu prov
    ```
    O Dockerfile usa build multi-stage: compila os assets do console administrativo com Node 20 e entrega apenas o resultado junto da imagem PHP final.
 2. **Execução de Containers**:
-   - Utilize a configuração [docker-compose.yml](file:///C:/Users/User/ANOT/backend/docker-compose.yml) limpa.
+   - Utilize a configuração [docker-compose.yml](../backend/docker-compose.yml).
    - O banco PostgreSQL opera isolado dentro da rede Docker fechada (sem bind port `5432:5432` externa).
    - O container da aplicação responde ao healthcheck no endpoint `GET /health`.
 
@@ -78,6 +78,7 @@ Em caso de falha crítica durante o deploy:
 ### Checklist mínimo antes de promover uma release
 
 - [ ] CI verde: PHPUnit, Pint, Composer audit, TypeScript, Expo Doctor, bundle Android, assets web e Docker build.
+- [ ] Confirmar que `EXPO_PUBLIC_API_URL` corresponde ao endpoint HTTPS aprovado; essa variável é incorporada ao bundle mobile e não pode conter segredos.
 - [ ] `APP_DEBUG=false`, `APP_URL` HTTPS e `MOBILE_RESET_URL` apontando para o domínio/scheme aprovado.
 - [ ] Executar `php artisan app:validate-production` e corrigir qualquer `FAIL` antes de liberar o tráfego.
 - [ ] Migration executada uma única vez como etapa controlada.
@@ -100,6 +101,12 @@ npx eas build --profile production --platform android
 ```
 
 O `EXPO_TOKEN` deve existir somente nos secrets do provedor/EAS. Keystore de distribuição nunca deve ser versionado.
+
+## CI e artefatos
+
+O workflow `.github/workflows/ci.yml` valida pushes em branches e pull requests destinados a `main`, `master` ou `develop`. Ele usa `GITHUB_TOKEN` somente com `contents: read`, não recebe credenciais de deploy e não publica em staging ou produção.
+
+Os artefatos retidos por 14 dias são o export JavaScript/recursos Android do Expo e os assets web compilados do backend. O export Android da CI **não é um APK/AAB instalável**; builds de distribuição continuam sendo uma etapa separada no EAS. A exportação mobile da CI usa `EXPO_PUBLIC_API_URL=https://api.anot.app`, um valor público embutido no bundle; antes de distribuir um build, confirme que esse domínio é o endpoint aprovado e está operacional.
 
 ---
 
