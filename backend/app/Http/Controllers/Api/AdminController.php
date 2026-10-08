@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\SchoolClassResource;
+use App\Http\Resources\UserResource;
 use App\Models\AdminAuditLog;
 use App\Models\SchoolClass;
 use App\Models\User;
@@ -16,9 +18,7 @@ class AdminController extends Controller
             'search' => 'nullable|string|max:100',
         ]);
 
-        $query = User::query()
-            ->select(['id', 'name', 'email', 'is_suspended', 'created_at'])
-            ->latest();
+        $query = User::query()->latest();
 
         if (! empty($validated['search'])) {
             $search = $validated['search'];
@@ -29,20 +29,20 @@ class AdminController extends Controller
             });
         }
 
-        return response()->json([
-            'data' => $query->paginate(25),
-        ]);
+        $paginated = $query->paginate(25);
+
+        return UserResource::collection($paginated);
     }
 
     public function classes()
     {
-        return response()->json([
-            'data' => SchoolClass::query()
-                ->with('owner:id,name,email')
-                ->withCount('members')
-                ->latest()
-                ->paginate(25),
-        ]);
+        $classes = SchoolClass::query()
+            ->with('owner:id,name,email')
+            ->withCount('members')
+            ->latest()
+            ->paginate(25);
+
+        return SchoolClassResource::collection($classes);
     }
 
     public function suspend(Request $request, User $user)
