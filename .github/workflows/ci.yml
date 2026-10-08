@@ -6,6 +6,15 @@ on:
   pull_request:
     branches: [ main, master, develop ]
 
+# CI only needs to read the repository.  Keep a single run per ref so an
+# obsolete push cannot consume runners after a newer commit is available.
+permissions:
+  contents: read
+
+concurrency:
+  group: anot-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   mobile-quality:
     name: Mobile TypeScript, Expo and dependency checks
