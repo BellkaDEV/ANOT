@@ -32,6 +32,7 @@ class ValidateProductionConfigTest extends TestCase
             'app.env' => 'production',
             'app.debug' => false,
             'app.url' => 'https://api.anot.app',
+            'app.mobile_reset_url' => 'https://api.anot.app/reset-password',
             'app.key' => 'base64:'.base64_encode(random_bytes(32)),
             'app.support_email' => 'suporte@anot.app',
             'database.default' => 'pgsql',
@@ -65,5 +66,71 @@ class ValidateProductionConfigTest extends TestCase
         ]);
 
         $this->artisan('app:validate-production')->assertSuccessful();
+    }
+
+    public function test_command_rejects_malformed_app_url(): void
+    {
+        config([
+            'app.env' => 'production',
+            'app.debug' => false,
+            'app.url' => 'https://',
+            'app.mobile_reset_url' => 'anot://reset-password',
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+            'app.support_email' => 'suporte@anot.app',
+            'database.default' => 'pgsql',
+            'database.connections.pgsql.password' => 'strong-secret',
+            'queue.default' => 'database',
+            'session.driver' => 'database',
+            'cache.default' => 'database',
+            'mail.default' => 'smtp',
+        ]);
+
+        $this->artisan('app:validate-production')
+            ->expectsOutputToContain('FAIL APP_URL')
+            ->assertFailed();
+    }
+
+    public function test_command_rejects_empty_mobile_reset_url(): void
+    {
+        config([
+            'app.env' => 'production',
+            'app.debug' => false,
+            'app.url' => 'https://api.anot.app',
+            'app.mobile_reset_url' => '',
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+            'app.support_email' => 'suporte@anot.app',
+            'database.default' => 'pgsql',
+            'database.connections.pgsql.password' => 'strong-secret',
+            'queue.default' => 'database',
+            'session.driver' => 'database',
+            'cache.default' => 'database',
+            'mail.default' => 'smtp',
+        ]);
+
+        $this->artisan('app:validate-production')
+            ->expectsOutputToContain('FAIL MOBILE_RESET_URL')
+            ->assertFailed();
+    }
+
+    public function test_command_rejects_insecure_mobile_reset_url(): void
+    {
+        config([
+            'app.env' => 'production',
+            'app.debug' => false,
+            'app.url' => 'https://api.anot.app',
+            'app.mobile_reset_url' => 'http://api.anot.app/reset-password',
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+            'app.support_email' => 'suporte@anot.app',
+            'database.default' => 'pgsql',
+            'database.connections.pgsql.password' => 'strong-secret',
+            'queue.default' => 'database',
+            'session.driver' => 'database',
+            'cache.default' => 'database',
+            'mail.default' => 'smtp',
+        ]);
+
+        $this->artisan('app:validate-production')
+            ->expectsOutputToContain('FAIL MOBILE_RESET_URL')
+            ->assertFailed();
     }
 }

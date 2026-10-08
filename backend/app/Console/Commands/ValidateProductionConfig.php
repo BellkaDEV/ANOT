@@ -23,8 +23,12 @@ class ValidateProductionConfig extends Command
                 'message' => 'APP_DEBUG deve estar desativado.',
             ],
             'APP_URL' => [
-                'ok' => str_starts_with((string) config('app.url'), 'https://'),
-                'message' => 'APP_URL deve usar HTTPS.',
+                'ok' => filter_var((string) config('app.url'), FILTER_VALIDATE_URL) !== false && str_starts_with((string) config('app.url'), 'https://'),
+                'message' => 'APP_URL deve ser uma URL válida com HTTPS.',
+            ],
+            'MOBILE_RESET_URL' => [
+                'ok' => $this->isValidMobileResetUrl((string) config('app.mobile_reset_url')),
+                'message' => 'MOBILE_RESET_URL deve ser uma URL HTTPS ou esquema móvel anot válido.',
             ],
             'APP_KEY' => [
                 'ok' => $this->hasRealValue((string) config('app.key'), 'base64:GERE_COM_php_artisan_key:generate'),
@@ -88,6 +92,23 @@ class ValidateProductionConfig extends Command
     private function hasRealValue(string $value, string $placeholder): bool
     {
         return $value !== '' && $value !== $placeholder && ! str_contains($value, 'GERE_COM');
+    }
+
+    private function isValidMobileResetUrl(string $url): bool
+    {
+        $parts = parse_url($url);
+
+        if ($parts === false || ! isset($parts['scheme']) || isset($parts['user']) || isset($parts['pass'])) {
+            return false;
+        }
+
+        $scheme = strtolower($parts['scheme']);
+
+        if ($scheme === 'anot') {
+            return isset($parts['host']) && $parts['host'] !== '';
+        }
+
+        return $scheme === 'https' && filter_var($url, FILTER_VALIDATE_URL) !== false;
     }
 
     private function hasProductionMailer(): bool
