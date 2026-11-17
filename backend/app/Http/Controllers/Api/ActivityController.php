@@ -41,9 +41,22 @@ class ActivityController extends Controller
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        $activities = Activity::where('class_id', $classId)
-            ->with(['groups.members.user', 'groups.leader', 'groups.invitations'])
-            ->get();
+        $query = Activity::where('class_id', $classId)
+            ->with(['groups.members.user', 'groups.leader', 'groups.invitations']);
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search): void {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('subject', 'like', "%{$search}%");
+            });
+        }
+
+        $activities = $query->get();
 
         $progressByActivity = UserActivityProgress::whereIn('activity_id', $activities->pluck('id'))
             ->where('user_id', $user->id)
