@@ -8,7 +8,7 @@ if (process.env.NODE_ENV === 'production' && !ENV_API_URL?.startsWith('https://'
   throw new Error('A URL da API em produção deve ser configurada com HTTPS.');
 }
 
-export const API_URL = `${(ENV_API_URL || DEFAULT_URL).replace(/\/$/, '')}/api`;
+export const API_URL = `${(ENV_API_URL || DEFAULT_URL).replace(/\/+$/, '').replace(/\/api$/, '')}/api`;
 
 const api = axios.create({
   baseURL: API_URL,
