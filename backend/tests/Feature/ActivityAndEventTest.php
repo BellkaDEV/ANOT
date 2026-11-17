@@ -281,4 +281,64 @@ class ActivityAndEventTest extends TestCase
             'personal_notes' => 'Falta terminar a questão 3.',
         ]);
     }
+
+    public function test_activities_can_be_filtered_by_type_and_search_query(): void
+    {
+        Activity::create([
+            'class_id' => $this->class->id,
+            'title' => 'Prova de Algebra Linear',
+            'subject' => 'Matematica',
+            'type' => 'prova',
+            'due_date' => now()->addDays(5)->toDateString(),
+            'created_by' => $this->owner->id,
+        ]);
+
+        Activity::create([
+            'class_id' => $this->class->id,
+            'title' => 'Trabalho de Historia Antiga',
+            'subject' => 'Historia',
+            'type' => 'trabalho',
+            'due_date' => now()->addDays(7)->toDateString(),
+            'created_by' => $this->owner->id,
+        ]);
+
+        Activity::create([
+            'class_id' => $this->class->id,
+            'title' => 'Lista de Exercicios de Algebra',
+            'subject' => 'Matematica',
+            'type' => 'trabalho',
+            'due_date' => now()->addDays(10)->toDateString(),
+            'created_by' => $this->owner->id,
+        ]);
+
+        // Filtro por tipo
+        $responseType = $this->actingAs($this->student, 'sanctum')
+            ->getJson("/api/classes/{$this->class->id}/activities?type=prova")
+            ->assertStatus(200);
+
+        $this->assertCount(1, $responseType->json('activities'));
+        $this->assertEquals('Prova de Algebra Linear', $responseType->json('activities.0.title'));
+
+        // Filtro por busca de texto (titulo)
+        $responseSearch = $this->actingAs($this->student, 'sanctum')
+            ->getJson("/api/classes/{$this->class->id}/activities?search=Algebra")
+            ->assertStatus(200);
+
+        $this->assertCount(2, $responseSearch->json('activities'));
+
+        // Filtro combinado: tipo e materia
+        $responseCombined = $this->actingAs($this->student, 'sanctum')
+            ->getJson("/api/classes/{$this->class->id}/activities?type=trabalho&search=Matematica")
+            ->assertStatus(200);
+
+        $this->assertCount(1, $responseCombined->json('activities'));
+        $this->assertEquals('Lista de Exercicios de Algebra', $responseCombined->json('activities.0.title'));
+
+        // Busca sem correspondencia
+        $responseEmpty = $this->actingAs($this->student, 'sanctum')
+            ->getJson("/api/classes/{$this->class->id}/activities?search=Inexistente")
+            ->assertStatus(200);
+
+        $this->assertCount(0, $responseEmpty->json('activities'));
+    }
 }
