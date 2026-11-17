@@ -26,9 +26,6 @@ class ClassController extends Controller
                 'members.user:id,name,email,avatar_url',
                 'announcements.author:id,name,email,avatar_url',
                 'activities.creator:id,name,email',
-                'activities.groups.members.user:id,name,email,avatar_url',
-                'activities.groups.leader:id,name,email,avatar_url',
-                'activities.groups.invitations',
                 'events',
             ])
             ->withCount('members')
@@ -116,9 +113,6 @@ class ClassController extends Controller
             'members.user:id,name,email,avatar_url',
             'announcements.author:id,name,email,avatar_url',
             'activities.creator:id,name,email',
-            'activities.groups.members.user:id,name,email,avatar_url',
-            'activities.groups.leader:id,name,email,avatar_url',
-            'activities.groups.invitations',
             'events',
         ])->find($id);
 

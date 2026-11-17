@@ -79,8 +79,6 @@ function mapBackendClass(c: any): AppClass {
       id: String(act.id),
       title: act.title || "",
       type: act.type || "dever",
-      workMode: act.work_mode || undefined,
-      groupSize: act.group_size ? Number(act.group_size) : undefined,
       assessmentFormat: act.assessment_format || undefined,
       pointsValue: act.points_value !== null && act.points_value !== undefined ? Number(act.points_value) : undefined,
       subject: act.subject || "",
@@ -94,31 +92,6 @@ function mapBackendClass(c: any): AppClass {
         status: act.user_progress.status,
         personalNotes: act.user_progress.personal_notes,
       } : null,
-      groups: (act.groups || []).map((g: any) => ({
-        id: String(g.id),
-        activityId: String(g.activity_id),
-        name: g.name || "",
-        capacity: Number(g.capacity || 2),
-        leaderUserId: g.leader_user_id ? String(g.leader_user_id) : null,
-        description: g.description || null,
-        leader: g.leader ? { id: String(g.leader.id), name: g.leader.name, email: g.leader.email } : null,
-        members: (g.members || []).map((m: any) => ({
-          id: String(m.id),
-          activityGroupId: String(m.activity_group_id),
-          userId: String(m.user_id),
-          joinedAt: String(m.joined_at || ""),
-          user: m.user ? { id: String(m.user.id), name: m.user.name, email: m.user.email } : undefined,
-        })),
-        invitations: (g.invitations || []).map((inv: any) => ({
-          id: String(inv.id),
-          activityGroupId: String(inv.activity_group_id),
-          invitedUserId: String(inv.invited_user_id),
-          invitedByUserId: String(inv.invited_by_user_id),
-          status: inv.status || "pending",
-          invitedUser: inv.invited_user ? { id: String(inv.invited_user.id), name: inv.invited_user.name, email: inv.invited_user.email } : undefined,
-          invitedBy: inv.invited_by ? { id: String(inv.invited_by.id), name: inv.invited_by.name, email: inv.invited_by.email } : undefined,
-        })),
-      })),
     })),
     events: (c.events || []).map((e: any) => {
       const parts = (e.event_date || TODAY_ISO).split("-");
@@ -500,8 +473,6 @@ function MainApp() {
         await api.put(`/activities/${existingId}`, {
           title: data.title,
           type: data.type,
-          work_mode: data.workMode,
-          group_size: data.groupSize,
           assessment_format: data.assessmentFormat,
           points_value: data.pointsValue,
           subject: data.subject,
@@ -513,8 +484,6 @@ function MainApp() {
         await api.post(`/classes/${cls.id}/activities`, {
           title: data.title,
           type: data.type,
-          work_mode: data.workMode,
-          group_size: data.groupSize,
           assessment_format: data.assessmentFormat,
           points_value: data.pointsValue,
           subject: data.subject,
@@ -541,67 +510,6 @@ function MainApp() {
     } catch (err: any) {
       handleApiError(err, "Erro ao remover atividade.");
       return false;
-    }
-  }
-
-  // Activity Groups Handlers
-  async function doJoinGroup(groupId: string) {
-    try {
-      const res = await api.post(`/activity-groups/${groupId}/join`);
-      await fetchClassesFromApi();
-      toast(res.data?.message || "Você entrou no grupo!");
-    } catch (err: any) {
-      handleApiError(err, "Erro ao entrar no grupo.");
-    }
-  }
-
-  async function doLeaveGroup(groupId: string) {
-    try {
-      const res = await api.post(`/activity-groups/${groupId}/leave`);
-      await fetchClassesFromApi();
-      toast(res.data?.message || "Você saiu do grupo.");
-    } catch (err: any) {
-      handleApiError(err, "Erro ao sair do grupo.");
-    }
-  }
-
-  async function doUpdateGroupDesc(groupId: string, description: string) {
-    try {
-      const res = await api.put(`/activity-groups/${groupId}/description`, { description });
-      await fetchClassesFromApi();
-      toast(res.data?.message || "Tema do grupo atualizado!");
-    } catch (err: any) {
-      handleApiError(err, "Erro ao atualizar descrição do grupo.");
-    }
-  }
-
-  async function doInviteMember(groupId: string, invitedUserId: string) {
-    try {
-      const res = await api.post(`/activity-groups/${groupId}/invite`, { invited_user_id: invitedUserId });
-      await fetchClassesFromApi();
-      toast(res.data?.message || "Convite enviado com sucesso!");
-    } catch (err: any) {
-      handleApiError(err, "Erro ao enviar convite.");
-    }
-  }
-
-  async function doRespondInvitation(invitationId: string, action: "accept" | "decline") {
-    try {
-      const res = await api.post(`/group-invitations/${invitationId}/respond`, { action });
-      await fetchClassesFromApi();
-      toast(res.data?.message || (action === "accept" ? "Convite aceito!" : "Convite recusado."));
-    } catch (err: any) {
-      handleApiError(err, "Erro ao responder convite.");
-    }
-  }
-
-  async function doRemoveGroupMember(groupId: string, targetUserId: string) {
-    try {
-      const res = await api.delete(`/activity-groups/${groupId}/members/${targetUserId}`);
-      await fetchClassesFromApi();
-      toast(res.data?.message || "Membro removido do grupo.");
-    } catch (err: any) {
-      handleApiError(err, "Erro ao remover membro do grupo.");
     }
   }
 
@@ -796,15 +704,8 @@ function MainApp() {
           notes={notes[act.id] ?? ""}
           user={appUser}
           myRole={myRole}
-          classMembers={activeClass.members}
           onSaveStatus={doSaveStatus}
           onSaveNotes={doSaveNotes}
-          onJoinGroup={doJoinGroup}
-          onLeaveGroup={doLeaveGroup}
-          onUpdateGroupDesc={doUpdateGroupDesc}
-          onInviteMember={doInviteMember}
-          onRespondInvitation={doRespondInvitation}
-          onRemoveGroupMember={doRemoveGroupMember}
           onBack={() => nav("classHome")}
           th={th}
         />

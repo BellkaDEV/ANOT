@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppIcon from "../components/AppIcon";
 import KeyboardAwareScreen from "../components/KeyboardAwareScreen";
@@ -7,7 +7,7 @@ import DateField from "../components/DateField";
 import TimeField from "../components/TimeField";
 import { Btn, FInput, FTextarea } from "../components/ui";
 import { ACT_META, TODAY_ISO, fmtDueLabel } from "../constants";
-import type { AppTheme, Activity, ActivityType, WorkMode, AssessmentFormat } from "../types";
+import type { AppTheme, Activity, ActivityType, AssessmentFormat } from "../types";
 
 interface Props {
   existing?: Activity;
@@ -32,10 +32,6 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
   const [subject, setSubject] = useState(existing?.subject ?? "");
   const [type, setType] = useState<ActivityType>(existing?.type ?? "dever");
 
-  // Campos de Trabalho
-  const [workMode, setWorkMode] = useState<WorkMode>(existing?.workMode ?? "individual");
-  const [groupSize, setGroupSize] = useState<string>(existing?.groupSize ? String(existing.groupSize) : "2");
-
   // Campos de Teste / Prova
   const [assessmentFormat, setAssessmentFormat] = useState<AssessmentFormat>(existing?.assessmentFormat ?? "nao_informado");
   const [hasPoints, setHasPoints] = useState<boolean>(existing?.pointsValue !== null && existing?.pointsValue !== undefined);
@@ -52,13 +48,6 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
     if (!subject.trim()) e.subject = "Matéria obrigatória";
     if (!dueDate) e.dueDate = "Data de entrega obrigatória";
 
-    if (type === "trabalho" && workMode === "groups") {
-      const sz = parseInt(groupSize, 10);
-      if (isNaN(sz) || sz < 2) {
-        e.groupSize = "Mínimo 2 pessoas por grupo";
-      }
-    }
-
     if (type === "teste" && hasPoints) {
       const pts = parseFloat(pointsValue.replace(",", "."));
       if (isNaN(pts) || pts < 0) {
@@ -73,15 +62,8 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
   function submit() {
     if (!validate()) return;
 
-    let finalWorkMode: WorkMode | undefined = undefined;
-    let finalGroupSize: number | undefined = undefined;
     let finalAssessmentFormat: AssessmentFormat | undefined = undefined;
     let finalPointsValue: number | undefined = undefined;
-
-    if (type === "trabalho") {
-      finalWorkMode = workMode;
-      finalGroupSize = workMode === "groups" ? parseInt(groupSize, 10) : undefined;
-    }
 
     if (type === "teste") {
       finalAssessmentFormat = assessmentFormat;
@@ -92,8 +74,6 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
       title: title.trim(),
       subject: subject.trim(),
       type,
-      workMode: finalWorkMode,
-      groupSize: finalGroupSize,
       assessmentFormat: finalAssessmentFormat,
       pointsValue: finalPointsValue,
       dueDate,
@@ -179,63 +159,6 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
             })}
           </View>
         </View>
-
-        {/* Configurações de Trabalho */}
-        {type === "trabalho" && (
-          <View style={[S.subBox, { backgroundColor: th.card2, borderColor: th.border }]}>
-            <Text style={[S.label, { color: th.fg }]}>MODALIDADE DO TRABALHO</Text>
-            <View style={S.typeRow}>
-              <TouchableOpacity
-                onPress={() => setWorkMode("individual")}
-                style={[
-                  S.optChip,
-                  {
-                    borderColor: workMode === "individual" ? th.orange : th.border,
-                    backgroundColor: workMode === "individual" ? th.orangeLight : th.card,
-                  },
-                ]}
-              >
-                <AppIcon name="person-outline" size={16} color={workMode === "individual" ? th.orange : th.muted} />
-                <Text style={[S.optText, { color: workMode === "individual" ? th.orange : th.fg }]}>Individual</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => setWorkMode("groups")}
-                style={[
-                  S.optChip,
-                  {
-                    borderColor: workMode === "groups" ? th.orange : th.border,
-                    backgroundColor: workMode === "groups" ? th.orangeLight : th.card,
-                  },
-                ]}
-              >
-                <AppIcon name="people-outline" size={16} color={workMode === "groups" ? th.orange : th.muted} />
-                <Text style={[S.optText, { color: workMode === "groups" ? th.orange : th.fg }]}>Em grupos</Text>
-              </TouchableOpacity>
-            </View>
-
-            {workMode === "groups" && (
-              <View style={{ gap: 10, marginTop: 6 }}>
-                <FInput
-                  th={th}
-                  label="Máximo de alunos por grupo"
-                  value={groupSize}
-                  onChange={setGroupSize}
-                  placeholder="Ex.: 2"
-                  leftIcon="people-circle-outline"
-                  keyboardType="numeric"
-                  error={errors.groupSize}
-                />
-                <View style={S.helpBox}>
-                  <AppIcon name="information-circle-outline" size={16} color={th.muted} />
-                  <Text style={[S.helpText, { color: th.muted }]}>
-                    Os grupos vazios serão criados automaticamente com base nos alunos da turma. O criador da turma não participa da divisão.
-                  </Text>
-                </View>
-              </View>
-            )}
-          </View>
-        )}
 
         {/* Configurações de Teste / Prova */}
         {type === "teste" && (
@@ -386,6 +309,4 @@ const S = StyleSheet.create({
     borderWidth: 1.5,
   },
   optText: { fontSize: 13, fontWeight: "600" },
-  helpBox: { flexDirection: "row", alignItems: "flex-start", gap: 8, marginTop: 4 },
-  helpText: { flex: 1, fontSize: 12, lineHeight: 17 },
 });
