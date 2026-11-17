@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Api\ActivityController;
-use App\Http\Controllers\Api\ActivityGroupController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\AuthController;
@@ -57,16 +56,6 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::put('/activities/{id}', [ActivityController::class, 'update']);
     Route::delete('/activities/{id}', [ActivityController::class, 'destroy']);
     Route::put('/activities/{id}/progress', [ActivityController::class, 'updateProgress']);
-
-    // Grupos de Trabalho (Activity Groups)
-    Route::get('/activities/{activityId}/groups', [ActivityGroupController::class, 'index']);
-    Route::get('/activity-groups/{groupId}', [ActivityGroupController::class, 'show']);
-    Route::post('/activity-groups/{groupId}/join', [ActivityGroupController::class, 'join']);
-    Route::post('/activity-groups/{groupId}/leave', [ActivityGroupController::class, 'leave']);
-    Route::put('/activity-groups/{groupId}/description', [ActivityGroupController::class, 'updateDescription']);
-    Route::post('/activity-groups/{groupId}/invite', [ActivityGroupController::class, 'invite']);
-    Route::post('/group-invitations/{invitationId}/respond', [ActivityGroupController::class, 'respondInvitation']);
-    Route::delete('/activity-groups/{groupId}/members/{userId}', [ActivityGroupController::class, 'removeMember']);
 
     // Avisos (Announcements)
     Route::get('/classes/{classId}/announcements', [AnnouncementController::class, 'index']);

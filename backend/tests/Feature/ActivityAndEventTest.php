@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Activity;
-use App\Models\ActivityGroup;
 use App\Models\Announcement;
 use App\Models\ClassMember;
 use App\Models\Event;
@@ -93,12 +92,6 @@ class ActivityAndEventTest extends TestCase
             'created_by' => $this->owner->id,
         ]);
 
-        $group = ActivityGroup::create([
-            'activity_id' => $activity->id,
-            'name' => 'Grupo privado',
-            'capacity' => 2,
-        ]);
-
         $this->actingAs($this->nonMember, 'sanctum')
             ->getJson("/api/activities/{$activity->id}")
             ->assertStatus(403);
@@ -109,10 +102,6 @@ class ActivityAndEventTest extends TestCase
 
         $this->actingAs($this->nonMember, 'sanctum')
             ->getJson("/api/events/{$event->id}")
-            ->assertStatus(403);
-
-        $this->actingAs($this->nonMember, 'sanctum')
-            ->getJson("/api/activity-groups/{$group->id}")
             ->assertStatus(403);
     }
 

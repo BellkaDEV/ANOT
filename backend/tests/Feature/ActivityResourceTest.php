@@ -39,11 +39,13 @@ class ActivityResourceTest extends TestCase
             ->assertJsonStructure([
                 'activity' => [
                     'id', 'class_id', 'title', 'type', 'due_date', 'created_by',
-                    'user_progress', 'groups',
+                    'user_progress',
                 ],
             ])
             ->assertJsonPath('activity.title', 'Atividade explícita')
             ->assertJsonPath('activity.user_progress', null)
+            ->assertJsonMissingPath('activity.groups')
+            ->assertJsonMissingPath('activity.work_mode')
             ->assertJsonMissingPath('activity.password');
     }
 }

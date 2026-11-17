@@ -4,7 +4,6 @@ export type EventKind      = "entrega" | "evento" | "periodo" | "prova";
 export type Modality       = "presencial" | "ead" | "hibrido";
 export type ClassRole      = "owner" | "rep" | "student";
 export type ActivityType   = "dever" | "trabalho" | "teste" | "outros";
-export type WorkMode       = "individual" | "groups";
 export type AssessmentFormat = "fechada" | "aberta" | "mista" | "nao_informado";
 
 export type Screen =
@@ -40,42 +39,10 @@ export interface Announcement {
   expiresAt?: string | null;
 }
 
-export interface ActivityGroupMember {
-  id: string;
-  activityGroupId: string;
-  userId: string;
-  joinedAt: string;
-  user?: AppUser;
-}
-
-export interface ActivityGroupInvitation {
-  id: string;
-  activityGroupId: string;
-  invitedUserId: string;
-  invitedByUserId: string;
-  status: "pending" | "accepted" | "declined" | "cancelled";
-  invitedUser?: AppUser;
-  invitedBy?: AppUser;
-}
-
-export interface ActivityGroup {
-  id: string;
-  activityId: string;
-  name: string;
-  capacity: number;
-  leaderUserId?: string | null;
-  description?: string | null;
-  leader?: AppUser | null;
-  members: ActivityGroupMember[];
-  invitations: ActivityGroupInvitation[];
-}
-
 export interface Activity {
   id: string;
   title: string;
   type: ActivityType;
-  workMode?: WorkMode | null;
-  groupSize?: number | null;
   assessmentFormat?: AssessmentFormat | null;
   pointsValue?: number | null;
   subject: string;
@@ -89,7 +56,6 @@ export interface Activity {
     status: ActivityStatus;
     personalNotes?: string | null;
   } | null;
-  groups?: ActivityGroup[];
 }
 
 export interface AppEvent { id: string; title: string; day: number; month: number; type: EventKind; subject?: string; room?: string; }
