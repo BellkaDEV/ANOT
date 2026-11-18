@@ -18,11 +18,23 @@ interface ClassCardProps {
 }
 
 export default function ClassCard({ schoolClass, onPress, th = LIGHT }: ClassCardProps) {
+  const accessibilityLabel = [
+    `Turma: ${schoolClass.name}`,
+    `Código: ${schoolClass.code}`,
+    schoolClass.course ? `Curso: ${schoolClass.course}` : null,
+    schoolClass.institution ? `Instituição: ${schoolClass.institution}` : null,
+    schoolClass.period ? `Período: ${schoolClass.period}` : null,
+  ].filter(Boolean).join(", ");
+
   return (
     <TouchableOpacity
       style={[styles.card, { backgroundColor: th.card, borderColor: th.border }]}
       onPress={onPress}
       activeOpacity={0.7}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint="Toque para ver os detalhes da turma"
     >
       <View style={styles.header}>
         <Text style={[styles.className, { color: th.fg }]} numberOfLines={1}>{schoolClass.name}</Text>

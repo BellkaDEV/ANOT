@@ -51,6 +51,14 @@ export default function AnnouncementCard({ announcement, onPress, th = LIGHT }: 
   const author = announcement.author?.name || announcement.authorName || "Sistema";
   const dateStr = formatDate(announcement.created_at || announcement.createdAt);
 
+  const announcementAccessibilityLabel = [
+    `Aviso: ${announcement.title}`,
+    `Prioridade: ${pm.label}`,
+    `Autor: ${author}`,
+    `Data: ${dateStr}`,
+    textContent ? `Conteúdo: ${textContent}` : null,
+  ].filter(Boolean).join(", ");
+
   const cardContent = (
     <View style={[styles.card, { backgroundColor: th.card, borderColor: th.border }]}>
       <View style={[styles.accentLine, { backgroundColor: pm.color }]} />
@@ -78,13 +86,28 @@ export default function AnnouncementCard({ announcement, onPress, th = LIGHT }: 
 
   if (onPress) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7} accessibilityLabel={announcement.title}>
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.7}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={announcementAccessibilityLabel}
+        accessibilityHint="Toque para ver os detalhes do aviso"
+      >
         {cardContent}
       </TouchableOpacity>
     );
   }
 
-  return cardContent;
+  return (
+    <View
+      accessible={true}
+      accessibilityRole="text"
+      accessibilityLabel={announcementAccessibilityLabel}
+    >
+      {cardContent}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
