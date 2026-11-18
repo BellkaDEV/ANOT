@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme/theme';
 import api from '../services/api';
@@ -12,40 +12,108 @@ export default function CalendarScreen({ navigation }: any) {
   const [events, setEvents] = useState<any[]>([]);
   const [isLoadingClasses, setIsLoadingClasses] = useState(true);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [classesError, setClassesError] = useState<string | null>(null);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+  const selectedClassIdRef = useRef<number | null>(null);
+  const eventsRequestIdRef = useRef(0);
 
   // Calendar UI states matching figma
   const [monthIdx, setMonthIdx] = useState(TODAY_MONTH - 1);
   const [selDay, setSelDay] = useState<number | null>(TODAY_DAY);
   const [filter, setFilter] = useState<'all' | 'prova' | 'entrega' | 'evento' | 'periodo'>('all');
 
-  const fetchClasses = async () => {
-    setIsLoadingClasses(true);
+  const selectClass = (classId: number | null) => {
+    if (selectedClassIdRef.current === classId) return;
+    selectedClassIdRef.current = classId;
+    setSelectedClassId(classId);
+  };
+
+  const fetchClasses = async (isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshing(true);
+    } else if (classes.length === 0) {
+      setIsLoadingClasses(true);
+    }
+    setClassesError(null);
     try {
       const response = await api.get('/classes');
       const classList = response.data.classes || [];
       setClasses(classList);
 
       if (classList.length > 0) {
-        setSelectedClassId(classList[0].id);
+        const currentClassId = selectedClassIdRef.current;
+        const nextClassId = currentClassId !== null && classList.some((c: any) => c.id === currentClassId)
+          ? currentClassId
+          : classList[0].id;
+        selectClass(nextClassId);
+      } else {
+        selectClass(null);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      Alert.alert('Erro', 'Não foi possível carregar suas turmas.');
+      const msg = err.response?.data?.message || 'Não foi possível carregar suas turmas.';
+      setClassesError(msg);
     } finally {
       setIsLoadingClasses(false);
+      if (isRefresh) setIsRefreshing(false);
     }
   };
 
-  const fetchEvents = async (classId: number) => {
-    setIsLoadingEvents(true);
+  const fetchEvents = async (classId: number, isRefresh = false) => {
+    const requestId = ++eventsRequestIdRef.current;
+    if (isRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoadingEvents(true);
+    }
+    setEventsError(null);
     try {
       const response = await api.get(`/classes/${classId}/events`);
+      if (requestId !== eventsRequestIdRef.current || selectedClassIdRef.current !== classId) return;
       setEvents(response.data.events || []);
-    } catch (err) {
+    } catch (err: any) {
+      if (requestId !== eventsRequestIdRef.current || selectedClassIdRef.current !== classId) return;
       console.error(err);
-      Alert.alert('Erro', 'Não foi possível carregar a agenda desta turma.');
+      const msg = err.response?.data?.message || 'Não foi possível carregar a agenda desta turma.';
+      setEventsError(msg);
     } finally {
-      setIsLoadingEvents(false);
+      if (requestId === eventsRequestIdRef.current) {
+        setIsLoadingEvents(false);
+        setIsRefreshing(false);
+      }
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setClassesError(null);
+    setEventsError(null);
+    let eventsReloadingForSelection = false;
+    try {
+      const response = await api.get('/classes');
+      const classList = response.data.classes || [];
+      setClasses(classList);
+
+      const currentClassId = selectedClassIdRef.current;
+      const targetId = (currentClassId !== null && classList.some((c: any) => c.id === currentClassId))
+        ? currentClassId
+        : (classList.length > 0 ? classList[0].id : null);
+
+      if (targetId !== currentClassId) {
+        selectClass(targetId);
+        eventsReloadingForSelection = targetId !== null;
+      }
+
+      if (targetId !== null && !eventsReloadingForSelection) {
+        await fetchEvents(targetId, true);
+      }
+    } catch (err: any) {
+      console.error(err);
+      const msg = err.response?.data?.message || 'Não foi possível atualizar o calendário.';
+      setClassesError(msg);
+    } finally {
+      if (!eventsReloadingForSelection) setIsRefreshing(false);
     }
   };
 
@@ -58,9 +126,13 @@ export default function CalendarScreen({ navigation }: any) {
 
   useEffect(() => {
     if (selectedClassId !== null) {
+      setEvents([]);
+      setEventsError(null);
       fetchEvents(selectedClassId);
     } else {
       setEvents([]);
+      setEventsError(null);
+      setIsLoadingEvents(false);
     }
   }, [selectedClassId]);
 
@@ -161,36 +233,89 @@ export default function CalendarScreen({ navigation }: any) {
         </ScrollView>
       </View>
 
-      {/* Class Selector Tab if multiple classes */}
-      <View style={styles.classesSelector}>
-        <FlatList
-          horizontal
-          data={classes}
-          keyExtractor={(item) => item.id.toString()}
-          showsHorizontalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.classChip,
-                selectedClassId === item.id && styles.classChipActive,
-              ]}
-              onPress={() => setSelectedClassId(item.id)}
-            >
-              <Text
-                style={[
-                  styles.classChipText,
-                  selectedClassId === item.id && styles.classChipTextActive,
-                ]}
-              >
-                {item.name}
-              </Text>
-            </TouchableOpacity>
-          )}
-          contentContainerStyle={styles.chipsPadding}
-        />
-      </View>
+      {isLoadingClasses && classes.length === 0 ? (
+        <View style={styles.centerContainer} accessibilityRole="progressbar" accessibilityLabel="Carregando calendário">
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      ) : classesError && classes.length === 0 ? (
+        <View style={styles.centerContainer} accessibilityRole="alert">
+          <Text style={styles.errorIcon}>⚠️</Text>
+          <Text style={styles.errorTitle}>Não foi possível carregar as turmas</Text>
+          <Text style={styles.errorMessage}>{classesError}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => fetchClasses()}
+            accessibilityRole="button"
+            accessibilityLabel="Tentar novamente"
+          >
+            <Text style={styles.retryButtonText}>Tentar novamente</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          {/* Class Selector Tab if multiple classes */}
+          <View style={styles.classesSelector}>
+            <FlatList
+              horizontal
+              data={classes}
+              keyExtractor={(item) => item.id.toString()}
+              showsHorizontalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.classChip,
+                    selectedClassId === item.id && styles.classChipActive,
+                  ]}
+                  onPress={() => selectClass(item.id)}
+                >
+                  <Text
+                    style={[
+                      styles.classChipText,
+                      selectedClassId === item.id && styles.classChipTextActive,
+                    ]}
+                  >
+                    {item.name}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.chipsPadding}
+            />
+          </View>
 
-      <ScrollView style={styles.scrollView} bounces={false}>
+          {((classesError && classes.length > 0) || (eventsError && events.length > 0)) && (
+            <View style={styles.inlineErrorBanner} accessibilityRole="alert">
+              <Text style={styles.inlineErrorText} numberOfLines={2}>
+                {classesError || eventsError}
+              </Text>
+              <TouchableOpacity
+                style={styles.inlineRetryButton}
+                onPress={() => {
+                  if (classesError) {
+                    fetchClasses(true);
+                  } else if (selectedClassId !== null) {
+                    fetchEvents(selectedClassId, true);
+                  }
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Tentar novamente"
+              >
+                <Text style={styles.inlineRetryButtonText}>Tentar novamente</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <ScrollView
+            style={styles.scrollView}
+            bounces={true}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={[theme.colors.primary]}
+                tintColor={theme.colors.primary}
+              />
+            }
+          >
         {/* Calendar Grid Container Card */}
         <View style={styles.gridCard}>
           {/* Weekday Headers */}
@@ -318,8 +443,21 @@ export default function CalendarScreen({ navigation }: any) {
         </View>
 
         {/* Monthly Events List */}
-        {isLoadingEvents ? (
-          <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginTop: 20 }} />
+        {isLoadingEvents && events.length === 0 ? (
+          <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginTop: 20 }} accessibilityRole="progressbar" />
+        ) : eventsError && events.length === 0 ? (
+          <View style={styles.eventsErrorContainer} accessibilityRole="alert">
+            <Text style={styles.errorIconSmall}>⚠️</Text>
+            <Text style={styles.eventsErrorText}>{eventsError}</Text>
+            <TouchableOpacity
+              style={styles.retryButtonSmall}
+              onPress={() => selectedClassId !== null && fetchEvents(selectedClassId)}
+              accessibilityRole="button"
+              accessibilityLabel="Tentar novamente"
+            >
+              <Text style={styles.retryButtonSmallText}>Tentar novamente</Text>
+            </TouchableOpacity>
+          </View>
         ) : monthEvs.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📅</Text>
@@ -353,7 +491,9 @@ export default function CalendarScreen({ navigation }: any) {
             })}
           </View>
         )}
-      </ScrollView>
+          </ScrollView>
+        </>
+      )}
     </SafeAreaView>
   );
 }
@@ -675,5 +815,98 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: theme.colors.textSecondary,
     marginTop: 2,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+  },
+  inlineErrorBanner: {
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    borderColor: theme.colors.error,
+    borderWidth: 1,
+    borderRadius: 12,
+    marginHorizontal: 13,
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  inlineErrorText: {
+    flex: 1,
+    fontSize: 12,
+    color: theme.colors.error,
+    fontWeight: '600',
+  },
+  inlineRetryButton: {
+    backgroundColor: theme.colors.error,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  inlineRetryButtonText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  errorIcon: {
+    fontSize: 36,
+    marginBottom: 8,
+  },
+  errorIconSmall: {
+    fontSize: 24,
+    marginBottom: 6,
+  },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: theme.colors.text,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 16,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  retryButton: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  eventsErrorContainer: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    gap: 6,
+  },
+  eventsErrorText: {
+    fontSize: 12,
+    color: theme.colors.error,
+    textAlign: 'center',
+    paddingHorizontal: theme.spacing.lg,
+  },
+  retryButtonSmall: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  retryButtonSmallText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
