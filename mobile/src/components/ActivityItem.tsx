@@ -74,15 +74,29 @@ export default function ActivityItem({ activity, onPress, onStatusChange, th = L
     }
   };
 
+  const dateLabel = formatDateLabel(activity.due_date);
+  const cardAccessibilityLabel = [
+    `${tm.label}: ${activity.title}`,
+    activity.subject ? `Matéria: ${activity.subject}` : null,
+    `Entrega: ${dateLabel}${activity.due_time ? ` às ${activity.due_time}` : ""}`,
+    `Status: ${sm.label}`,
+  ].filter(Boolean).join(", ");
+
   return (
-    <TouchableOpacity
+    <View
       style={[styles.card, { backgroundColor: th.card, borderColor: th.border }]}
-      onPress={onPress}
-      activeOpacity={0.7}
     >
       <View style={[styles.accentLine, { backgroundColor: sm.color }]} />
       <View style={styles.content}>
-        <View style={styles.mainInfo}>
+        <TouchableOpacity
+          style={styles.mainInfo}
+          onPress={onPress}
+          activeOpacity={0.7}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={cardAccessibilityLabel}
+          accessibilityHint="Toque para ver os detalhes da atividade"
+        >
           <View style={styles.typeRow}>
             <Text style={[styles.typeLabel, { color: tm.color }]}>
               {tm.label.toUpperCase()}
@@ -93,21 +107,26 @@ export default function ActivityItem({ activity, onPress, onStatusChange, th = L
           </View>
           <Text style={[styles.title, { color: th.fg }]} numberOfLines={1}>{activity.title}</Text>
           <Text style={[styles.subtext, { color: th.muted }]}>
-            {activity.subject || "Sem matéria"} · {formatDateLabel(activity.due_date)}
+            {activity.subject || "Sem matéria"} · {dateLabel}
           </Text>
-        </View>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.badge, { backgroundColor: sm.bg }]}
           onPress={handleCycleStatus}
           disabled={!onStatusChange}
           activeOpacity={0.7}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={`Status: ${sm.label}`}
+          accessibilityHint={onStatusChange ? "Toque para alternar o status da atividade" : undefined}
+          accessibilityState={{ disabled: !onStatusChange }}
         >
           <View style={[styles.badgeDot, { backgroundColor: sm.color }]} />
           <Text style={[styles.badgeText, { color: sm.color }]}>{sm.label}</Text>
         </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 

@@ -39,15 +39,26 @@ export default function MemberSheet({
 
   return (
     <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
+      <TouchableWithoutFeedback
+        onPress={onClose}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Fechar opções do membro"
+        accessibilityHint="Toque na área externa para fechar o menu"
+      >
         <View style={S.backdrop}/>
       </TouchableWithoutFeedback>
       <Animated.View style={[S.sheet, { backgroundColor: th.card, transform: [{ translateY: slide }] }]}>
         {/* Handle */}
-        <View style={[S.handle, { backgroundColor: th.border }]}/>
+        <View style={[S.handle, { backgroundColor: th.border }]} importantForAccessibility="no"/>
 
         {/* Member info */}
-        <View style={S.header}>
+        <View
+          style={S.header}
+          accessible={true}
+          accessibilityRole="header"
+          accessibilityLabel={`Membro: ${member.name}, e-mail: ${member.email}, cargo: ${rm.label}`}
+        >
           <MemberAvatar member={member} size={52} th={th}/>
           <View style={{ flex: 1 }}>
             <Text style={[S.name, { color: th.fg }]}>{member.name}</Text>
@@ -56,7 +67,7 @@ export default function MemberSheet({
           <Badge color={rm.color} bg={rm.bg}>{rm.label}</Badge>
         </View>
 
-        <View style={[S.divider, { backgroundColor: th.border }]}/>
+        <View style={[S.divider, { backgroundColor: th.border }]} importantForAccessibility="no"/>
 
         <View style={{ gap: 8 }}>
           {canPromote && (
