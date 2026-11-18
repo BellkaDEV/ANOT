@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme/theme';
 import api from '../services/api';
@@ -19,9 +19,17 @@ export default function ClassDetailsScreen({ route, navigation }: any) {
   const [myRole, setMyRole] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
-  const fetchData = async () => {
-    setIsLoading(true);
+  const fetchData = async (isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshing(true);
+    } else if (!hasLoadedOnceRef.current) {
+      setIsLoading(true);
+    }
+    setErrorMessage(null);
     try {
       const classRes = await api.get(`/classes/${classId}`);
       setClassDetails(classRes.data.class);
@@ -35,12 +43,14 @@ export default function ClassDetailsScreen({ route, navigation }: any) {
 
       const memRes = await api.get(`/classes/${classId}/members`);
       setMembers(memRes.data.members || []);
+      hasLoadedOnceRef.current = true;
     } catch (err: any) {
       console.error(err);
-      Alert.alert('Erro', 'Não foi possível carregar os dados desta turma.');
-      navigation.goBack();
+      const msg = err.response?.data?.message || 'Não foi possível carregar os dados desta turma.';
+      setErrorMessage(msg);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -182,9 +192,39 @@ export default function ClassDetailsScreen({ route, navigation }: any) {
         ))}
       </View>
 
-      {isLoading ? (
-        <View style={styles.centerContainer}>
+      {errorMessage && classDetails && (
+        <View style={styles.inlineErrorBanner} accessibilityRole="alert">
+          <Text style={styles.inlineErrorText} numberOfLines={2}>
+            {errorMessage}
+          </Text>
+          <TouchableOpacity
+            style={styles.inlineRetryButton}
+            onPress={() => fetchData(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Tentar novamente"
+          >
+            <Text style={styles.inlineRetryButtonText}>Tentar novamente</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {isLoading && !hasLoadedOnceRef.current ? (
+        <View style={styles.centerContainer} accessibilityRole="progressbar" accessibilityLabel="Carregando dados da turma">
           <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      ) : errorMessage && !classDetails ? (
+        <View style={styles.centerContainer} accessibilityRole="alert">
+          <Text style={styles.errorIcon}>⚠️</Text>
+          <Text style={styles.errorTitle}>Não foi possível carregar os dados</Text>
+          <Text style={styles.errorMessage}>{errorMessage}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => fetchData()}
+            accessibilityRole="button"
+            accessibilityLabel="Tentar novamente"
+          >
+            <Text style={styles.retryButtonText}>Tentar novamente</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.content}>
@@ -201,6 +241,14 @@ export default function ClassDetailsScreen({ route, navigation }: any) {
               <FlatList
                 data={activities}
                 keyExtractor={(item) => item.id.toString()}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={() => fetchData(true)}
+                    colors={[theme.colors.primary]}
+                    tintColor={theme.colors.primary}
+                  />
+                }
                 renderItem={({ item }) => (
                   <ActivityItem
                     activity={item}
@@ -231,6 +279,14 @@ export default function ClassDetailsScreen({ route, navigation }: any) {
               <FlatList
                 data={announcements}
                 keyExtractor={(item) => item.id.toString()}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={() => fetchData(true)}
+                    colors={[theme.colors.primary]}
+                    tintColor={theme.colors.primary}
+                  />
+                }
                 renderItem={({ item }) => <AnnouncementCard announcement={item} />}
                 ListEmptyComponent={
                   <View style={styles.emptyView}>
@@ -253,6 +309,14 @@ export default function ClassDetailsScreen({ route, navigation }: any) {
               <FlatList
                 data={members}
                 keyExtractor={(item) => item.id.toString()}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={() => fetchData(true)}
+                    colors={[theme.colors.primary]}
+                    tintColor={theme.colors.primary}
+                  />
+                }
                 renderItem={({ item }) => {
                   const memberUser = item.user;
                   const isTargetOwner = item.role === 'owner';
@@ -551,6 +615,66 @@ const styles = StyleSheet.create({
   panelButtonText: {
     color: '#ffffff',
     fontSize: 11,
+    fontWeight: '700',
+  },
+  inlineErrorBanner: {
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    borderColor: theme.colors.error,
+    borderWidth: 1,
+    borderRadius: 12,
+    marginHorizontal: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  inlineErrorText: {
+    flex: 1,
+    fontSize: 12,
+    color: theme.colors.error,
+    fontWeight: '600',
+  },
+  inlineRetryButton: {
+    backgroundColor: theme.colors.error,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  inlineRetryButtonText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  errorIcon: {
+    fontSize: 36,
+    marginBottom: 8,
+  },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: theme.colors.text,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 16,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  retryButton: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
     fontWeight: '700',
   },
 });
