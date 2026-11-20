@@ -21,17 +21,27 @@ export default function EmptyState({
   th,
 }: EmptyStateProps) {
   return (
-    <View style={[S.container, { backgroundColor: th.card, borderColor: th.border }]}>
-      <View style={[S.iconWrap, { backgroundColor: th.card2 }]}>
+    <View
+      style={[S.container, { backgroundColor: th.card, borderColor: th.border }]}
+    >
+      <View
+        style={[S.iconWrap, { backgroundColor: th.card2 }]}
+        importantForAccessibility="no"
+        accessibilityElementsHidden={true}
+      >
         <AppIcon name={icon} size={32} color={th.muted} />
       </View>
-      <Text style={[S.title, { color: th.fg }]}>{title}</Text>
+      <Text style={[S.title, { color: th.fg }]} accessibilityRole="header">{title}</Text>
       {Boolean(subtitle) && <Text style={[S.subtitle, { color: th.muted }]}>{subtitle}</Text>}
       {Boolean(actionLabel && onAction) && (
         <TouchableOpacity
           style={[S.actionBtn, { backgroundColor: th.orange }]}
           onPress={onAction}
           activeOpacity={0.8}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={actionLabel}
+          accessibilityHint={actionLabel ? `Toque para ${actionLabel.toLowerCase()}` : undefined}
         >
           <Text style={S.actionText}>{actionLabel}</Text>
         </TouchableOpacity>

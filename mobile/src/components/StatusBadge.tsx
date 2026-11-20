@@ -57,10 +57,29 @@ export default function StatusBadge({ type = "activity", value, th, size = "md" 
 
   const isSm = size === "sm";
 
+  const accessibilityPrefix =
+    type === "role"
+      ? "Cargo: "
+      : type === "priority"
+      ? "Prioridade: "
+      : type === "activity"
+      ? "Tipo: "
+      : "Status: ";
+
   return (
-    <View style={[S.badge, { backgroundColor: bg }, isSm && S.badgeSm]}>
+    <View
+      style={[S.badge, { backgroundColor: bg }, isSm && S.badgeSm]}
+      accessible={true}
+      accessibilityRole="text"
+      accessibilityLabel={`${accessibilityPrefix}${label}`}
+    >
       {Boolean(iconName) && (
-        <AppIcon name={iconName} size={isSm ? 12 : 14} color={color} style={S.icon} />
+        <AppIcon
+          name={iconName}
+          size={isSm ? 12 : 14}
+          color={color}
+          style={S.icon}
+        />
       )}
       <Text style={[S.text, { color }, isSm && S.textSm]}>{label}</Text>
     </View>

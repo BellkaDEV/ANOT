@@ -32,11 +32,18 @@ export default function SettingRow({
 }: SettingRowProps) {
   const textColor = isDestructive ? (th.error || "#ef4444") : th.fg;
   const iconColor = isDestructive ? (th.error || "#ef4444") : th.navy;
+  const fullAccessibilityLabel = `${label}${badge ? ` (${badge})` : ""}${
+    sub ? `: ${sub}` : ""
+  }${rightText ? `. ${rightText}` : ""}`;
 
   const content = (
     <View style={[S.row, disabled && S.disabledRow]}>
       {Boolean(icon) && (
-        <View style={[S.iconWrap, { backgroundColor: isDestructive ? (th.errorBg || "rgba(239,68,68,0.1)") : th.navyLight }]}>
+        <View
+          style={[S.iconWrap, { backgroundColor: isDestructive ? (th.errorBg || "rgba(239,68,68,0.1)") : th.navyLight }]}
+          importantForAccessibility="no"
+          accessibilityElementsHidden={true}
+        >
           <AppIcon name={icon!} size={18} color={iconColor} />
         </View>
       )}
@@ -64,18 +71,34 @@ export default function SettingRow({
           disabled={disabled}
           trackColor={{ false: th.border, true: th.orange }}
           thumbColor="#FFFFFF"
+          accessible={true}
+          accessibilityRole="switch"
+          accessibilityLabel={fullAccessibilityLabel}
+          accessibilityState={{ checked: value, disabled }}
         />
       )}
 
       {Boolean(onPress && !onToggle) && (
-        <AppIcon name="chevron-forward" size={16} color={th.muted} />
+        <AppIcon
+          name="chevron-forward"
+          size={16}
+          color={th.muted}
+        />
       )}
     </View>
   );
 
   if (onPress && !disabled && onToggle === undefined) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7} accessibilityLabel={label}>
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.7}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={fullAccessibilityLabel}
+        accessibilityHint="Toque para abrir configuração"
+        accessibilityState={{ disabled }}
+      >
         {content}
       </TouchableOpacity>
     );
