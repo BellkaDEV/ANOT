@@ -4,9 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ClassMemberResource;
-use App\Models\ActivityGroup;
-use App\Models\ActivityGroupInvitation;
-use App\Models\ActivityGroupMember;
 use App\Models\ClassMember;
 use App\Models\SchoolClass;
 use Illuminate\Http\Request;
@@ -160,38 +157,6 @@ class MemberController extends Controller
         }
 
         $targetMembership->delete();
-
-        // Limpar membros de grupo e convites da pessoa removida da turma
-        $groups = ActivityGroup::whereHas('activity', function ($q) use ($classId) {
-            $q->where('class_id', $classId);
-        })->get();
-
-        foreach ($groups as $group) {
-            $groupMember = ActivityGroupMember::where('activity_group_id', $group->id)
-                ->where('user_id', $userId)
-                ->first();
-
-            if ($groupMember) {
-                $groupMember->delete();
-
-                if ($group->leader_user_id == $userId) {
-                    $oldest = ActivityGroupMember::where('activity_group_id', $group->id)
-                        ->orderBy('joined_at', 'asc')
-                        ->orderBy('id', 'asc')
-                        ->first();
-
-                    $group->leader_user_id = $oldest ? $oldest->user_id : null;
-                    $group->save();
-                }
-            }
-
-            ActivityGroupInvitation::where('activity_group_id', $group->id)
-                ->where(function ($q) use ($userId) {
-                    $q->where('invited_user_id', $userId)
-                        ->orWhere('invited_by_user_id', $userId);
-                })
-                ->delete();
-        }
 
         return response()->json([
             'message' => 'Membro removido da turma com sucesso.',
