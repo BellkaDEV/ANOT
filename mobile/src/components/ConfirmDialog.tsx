@@ -36,7 +36,11 @@ export default function ConfirmDialog({
         <View style={S.overlay}>
           <TouchableWithoutFeedback>
             <View style={[S.dialog, { backgroundColor: th.card, borderColor: th.border }]}>
-              <View style={[S.iconWrap, { backgroundColor: isDestructive ? (th.errorBg || "rgba(239,68,68,0.1)") : th.orangeLight }]}>
+              <View
+                style={[S.iconWrap, { backgroundColor: isDestructive ? (th.errorBg || "rgba(239,68,68,0.1)") : th.orangeLight }]}
+                importantForAccessibility="no"
+                accessibilityElementsHidden={true}
+              >
                 <AppIcon
                   name={isDestructive ? "alert-circle-outline" : "help-circle-outline"}
                   size={28}
@@ -44,7 +48,7 @@ export default function ConfirmDialog({
                 />
               </View>
 
-              <Text style={[S.title, { color: th.fg }]}>{title}</Text>
+              <Text style={[S.title, { color: th.fg }]} accessibilityRole="header">{title}</Text>
               <Text style={[S.message, { color: th.muted }]}>{message}</Text>
 
               <View style={S.btnRow}>
@@ -52,6 +56,10 @@ export default function ConfirmDialog({
                   style={[S.btn, S.cancelBtn, { backgroundColor: th.card2, borderColor: th.border }]}
                   onPress={onCancel}
                   activeOpacity={0.8}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={cancelLabel}
+                  accessibilityHint="Toque para cancelar e fechar este diálogo"
                 >
                   <Text style={[S.btnText, { color: th.fg }]}>{cancelLabel}</Text>
                 </TouchableOpacity>
@@ -60,6 +68,10 @@ export default function ConfirmDialog({
                   style={[S.btn, { backgroundColor: confirmBg }]}
                   onPress={onConfirm}
                   activeOpacity={0.8}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={confirmLabel}
+                  accessibilityHint={isDestructive ? "Ação destrutiva. Toque para confirmar" : "Toque para confirmar a ação"}
                 >
                   <Text style={[S.btnText, { color: "#FFFFFF" }]}>{confirmLabel}</Text>
                 </TouchableOpacity>

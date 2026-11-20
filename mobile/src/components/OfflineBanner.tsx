@@ -45,12 +45,21 @@ export default function OfflineBanner() {
   }
 
   return (
-    <Animated.View style={[styles.banner, { opacity: fadeAnim }]}>
+    <Animated.View
+      style={[styles.banner, { opacity: fadeAnim }]}
+    >
       <View style={styles.content}>
-        <Text style={styles.icon}>⚠️</Text>
+        <Text style={styles.icon} importantForAccessibility="no" accessibilityElementsHidden={true}>⚠️</Text>
         <Text style={styles.text}>Sem conexão com o servidor ANOT</Text>
       </View>
-      <TouchableOpacity style={styles.retryBtn} onPress={handleRetry}>
+      <TouchableOpacity
+        style={styles.retryBtn}
+        onPress={handleRetry}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Tentar reconectar"
+        accessibilityHint="Toque para testar novamente a conexão com o servidor"
+      >
         <Text style={styles.retryBtnText}>Reconectar</Text>
       </TouchableOpacity>
     </Animated.View>

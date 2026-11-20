@@ -136,19 +136,25 @@ export default function CalendarPickerModal({
                 <TouchableOpacity
                   onPress={handlePrevMonth}
                   style={[S.navBtn, { backgroundColor: th.card2 }]}
+                  accessible={true}
+                  accessibilityRole="button"
                   accessibilityLabel="Mês anterior"
+                  accessibilityHint="Toque para ver o mês anterior"
                 >
                   <AppIcon name="chevron-back" size={20} color={th.fg} />
                 </TouchableOpacity>
 
-                <Text style={[S.monthTitle, { color: th.fg }]}>
+                <Text style={[S.monthTitle, { color: th.fg }]} accessibilityRole="header">
                   {MONTH_NAMES[viewMonth]} {viewYear}
                 </Text>
 
                 <TouchableOpacity
                   onPress={handleNextMonth}
                   style={[S.navBtn, { backgroundColor: th.card2 }]}
+                  accessible={true}
+                  accessibilityRole="button"
                   accessibilityLabel="Próximo mês"
+                  accessibilityHint="Toque para ver o próximo mês"
                 >
                   <AppIcon name="chevron-forward" size={20} color={th.fg} />
                 </TouchableOpacity>
@@ -182,6 +188,11 @@ export default function CalendarPickerModal({
                         isSelected && { backgroundColor: th.orange },
                         isToday && !isSelected && { borderWidth: 1.5, borderColor: th.orange },
                       ]}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${day} de ${MONTH_NAMES[viewMonth]} de ${viewYear}${isToday ? ", hoje" : ""}`}
+                      accessibilityState={{ selected: isSelected }}
+                      accessibilityHint="Toque para selecionar esta data"
                     >
                       <Text
                         style={[
@@ -202,7 +213,10 @@ export default function CalendarPickerModal({
                 <TouchableOpacity
                   onPress={onClose}
                   style={[S.btn, { backgroundColor: th.card2 }]}
+                  accessible={true}
+                  accessibilityRole="button"
                   accessibilityLabel="Cancelar"
+                  accessibilityHint="Toque para fechar o calendário sem selecionar"
                 >
                   <Text style={[S.btnText, { color: th.fg }]}>Cancelar</Text>
                 </TouchableOpacity>
@@ -210,7 +224,10 @@ export default function CalendarPickerModal({
                 <TouchableOpacity
                   onPress={handleConfirm}
                   style={[S.btn, { backgroundColor: th.orange }]}
+                  accessible={true}
+                  accessibilityRole="button"
                   accessibilityLabel="Confirmar data"
+                  accessibilityHint="Toque para confirmar a data selecionada"
                 >
                   <Text style={[S.btnText, { color: "#FFFFFF", fontWeight: "800" }]}>
                     Confirmar

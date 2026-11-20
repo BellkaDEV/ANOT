@@ -45,10 +45,16 @@ export default function DateField({ label, value, onChange, error, th }: Props) 
             borderColor: error ? th.error : th.border,
           },
         ]}
-        accessibilityLabel={label || "Data de entrega"}
-        accessibilityHint="Toque para abrir o calendário"
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`${label ? `${label}: ` : ""}${displayDate}`}
+        accessibilityHint="Toque para abrir o calendário e selecionar uma data"
       >
-        <AppIcon name="calendar-outline" size={18} color={error ? th.error : th.orange} />
+        <AppIcon
+          name="calendar-outline"
+          size={18}
+          color={error ? th.error : th.orange}
+        />
         <Text
           style={[
             S.dateText,
@@ -59,7 +65,11 @@ export default function DateField({ label, value, onChange, error, th }: Props) 
         >
           {displayDate}
         </Text>
-        <AppIcon name="chevron-down" size={16} color={th.muted} />
+        <AppIcon
+          name="chevron-down"
+          size={16}
+          color={th.muted}
+        />
       </TouchableOpacity>
 
       {Boolean(error) && <Text style={[S.errText, { color: th.error }]}>{error}</Text>}

@@ -16,18 +16,45 @@ export default function QRModal({ code, visible, onClose, th }: Props) {
       <SafeAreaView style={S.overlay}>
         <View style={[S.card, { backgroundColor: th.card }]}>
           <View style={S.closeRow}>
-            <Text style={[S.title, { color: th.fg }]}>QR Code da Turma</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityLabel="Fechar QR Code">
+            <Text style={[S.title, { color: th.fg }]} accessibilityRole="header">QR Code da Turma</Text>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Fechar QR Code"
+              accessibilityHint="Toque para fechar a visualização do QR Code"
+            >
               <AppIcon name="close-circle" size={28} color={th.muted}/>
             </TouchableOpacity>
           </View>
-          <View style={S.qrWrap}>
+          <View
+            style={S.qrWrap}
+            accessible={true}
+            accessibilityRole="image"
+            accessibilityLabel={`QR Code de convite para a turma com código ${code}`}
+          >
             <QRCode value={deepLink} size={220} color="#0e2f5a" backgroundColor="#ffffff" />
           </View>
-          <Text style={[S.codeLabel, { color: th.muted }]}>CÓDIGO DA TURMA</Text>
-          <Text style={[S.code, { color: th.orange }]} selectable>{code}</Text>
+          <Text style={[S.codeLabel, { color: th.muted }]} importantForAccessibility="no">CÓDIGO DA TURMA</Text>
+          <Text
+            style={[S.code, { color: th.orange }]}
+            selectable
+            accessible={true}
+            accessibilityRole="text"
+            accessibilityLabel={`Código de acesso da turma: ${code}`}
+          >
+            {code}
+          </Text>
           <Text style={[S.hint, { color: th.muted }]}>Peça para seus colegas escanearem ou digitarem o código acima para entrar na turma.</Text>
-          <TouchableOpacity style={[S.shareButton, { backgroundColor: th.orange }]} onPress={() => Share.share({ message: `Entre na turma pelo ANOT: ${fallbackLink}` })} accessibilityRole="button">
+          <TouchableOpacity
+            style={[S.shareButton, { backgroundColor: th.orange }]}
+            onPress={() => Share.share({ message: `Entre na turma pelo ANOT: ${fallbackLink}` })}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Compartilhar convite da turma"
+            accessibilityHint="Toque para compartilhar o link de convite da turma"
+          >
             <AppIcon name="share-social-outline" size={18} color="#fff" />
             <Text style={S.shareText}>Compartilhar convite</Text>
           </TouchableOpacity>
