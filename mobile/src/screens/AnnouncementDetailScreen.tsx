@@ -36,7 +36,14 @@ export default function AnnouncementDetailScreen({
     return (
       <View style={[S.safe, { backgroundColor: th.bg }]}>
         <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
-          <TouchableOpacity onPress={onBack} style={S.backBtn} accessibilityLabel="Voltar">
+          <TouchableOpacity
+            onPress={onBack}
+            style={S.backBtn}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            accessibilityHint="Toque para voltar à tela anterior"
+          >
             <AppIcon name="arrow-back" size={22} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={S.hTitle}>Aviso</Text>
@@ -91,6 +98,10 @@ export default function AnnouncementDetailScreen({
                 key={index}
                 style={[S.linkText, { color: th.orange }]}
                 onPress={() => handleOpenUrl(part)}
+                accessible={true}
+                accessibilityRole="link"
+                accessibilityLabel={`Link: ${part}`}
+                accessibilityHint="Toque para abrir este link"
               >
                 {part}
               </Text>
@@ -106,19 +117,40 @@ export default function AnnouncementDetailScreen({
     <View style={[S.safe, { backgroundColor: th.bg }]}>
       {/* Header */}
       <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
-        <TouchableOpacity onPress={onBack} style={S.backBtn} accessibilityLabel="Voltar">
+        <TouchableOpacity
+          onPress={onBack}
+          style={S.backBtn}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+          accessibilityHint="Toque para voltar à tela anterior"
+        >
           <AppIcon name="arrow-back" size={22} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={S.hTitle}>Detalhes do Aviso</Text>
         {canManage && (onEdit || onDelete) ? (
           <View style={S.headerActions}>
             {Boolean(onEdit) && (
-              <TouchableOpacity onPress={() => onEdit!(announcement.id)} style={S.iconBtn} accessibilityLabel="Editar aviso">
+              <TouchableOpacity
+                onPress={() => onEdit!(announcement.id)}
+                style={S.iconBtn}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Editar aviso"
+                accessibilityHint="Toque para abrir a edição deste aviso"
+              >
                 <AppIcon name="create-outline" size={20} color="#FFFFFF" />
               </TouchableOpacity>
             )}
             {Boolean(onDelete) && (
-              <TouchableOpacity onPress={() => setConfirmDelete(true)} style={S.iconBtn} accessibilityLabel="Excluir aviso">
+              <TouchableOpacity
+                onPress={() => setConfirmDelete(true)}
+                style={S.iconBtn}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Excluir aviso"
+                accessibilityHint="Toque para abrir a confirmação de exclusão deste aviso"
+              >
                 <AppIcon name="trash-outline" size={20} color="#ef4444" />
               </TouchableOpacity>
             )}
@@ -140,10 +172,10 @@ export default function AnnouncementDetailScreen({
             )}
           </View>
 
-          <Text style={[S.title, { color: th.fg }]}>{announcement.title}</Text>
+          <Text style={[S.title, { color: th.fg }]} accessibilityRole="header">{announcement.title}</Text>
 
           <View style={S.authorSection}>
-            <View style={[S.authorIcon, { backgroundColor: th.navyLight }]}>
+            <View style={[S.authorIcon, { backgroundColor: th.navyLight }]} importantForAccessibility="no">
               <AppIcon name="person-outline" size={16} color={th.navy} />
             </View>
             <View style={{ flex: 1 }}>
