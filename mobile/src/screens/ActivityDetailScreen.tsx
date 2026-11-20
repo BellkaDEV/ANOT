@@ -53,7 +53,14 @@ export default function ActivityDetailScreen({
 
   const header = (
     <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
-      <TouchableOpacity onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityLabel="Voltar">
+      <TouchableOpacity
+        onPress={onBack}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Voltar"
+        accessibilityHint="Toque para voltar à tela anterior"
+      >
         <AppIcon name="arrow-back" size={22} color="#FFFFFF" />
       </TouchableOpacity>
       <Text style={S.hTitle} numberOfLines={1}>{activity.title}</Text>
@@ -66,9 +73,11 @@ export default function ActivityDetailScreen({
       {/* Card Principal */}
       <View style={[S.card, { backgroundColor: th.card, borderColor: am.color + "40", borderLeftColor: am.color }]}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <AppIcon name={am.icon} size={28} color={am.color} />
+          <View importantForAccessibility="no">
+            <AppIcon name={am.icon} size={28} color={am.color} />
+          </View>
           <View style={{ flex: 1 }}>
-            <Text style={[S.actTitle, { color: th.fg }]}>{activity.title}</Text>
+            <Text style={[S.actTitle, { color: th.fg }]} accessibilityRole="header">{activity.title}</Text>
             <Text style={[S.actSubject, { color: th.muted }]}>{activity.subject}</Text>
           </View>
         </View>
@@ -81,10 +90,10 @@ export default function ActivityDetailScreen({
       {/* Detalhes de Teste / Prova */}
       {activity.type === "teste" && (
         <View style={[S.infoCard, { backgroundColor: th.card, borderColor: th.border }]}>
-          <Text style={[S.sectionTitle, { color: th.muted }]}>INFORMAÇÕES DA AVALIAÇÃO</Text>
+          <Text style={[S.sectionTitle, { color: th.muted }]} accessibilityRole="header">INFORMAÇÕES DA AVALIAÇÃO</Text>
 
           <View style={S.infoRow}>
-            <View style={[S.infoIconWrap, { backgroundColor: th.navyLight }]}>
+            <View style={[S.infoIconWrap, { backgroundColor: th.navyLight }]} importantForAccessibility="no">
               <AppIcon name="help-circle-outline" size={16} color={th.navy} />
             </View>
             <View style={{ flex: 1 }}>
@@ -98,7 +107,7 @@ export default function ActivityDetailScreen({
           <HDivider th={th} />
 
           <View style={S.infoRow}>
-            <View style={[S.infoIconWrap, { backgroundColor: th.orangeLight }]}>
+            <View style={[S.infoIconWrap, { backgroundColor: th.orangeLight }]} importantForAccessibility="no">
               <AppIcon name="calculator-outline" size={16} color={th.orange} />
             </View>
             <View style={{ flex: 1 }}>
@@ -121,7 +130,7 @@ export default function ActivityDetailScreen({
         ].map((row, idx) => (
           <React.Fragment key={row.label}>
             <View style={S.infoRow}>
-              <View style={[S.infoIconWrap, { backgroundColor: th.navyLight }]}>
+              <View style={[S.infoIconWrap, { backgroundColor: th.navyLight }]} importantForAccessibility="no">
                 <AppIcon name={row.icon} size={16} color={th.navy} />
               </View>
               <View style={{ flex: 1 }}>
@@ -137,14 +146,14 @@ export default function ActivityDetailScreen({
       {/* Descrição */}
       {Boolean(activity.description) && (
         <View style={[S.infoCard, { backgroundColor: th.card, borderColor: th.border }]}>
-          <Text style={[S.sectionTitle, { color: th.muted }]}>INSTRUÇÕES / DESCRIÇÃO</Text>
+          <Text style={[S.sectionTitle, { color: th.muted }]} accessibilityRole="header">INSTRUÇÕES / DESCRIÇÃO</Text>
           <Text style={[S.descText, { color: th.fg }]}>{activity.description}</Text>
         </View>
       )}
 
       {/* Update progress */}
       <View style={[S.infoCard, { backgroundColor: th.card, borderColor: th.border }]}>
-        <Text style={[S.sectionTitle, { color: th.muted }]}>MEU STATUS</Text>
+        <Text style={[S.sectionTitle, { color: th.muted }]} accessibilityRole="header">MEU STATUS</Text>
         <View style={{ flexDirection: "row", gap: 8 }}>
           {STATUSES.map((st) => {
             const meta = STATUS_META[st];
@@ -160,6 +169,11 @@ export default function ActivityDetailScreen({
                     backgroundColor: active ? meta.bg : th.card2,
                   },
                 ]}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={`Status: ${meta.label}`}
+                accessibilityState={{ selected: active }}
+                accessibilityHint={`Toque para definir o status como ${meta.label}`}
               >
                 <Text style={[S.stText, { color: active ? meta.color : th.muted }]}>{meta.label}</Text>
               </TouchableOpacity>
@@ -170,7 +184,7 @@ export default function ActivityDetailScreen({
 
       {/* Notes */}
       <View style={[S.infoCard, { backgroundColor: th.card, borderColor: th.border }]}>
-        <Text style={[S.sectionTitle, { color: th.muted }]}>ANOTAÇÕES PESSOAIS</Text>
+        <Text style={[S.sectionTitle, { color: th.muted }]} accessibilityRole="header">ANOTAÇÕES PESSOAIS</Text>
         <FTextarea
           th={th}
           value={localNotes}
@@ -179,7 +193,12 @@ export default function ActivityDetailScreen({
           rows={3}
           maxLen={500}
         />
-        <Btn th={th} variant="secondary" size="sm" onPress={saveNotes}>
+        <Btn
+          th={th}
+          variant="secondary"
+          size="sm"
+          onPress={saveNotes}
+        >
           {saved ? "Salvo ✓" : "Salvar anotações"}
         </Btn>
       </View>

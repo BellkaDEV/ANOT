@@ -73,7 +73,15 @@ export default function JoinClassScreen({ onJoin, onBack, loading = false, th, i
 
   const header = (
     <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
-      <TouchableOpacity onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} style={S.backBtn} accessibilityLabel="Voltar">
+      <TouchableOpacity
+        onPress={onBack}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        style={S.backBtn}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Voltar"
+        accessibilityHint="Toque para voltar à tela anterior"
+      >
         <AppIcon name="arrow-back" size={22} color="#FFFFFF" />
       </TouchableOpacity>
       <Text style={S.hTitle}>Entrar em Turma</Text>
@@ -85,20 +93,33 @@ export default function JoinClassScreen({ onJoin, onBack, loading = false, th, i
     <KeyboardAwareScreen header={header} th={th} contentContainerStyle={S.body}>
       <View style={[S.card, { backgroundColor: th.card, borderColor: th.border }]}>
         <View style={S.cardTop}>
-          <View style={[S.iconWrap, { backgroundColor: th.orangeLight }]}><AppIcon name="key" size={22} color={th.orange} /></View>
+          <View style={[S.iconWrap, { backgroundColor: th.orangeLight }]} importantForAccessibility="no">
+            <AppIcon name="key" size={22} color={th.orange} />
+          </View>
           <View style={{ flex: 1 }}>
-            <Text style={[S.cardTitle, { color: th.fg }]}>Código de Acesso</Text>
+            <Text style={[S.cardTitle, { color: th.fg }]} accessibilityRole="header">Código de Acesso</Text>
             <Text style={[S.cardSub, { color: th.muted }]}>Peça o código ao representante da turma</Text>
           </View>
         </View>
 
-        <TouchableOpacity style={[S.scanCard, { borderColor: th.orange, backgroundColor: th.orangeLight }]} onPress={openScanner} accessibilityRole="button">
-          <AppIcon name="scan-outline" size={28} color={th.orange} />
+        <TouchableOpacity
+          style={[S.scanCard, { borderColor: th.orange, backgroundColor: th.orangeLight }]}
+          onPress={openScanner}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Escanear QR Code. Use a câmera para ler um convite ANOT"
+          accessibilityHint="Toque para abrir a câmera e escanear o convite"
+        >
+          <View importantForAccessibility="no">
+            <AppIcon name="scan-outline" size={28} color={th.orange} />
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={[S.scanTitle, { color: th.fg }]}>Escanear QR Code</Text>
             <Text style={[S.scanSub, { color: th.muted }]}>Use a câmera para ler um convite ANOT</Text>
           </View>
-          <AppIcon name="chevron-forward" size={20} color={th.orange} />
+          <View importantForAccessibility="no">
+            <AppIcon name="chevron-forward" size={20} color={th.orange} />
+          </View>
         </TouchableOpacity>
 
         <FInput th={th} label="Código da Turma" value={code} onChange={(v) => { setCode(v.toUpperCase()); if (error) setError(""); }} placeholder="Ex.: ABC-1234" leftIcon="qr-code-outline" autoCapitalize="characters" error={error} hint="Digite o código com ou sem hífen" />
@@ -109,7 +130,16 @@ export default function JoinClassScreen({ onJoin, onBack, loading = false, th, i
         <View style={[S.scanner, { backgroundColor: "#000" }]}>
           {permission?.granted ? <CameraView style={StyleSheet.absoluteFill} facing="back" barcodeScannerSettings={{ barcodeTypes: ["qr"] }} onBarcodeScanned={handleBarcodeScanned} /> : null}
           <View style={S.scannerOverlay}>
-            <TouchableOpacity style={S.closeScanner} onPress={() => setScannerVisible(false)} accessibilityLabel="Fechar scanner"><AppIcon name="close" size={28} color="#fff" /></TouchableOpacity>
+            <TouchableOpacity
+              style={S.closeScanner}
+              onPress={() => setScannerVisible(false)}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Fechar scanner"
+              accessibilityHint="Toque para fechar a câmera"
+            >
+              <AppIcon name="close" size={28} color="#fff" />
+            </TouchableOpacity>
             <View style={S.scanFrame} />
             <Text style={S.scannerText}>{scannerError || "Aponte a câmera para o QR Code do convite"}</Text>
             {!permission?.granted && <Btn th={{ ...th, orange: "#fff" }} variant="secondary" onPress={openScanner}>Permitir câmera</Btn>}
