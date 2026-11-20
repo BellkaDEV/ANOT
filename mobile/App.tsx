@@ -586,7 +586,9 @@ function MainApp() {
     if (!appUser) return <WelcomeScreen onLogin={() => nav("login")} onRegister={() => nav("register")} th={th}/>;
 
     if (screen === "dashboard") return (
-      <DashboardScreen user={appUser} classes={classes} loading={isLoadingClasses} loadError={classLoadError} onRetry={fetchClassesFromApi}
+      <DashboardScreen user={appUser} classes={classes} loading={isLoadingClasses && classes.length === 0}
+        loadError={classLoadError} onRetry={fetchClassesFromApi} onRefresh={fetchClassesFromApi}
+        refreshing={isLoadingClasses && classes.length > 0}
         onSelectClass={id => { setActiveId(id); nav("classHome"); }}
         onCreateClass={() => nav("createClass")} onJoinClass={() => nav("joinClass")}
         onProfile={() => nav("profile")} onSettings={() => nav("settings")} th={th}/>
@@ -639,7 +641,9 @@ function MainApp() {
     if (screen === "about") return <AboutScreen onBack={() => nav("profile")} th={th}/>;
 
     if (!activeClass) return (
-      <DashboardScreen user={appUser} classes={classes} loading={isLoadingClasses}
+      <DashboardScreen user={appUser} classes={classes} loading={isLoadingClasses && classes.length === 0}
+        loadError={classLoadError} onRetry={fetchClassesFromApi} onRefresh={fetchClassesFromApi}
+        refreshing={isLoadingClasses && classes.length > 0}
         onSelectClass={id => { setActiveId(id); nav("classHome"); }}
         onCreateClass={() => nav("createClass")} onJoinClass={() => nav("joinClass")}
         onProfile={() => nav("profile")} onSettings={() => nav("settings")} th={th}/>

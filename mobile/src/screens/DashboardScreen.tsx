@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Btn, SkelCard, Empty } from "../components/ui";
@@ -16,11 +16,25 @@ interface Props {
   loading?: boolean;
   loadError?: boolean;
   onRetry?: () => void;
+  onRefresh?: () => void;
+  refreshing?: boolean;
   th: AppTheme;
 }
 
 export default function DashboardScreen({
-  user, classes, onSelectClass, onCreateClass, onJoinClass, onProfile, onSettings, loading, loadError, onRetry, th,
+  user,
+  classes,
+  onSelectClass,
+  onCreateClass,
+  onJoinClass,
+  onProfile,
+  onSettings,
+  loading,
+  loadError,
+  onRetry,
+  onRefresh,
+  refreshing,
+  th,
 }: Props) {
   const insets = useSafeAreaInsets();
   return (
@@ -32,27 +46,67 @@ export default function DashboardScreen({
           <Text style={S.hSub}>{classes.length} {classes.length === 1 ? "turma" : "turmas"} ativas</Text>
         </View>
         <View style={{ flexDirection: "row", gap: 8 }}>
-          <TouchableOpacity onPress={onSettings} style={[S.iconBtn, { backgroundColor: "rgba(255,255,255,0.12)" }]}>
+          <TouchableOpacity
+            onPress={onSettings}
+            style={[S.iconBtn, { backgroundColor: "rgba(255,255,255,0.12)" }]}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Configurações do aplicativo"
+            accessibilityHint="Toque para abrir configurações"
+          >
             <Ionicons name="settings-outline" size={18} color="#fff"/>
           </TouchableOpacity>
-          <TouchableOpacity onPress={onProfile} style={[S.iconBtn, { backgroundColor: "rgba(255,255,255,0.12)" }]}>
+          <TouchableOpacity
+            onPress={onProfile}
+            style={[S.iconBtn, { backgroundColor: "rgba(255,255,255,0.12)" }]}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Meu perfil"
+            accessibilityHint="Toque para abrir seu perfil"
+          >
             <Ionicons name="person-circle-outline" size={20} color="#fff"/>
           </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={S.body}>
+      <ScrollView
+        contentContainerStyle={S.body}
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl
+              refreshing={Boolean(refreshing)}
+              onRefresh={onRefresh}
+              tintColor={th.orange}
+              colors={[th.orange]}
+            />
+          ) : undefined
+        }
+      >
         {/* Quick actions */}
         <View style={S.actionRow}>
-          <TouchableOpacity onPress={onCreateClass} style={[S.actionCard, { backgroundColor: th.card, borderColor: th.border }]}>
-            <View style={[S.actionIcon, { backgroundColor: th.orangeLight }]}>
+          <TouchableOpacity
+            onPress={onCreateClass}
+            style={[S.actionCard, { backgroundColor: th.card, borderColor: th.border }]}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Criar turma como representante"
+            accessibilityHint="Toque para criar uma nova turma"
+          >
+            <View style={[S.actionIcon, { backgroundColor: th.orangeLight }]} importantForAccessibility="no">
               <Ionicons name="add-circle" size={22} color={th.orange}/>
             </View>
             <Text style={[S.actionLabel, { color: th.fg }]}>Criar turma</Text>
             <Text style={[S.actionSub, { color: th.muted }]}>Como representante</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={onJoinClass} style={[S.actionCard, { backgroundColor: th.card, borderColor: th.border }]}>
-            <View style={[S.actionIcon, { backgroundColor: th.navyLight }]}>
+          <TouchableOpacity
+            onPress={onJoinClass}
+            style={[S.actionCard, { backgroundColor: th.card, borderColor: th.border }]}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Entrar em turma via código ou link"
+            accessibilityHint="Toque para entrar em uma turma existente"
+          >
+            <View style={[S.actionIcon, { backgroundColor: th.navyLight }]} importantForAccessibility="no">
               <Ionicons name="enter" size={22} color={th.navy}/>
             </View>
             <Text style={[S.actionLabel, { color: th.fg }]}>Entrar em turma</Text>
@@ -61,10 +115,37 @@ export default function DashboardScreen({
         </View>
 
         {/* Classes */}
-        <Text style={[S.sectionTitle, { color: th.muted }]}>SUAS TURMAS</Text>
+        <Text style={[S.sectionTitle, { color: th.muted }]} accessibilityRole="header">SUAS TURMAS</Text>
+
+        {/* Inline error when refreshing fails but cached classes exist */}
+        {loadError && classes.length > 0 && (
+          <View
+            style={[S.inlineError, { backgroundColor: th.card, borderColor: th.border }]}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+              <Ionicons name="alert-circle-outline" size={20} color={th.error || "#ef4444"} />
+              <Text style={[S.inlineErrorText, { color: th.fg, flex: 1 }]}>
+                Não foi possível atualizar as turmas.
+              </Text>
+            </View>
+            {Boolean(onRetry) && (
+              <TouchableOpacity
+                onPress={onRetry}
+                style={[S.retryBtn, { backgroundColor: th.orange }]}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Tentar novamente atualizar turmas"
+                accessibilityHint="Toque para recarregar as turmas"
+              >
+                <Text style={S.retryBtnText}>Tentar novamente</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
         {loading ? (
           [1, 2].map(i => <SkelCard key={i} th={th}/>)
-        ) : loadError ? (
+        ) : loadError && classes.length === 0 ? (
           <Empty th={th} icon="cloud-offline-outline" title="Não foi possível carregar as turmas"
             sub="Verifique sua conexão e tente novamente." cta="Tentar novamente" onCta={onRetry}/>
         ) : classes.length === 0 ? (
@@ -74,11 +155,21 @@ export default function DashboardScreen({
           classes.map(cls => {
             const myRole = cls.members.find(m => m.userId === user.id)?.classRole;
             const pending = cls.activities.length;
+            const roleLabel = myRole === "owner" ? "Criador" : myRole === "rep" ? "Representante" : "";
+            const accessibilityLabel = `${cls.name}, instituição ${cls.institution}, período ${cls.period}, ${cls.members.length} ${cls.members.length === 1 ? "membro" : "membros"}${pending > 0 ? `, ${pending} ${pending === 1 ? "atividade" : "atividades"}` : ""}${roleLabel ? `, seu papel: ${roleLabel}` : ""}`;
+
             return (
-              <TouchableOpacity key={cls.id} onPress={() => onSelectClass(cls.id)}
-                style={[S.clsCard, { backgroundColor: th.card, borderColor: th.border, borderLeftColor: th.orange }]}>
+              <TouchableOpacity
+                key={cls.id}
+                onPress={() => onSelectClass(cls.id)}
+                style={[S.clsCard, { backgroundColor: th.card, borderColor: th.border, borderLeftColor: th.orange }]}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={accessibilityLabel}
+                accessibilityHint="Toque para ver os detalhes da turma"
+              >
                 <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
-                  <View style={[S.clsIcon, { backgroundColor: th.orangeLight }]}>
+                  <View style={[S.clsIcon, { backgroundColor: th.orangeLight }]} importantForAccessibility="no">
                     <Ionicons name="school" size={20} color={th.orange}/>
                   </View>
                   <View style={{ flex: 1 }}>
@@ -132,6 +223,10 @@ const S = StyleSheet.create({
   actionLabel:{ fontSize: 14, fontWeight: "700" },
   actionSub:  { fontSize: 12 },
   sectionTitle:{ fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.9, marginTop: 8, marginBottom: 6 },
+  inlineError:{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 12, borderRadius: 12, borderWidth: 1, marginBottom: 8, gap: 8 },
+  inlineErrorText:{ fontSize: 13, fontWeight: "600" },
+  retryBtn:   { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  retryBtnText:{ color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
   clsCard:    { borderRadius: 16, borderWidth: 1, borderLeftWidth: 3, padding: 14, marginBottom: 4,
                 shadowColor: "#0e2f5a", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
   clsIcon:    { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
