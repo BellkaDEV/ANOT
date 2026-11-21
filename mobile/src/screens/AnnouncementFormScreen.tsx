@@ -44,12 +44,26 @@ export default function AnnouncementFormScreen({ existing, onSave, onDelete, onB
 
   const header = (
     <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
-      <TouchableOpacity onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityLabel="Voltar">
+      <TouchableOpacity
+        onPress={onBack}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Voltar"
+        accessibilityHint="Toque para voltar à tela anterior"
+      >
         <AppIcon name="arrow-back" size={22} color="#FFFFFF" />
       </TouchableOpacity>
       <Text style={S.hTitle}>{existing ? "Editar aviso" : "Novo aviso"}</Text>
       {existing && onDelete ? (
-        <TouchableOpacity onPress={onDelete} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityLabel="Excluir aviso">
+        <TouchableOpacity
+          onPress={onDelete}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Excluir aviso"
+          accessibilityHint="Toque para excluir este aviso"
+        >
           <AppIcon name="trash-outline" size={20} color="#ef4444" />
         </TouchableOpacity>
       ) : (
@@ -74,7 +88,7 @@ export default function AnnouncementFormScreen({ existing, onSave, onDelete, onB
 
         {/* Priority picker */}
         <View style={{ gap: 8 }}>
-          <Text style={[S.label, { color: th.muted }]}>PRIORIDADE</Text>
+          <Text style={[S.label, { color: th.muted }]} accessibilityRole="header">PRIORIDADE</Text>
           <View style={S.prioRow}>
             {PRIORITIES.map((p) => {
               const pm = PRIORITY_META[p];
@@ -90,8 +104,13 @@ export default function AnnouncementFormScreen({ existing, onSave, onDelete, onB
                       backgroundColor: active ? pm.bg : "transparent",
                     },
                   ]}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Prioridade: ${pm.label}`}
+                  accessibilityState={{ selected: active }}
+                  accessibilityHint={`Toque para definir a prioridade como ${pm.label}`}
                 >
-                  <View style={[S.prioDot, { backgroundColor: pm.dot }]} />
+                  <View style={[S.prioDot, { backgroundColor: pm.dot }]} importantForAccessibility="no" />
                   <Text
                     style={[
                       S.prioLabel,

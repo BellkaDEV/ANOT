@@ -85,12 +85,26 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
 
   const header = (
     <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
-      <TouchableOpacity onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityLabel="Voltar">
+      <TouchableOpacity
+        onPress={onBack}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Voltar"
+        accessibilityHint="Toque para voltar à tela anterior"
+      >
         <AppIcon name="arrow-back" size={22} color="#FFFFFF" />
       </TouchableOpacity>
       <Text style={S.hTitle}>{existing ? "Editar atividade" : "Nova atividade"}</Text>
       {existing && onDelete ? (
-        <TouchableOpacity onPress={onDelete} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }} accessibilityLabel="Excluir atividade">
+        <TouchableOpacity
+          onPress={onDelete}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Excluir atividade"
+          accessibilityHint="Toque para excluir esta atividade"
+        >
           <AppIcon name="trash-outline" size={20} color="#ef4444" />
         </TouchableOpacity>
       ) : (
@@ -125,7 +139,7 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
 
         {/* Type picker */}
         <View style={{ gap: 8 }}>
-          <Text style={[S.label, { color: th.muted }]}>TIPO</Text>
+          <Text style={[S.label, { color: th.muted }]} accessibilityRole="header">TIPO</Text>
           <View style={S.typeRow}>
             {TYPES.map((t) => {
               const am = ACT_META[t];
@@ -141,8 +155,15 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
                       backgroundColor: active ? am.color + "18" : "transparent",
                     },
                   ]}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Tipo: ${am.label}`}
+                  accessibilityState={{ selected: active }}
+                  accessibilityHint={`Toque para definir o tipo como ${am.label}`}
                 >
-                  <AppIcon name={am.icon} size={16} color={active ? am.color : th.muted} />
+                  <View importantForAccessibility="no">
+                    <AppIcon name={am.icon} size={16} color={active ? am.color : th.muted} />
+                  </View>
                   <Text
                     style={[
                       S.typeLabel,
@@ -163,7 +184,7 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
         {/* Configurações de Teste / Prova */}
         {type === "teste" && (
           <View style={[S.subBox, { backgroundColor: th.card2, borderColor: th.border }]}>
-            <Text style={[S.label, { color: th.fg }]}>FORMATO DA AVALIAÇÃO</Text>
+            <Text style={[S.label, { color: th.fg }]} accessibilityRole="header">FORMATO DA AVALIAÇÃO</Text>
             <View style={S.typeRow}>
               {ASSESSMENT_FORMATS.map((fmt) => {
                 const active = assessmentFormat === fmt.key;
@@ -178,6 +199,11 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
                         backgroundColor: active ? th.navyLight : th.card,
                       },
                     ]}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Formato: ${fmt.label}`}
+                    accessibilityState={{ selected: active }}
+                    accessibilityHint={`Toque para selecionar o formato ${fmt.label}`}
                   >
                     <Text style={[S.optText, { color: active ? th.navy : th.fg, fontWeight: active ? "700" : "500" }]}>
                       {fmt.label}
@@ -187,7 +213,7 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
               })}
             </View>
 
-            <Text style={[S.label, { color: th.fg, marginTop: 12 }]}>VALOR EM PONTOS</Text>
+            <Text style={[S.label, { color: th.fg, marginTop: 12 }]} accessibilityRole="header">VALOR EM PONTOS</Text>
             <View style={S.typeRow}>
               <TouchableOpacity
                 onPress={() => setHasPoints(false)}
@@ -198,6 +224,11 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
                     backgroundColor: !hasPoints ? th.orangeLight : th.card,
                   },
                 ]}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Pontuação não informada"
+                accessibilityState={{ selected: !hasPoints }}
+                accessibilityHint="Toque para não definir valor em pontos"
               >
                 <Text style={[S.optText, { color: !hasPoints ? th.orange : th.fg }]}>Não informado</Text>
               </TouchableOpacity>
@@ -211,6 +242,11 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
                     backgroundColor: hasPoints ? th.orangeLight : th.card,
                   },
                 ]}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Pontuação definida"
+                accessibilityState={{ selected: hasPoints }}
+                accessibilityHint="Toque para definir um valor em pontos para a avaliação"
               >
                 <Text style={[S.optText, { color: hasPoints ? th.orange : th.fg }]}>Pontuação definida</Text>
               </TouchableOpacity>
