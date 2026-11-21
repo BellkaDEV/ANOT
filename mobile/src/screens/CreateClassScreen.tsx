@@ -61,7 +61,10 @@ export default function CreateClassScreen({ onSubmit, onBack, loading = false, t
         onPress={onBack}
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         style={S.backBtn}
+        accessible={true}
+        accessibilityRole="button"
         accessibilityLabel="Voltar"
+        accessibilityHint="Toque para voltar à tela anterior"
       >
         <AppIcon name="arrow-back" size={22} color="#FFFFFF" />
       </TouchableOpacity>
@@ -74,11 +77,11 @@ export default function CreateClassScreen({ onSubmit, onBack, loading = false, t
     <KeyboardAwareScreen header={header} th={th} contentContainerStyle={S.body}>
       <View style={[S.card, { backgroundColor: th.card, borderColor: th.border }]}>
         <View style={S.cardTop}>
-          <View style={[S.iconWrap, { backgroundColor: th.orangeLight }]}>
+          <View style={[S.iconWrap, { backgroundColor: th.orangeLight }]} importantForAccessibility="no">
             <AppIcon name="school" size={22} color={th.orange} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[S.cardTitle, { color: th.fg }]}>Dados da Turma</Text>
+            <Text style={[S.cardTitle, { color: th.fg }]} accessibilityRole="header">Dados da Turma</Text>
             <Text style={[S.cardSub, { color: th.muted }]}>Você será o Criador/Representante</Text>
           </View>
         </View>
@@ -126,7 +129,7 @@ export default function CreateClassScreen({ onSubmit, onBack, loading = false, t
           />
 
           <View style={{ gap: 8 }}>
-            <Text style={[S.label, { color: th.muted }]}>MODALIDADE</Text>
+            <Text style={[S.label, { color: th.muted }]} accessibilityRole="header">MODALIDADE</Text>
             <View style={S.modalityRow}>
               {MODALITIES.map((m) => {
                 const active = m.key === modality;
@@ -141,6 +144,11 @@ export default function CreateClassScreen({ onSubmit, onBack, loading = false, t
                         backgroundColor: active ? th.orangeLight : th.card2,
                       },
                     ]}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Modalidade ${m.label}`}
+                    accessibilityState={{ selected: active }}
+                    accessibilityHint={`Toque para selecionar a modalidade ${m.label}`}
                   >
                     <Text style={[S.modText, { color: active ? th.orange : th.muted, fontWeight: active ? "700" : "500" }]}>
                       {m.label}
