@@ -39,10 +39,39 @@ class ActivityController extends Controller
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        $query = Activity::where('class_id', $classId);
+        $query = Activity::where('class_id', $classId)->with('creator:id,name,avatar_url');
 
         if ($request->filled('type')) {
             $query->where('type', $request->input('type'));
+        }
+
+        if ($request->filled('subject')) {
+            $query->where('subject', 'like', "%{$request->input('subject')}%");
+        }
+
+        if ($request->filled('from_date')) {
+            $query->where('due_date', '>=', $request->input('from_date'));
+        }
+
+        if ($request->filled('to_date')) {
+            $query->where('due_date', '<=', $request->input('to_date'));
+        }
+
+        if ($request->filled('status')) {
+            $status = $request->input('status');
+            if ($status === 'todo') {
+                $query->where(function ($q) use ($user): void {
+                    $q->whereHas('progresses', function ($pq) use ($user): void {
+                        $pq->where('user_id', $user->id)->where('status', 'todo');
+                    })->orWhereDoesntHave('progresses', function ($pq) use ($user): void {
+                        $pq->where('user_id', $user->id);
+                    });
+                });
+            } else {
+                $query->whereHas('progresses', function ($pq) use ($user, $status): void {
+                    $pq->where('user_id', $user->id)->where('status', $status);
+                });
+            }
         }
 
         if ($request->filled('search')) {
@@ -53,7 +82,44 @@ class ActivityController extends Controller
             });
         }
 
-        $activities = $query->get();
+        $sortBy = $request->input('sort_by', 'due_date');
+        $allowedSorts = ['due_date', 'created_at', 'title', 'points_value'];
+        if (! in_array($sortBy, $allowedSorts, true)) {
+            $sortBy = 'due_date';
+        }
+
+        $direction = strtolower($request->input('direction', $request->input('order', 'asc')));
+        if (! in_array($direction, ['asc', 'desc'], true)) {
+            $direction = 'asc';
+        }
+
+        $query->orderBy($sortBy, $direction);
+        if ($sortBy === 'due_date') {
+            $query->orderBy('due_time', $direction);
+        }
+        $query->orderBy('id', 'asc');
+
+        if ($request->has('per_page') || $request->has('page')) {
+            $perPage = max(1, min((int) $request->input('per_page', 15), 100));
+            $paginator = $query->paginate($perPage);
+            $activities = collect($paginator->items());
+            $meta = [
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'has_more' => $paginator->hasMorePages(),
+            ];
+        } else {
+            $activities = $query->get();
+            $meta = [
+                'total' => $activities->count(),
+                'per_page' => $activities->count(),
+                'current_page' => 1,
+                'last_page' => 1,
+                'has_more' => false,
+            ];
+        }
 
         $progressByActivity = UserActivityProgress::whereIn('activity_id', $activities->pluck('id'))
             ->where('user_id', $user->id)
@@ -66,6 +132,7 @@ class ActivityController extends Controller
 
         return response()->json([
             'activities' => ActivityResource::collection($activities),
+            'meta' => $meta,
         ]);
     }
 

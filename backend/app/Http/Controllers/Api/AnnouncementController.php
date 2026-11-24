@@ -37,18 +37,55 @@ class AnnouncementController extends Controller
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        // Listar avisos ativos (expires_at > now)
-        $announcements = Announcement::where('class_id', $classId)
-            ->where(function ($query) {
-                $query->where('expires_at', '>', now())
+        $query = Announcement::where('class_id', $classId)->with('author:id,name,avatar_url');
+
+        $activeOnly = ! $request->has('active_only') || filter_var($request->input('active_only'), FILTER_VALIDATE_BOOLEAN);
+        if ($activeOnly && ! filter_var($request->input('include_expired', false), FILTER_VALIDATE_BOOLEAN)) {
+            $query->where(function ($q) {
+                $q->where('expires_at', '>', now())
                     ->orWhereNull('expires_at');
-            })
-            ->with('author:id,name,avatar_url')
-            ->orderBy('created_at', 'desc')
-            ->get();
+            });
+        }
+
+        if ($request->filled('priority')) {
+            $query->where('priority', $request->input('priority'));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search): void {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+
+        $query->orderBy('created_at', 'desc')->orderBy('id', 'desc');
+
+        if ($request->has('per_page') || $request->has('page')) {
+            $perPage = max(1, min((int) $request->input('per_page', 15), 100));
+            $paginator = $query->paginate($perPage);
+            $announcements = collect($paginator->items());
+            $meta = [
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'has_more' => $paginator->hasMorePages(),
+            ];
+        } else {
+            $announcements = $query->get();
+            $meta = [
+                'total' => $announcements->count(),
+                'per_page' => $announcements->count(),
+                'current_page' => 1,
+                'last_page' => 1,
+                'has_more' => false,
+            ];
+        }
 
         return response()->json([
             'announcements' => AnnouncementResource::collection($announcements),
+            'meta' => $meta,
         ]);
     }
 

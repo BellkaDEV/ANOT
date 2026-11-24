@@ -3,8 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ActivityResource;
+use App\Http\Resources\AnnouncementResource;
+use App\Http\Resources\EventResource;
 use App\Http\Resources\SchoolClassResource;
+use App\Models\Activity;
+use App\Models\Announcement;
 use App\Models\ClassMember;
+use App\Models\Event;
 use App\Models\SchoolClass;
 use App\Models\UserActivityProgress;
 use Illuminate\Http\Request;
@@ -135,6 +141,98 @@ class ClassController extends Controller
 
         return response()->json([
             'class' => SchoolClassResource::make($schoolClass),
+        ]);
+    }
+
+    public function feed(Request $request, $id)
+    {
+        $user = $request->user();
+        $schoolClass = SchoolClass::find($id);
+
+        if (! $schoolClass) {
+            return response()->json(['message' => 'Turma não encontrada.'], 404);
+        }
+
+        $membership = ClassMember::where('class_id', $schoolClass->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (! $membership && $schoolClass->owner_id !== $user->id) {
+            return response()->json(['message' => 'Acesso negado. Você não é membro desta turma.'], 403);
+        }
+
+        $limit = max(1, min((int) $request->input('limit', 5), 20));
+
+        $announcements = Announcement::where('class_id', $id)
+            ->where(function ($query) {
+                $query->where('expires_at', '>', now())
+                    ->orWhereNull('expires_at');
+            })
+            ->with('author:id,name,avatar_url')
+            ->orderBy('created_at', 'desc')
+            ->take($limit)
+            ->get();
+
+        $today = now()->toDateString();
+
+        $activities = Activity::where('class_id', $id)
+            ->where('due_date', '>=', $today)
+            ->with('creator:id,name,avatar_url')
+            ->orderBy('due_date', 'asc')
+            ->orderBy('due_time', 'asc')
+            ->orderBy('id', 'asc')
+            ->take($limit)
+            ->get();
+
+        $progressByActivity = UserActivityProgress::whereIn('activity_id', $activities->pluck('id'))
+            ->where('user_id', $user->id)
+            ->get()
+            ->keyBy('activity_id');
+
+        $activities->each(function ($activity) use ($progressByActivity) {
+            $activity->setAttribute('user_progress', $progressByActivity->get($activity->id));
+        });
+
+        $events = Event::where('class_id', $id)
+            ->where('event_date', '>=', $today)
+            ->orderBy('event_date', 'asc')
+            ->orderBy('event_time', 'asc')
+            ->orderBy('id', 'asc')
+            ->take($limit)
+            ->get();
+
+        $totalActivities = Activity::where('class_id', $id)->count();
+        $completedCount = UserActivityProgress::whereIn(
+            'activity_id',
+            Activity::where('class_id', $id)->select('id')
+        )
+            ->where('user_id', $user->id)
+            ->where('status', 'done')
+            ->count();
+
+        $activeAnnouncementsCount = Announcement::where('class_id', $id)
+            ->where(function ($query) {
+                $query->where('expires_at', '>', now())
+                    ->orWhereNull('expires_at');
+            })
+            ->count();
+
+        $upcomingEventsCount = Event::where('class_id', $id)
+            ->where('event_date', '>=', $today)
+            ->count();
+
+        return response()->json([
+            'class_id' => (int) $id,
+            'announcements' => AnnouncementResource::collection($announcements),
+            'upcoming_activities' => ActivityResource::collection($activities),
+            'upcoming_events' => EventResource::collection($events),
+            'summary' => [
+                'total_activities' => $totalActivities,
+                'completed_activities' => $completedCount,
+                'pending_activities' => max(0, $totalActivities - $completedCount),
+                'active_announcements' => $activeAnnouncementsCount,
+                'upcoming_events' => $upcomingEventsCount,
+            ],
         ]);
     }
 
