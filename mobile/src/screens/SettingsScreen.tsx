@@ -71,12 +71,13 @@ export default function SettingsScreen({
         <TouchableOpacity
           onPress={onBack}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityRole="button"
           accessibilityLabel="Voltar"
           style={S.backBtn}
         >
           <AppIcon name="arrow-back" size={22} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={S.hTitle}>Configurações</Text>
+        <Text style={S.hTitle} accessibilityRole="header">Configurações</Text>
         <View style={{ width: 22 }} />
       </View>
 
@@ -307,6 +308,9 @@ export default function SettingsScreen({
                     setThemeModalVisible(false);
                   }}
                   activeOpacity={0.8}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`Tema ${themeLabelMap[mode]}${selected ? ", selecionado" : ""}`}
                 >
                   <AppIcon
                     name={
@@ -354,6 +358,8 @@ export default function SettingsScreen({
               style={[S.closeBtn, { backgroundColor: th.orange }]}
               onPress={() => setInfoModalContent(null)}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Entendi, fechar aviso"
             >
               <Text style={S.closeBtnText}>Entendi</Text>
             </TouchableOpacity>
@@ -393,6 +399,8 @@ export default function SettingsScreen({
             <TouchableOpacity
               style={[S.closeBtn, { backgroundColor: th.orange, opacity: changePasswordSubmitting || !currentPassword || !newPassword || !confirmPassword ? 0.55 : 1 }]}
               disabled={changePasswordSubmitting || !currentPassword || !newPassword || !confirmPassword}
+              accessibilityRole="button"
+              accessibilityLabel="Confirmar alteração de senha"
               onPress={async () => {
                 if (newPassword !== confirmPassword) {
                   setChangePasswordError("A confirmação da nova senha não confere.");
@@ -411,7 +419,13 @@ export default function SettingsScreen({
             >
               {changePasswordSubmitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={S.closeBtnText}>Alterar senha</Text>}
             </TouchableOpacity>
-            <TouchableOpacity style={[S.cancelBtn, { borderColor: th.border }]} onPress={() => setChangePasswordVisible(false)} disabled={changePasswordSubmitting}>
+            <TouchableOpacity
+              style={[S.cancelBtn, { borderColor: th.border }]}
+              onPress={() => setChangePasswordVisible(false)}
+              disabled={changePasswordSubmitting}
+              accessibilityRole="button"
+              accessibilityLabel="Cancelar alteração de senha"
+            >
               <Text style={[S.cancelBtnText, { color: th.fg }]}>Cancelar</Text>
             </TouchableOpacity>
           </View>
@@ -450,6 +464,8 @@ export default function SettingsScreen({
             <TouchableOpacity
               style={[S.closeBtn, { backgroundColor: "#dc2626", opacity: deleteSubmitting || !deletePassword ? 0.55 : 1 }]}
               disabled={deleteSubmitting || !deletePassword}
+              accessibilityRole="button"
+              accessibilityLabel="Excluir conta permanentemente"
               onPress={async () => {
                 setDeleteSubmitting(true);
                 try {
@@ -469,6 +485,8 @@ export default function SettingsScreen({
               style={[S.cancelBtn, { borderColor: th.border }]}
               onPress={() => setDeleteAccountVisible(false)}
               disabled={deleteSubmitting}
+              accessibilityRole="button"
+              accessibilityLabel="Cancelar exclusão de conta"
             >
               <Text style={[S.cancelBtnText, { color: th.fg }]}>Cancelar</Text>
             </TouchableOpacity>

@@ -37,7 +37,11 @@ export default function NotificationsScreen({ cls, user, readSet, onMarkRead, on
     return (
       <TouchableOpacity onPress={handlePress}
         style={[S.annCard, { backgroundColor: th.card, borderColor: th.border, borderLeftColor: pm.dot,
-          opacity: exp ? 0.55 : 1 }]}>
+          opacity: exp ? 0.55 : 1 }]}
+        accessibilityRole="button"
+        accessibilityLabel={`Aviso: ${ann.title}. Prioridade: ${pm.label}. Autor: ${ann.authorName}. Data: ${ann.date}.${isNew ? " Não lido." : ""}${exp ? " Expirado." : ""}`}
+        accessibilityHint="Toque para visualizar detalhes do aviso"
+      >
         <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
           {isNew && <View style={[S.newDot, { backgroundColor: th.orange }]}/>}
           <View style={{ flex: 1, gap: 4 }}>
@@ -69,9 +73,11 @@ export default function NotificationsScreen({ cls, user, readSet, onMarkRead, on
   return (
     <View style={[S.safe, { backgroundColor: th.bg }]}>
       <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
-        <Text style={S.hTitle}>Avisos</Text>
+        <Text style={S.hTitle} accessibilityRole="header">Avisos</Text>
         {unread > 0 && (
-          <View style={S.badge}><Text style={S.badgeText}>{unread} novos</Text></View>
+          <View style={S.badge} accessible accessibilityLabel={`${unread} novos avisos`}>
+            <Text style={S.badgeText}>{unread} novos</Text>
+          </View>
         )}
       </View>
 
@@ -85,7 +91,10 @@ export default function NotificationsScreen({ cls, user, readSet, onMarkRead, on
 
           {expired.length > 0 && (
             <TouchableOpacity onPress={() => setShowExpired(!showExpired)}
-              style={[S.expiredBtn, { borderColor: th.border }]}>
+              style={[S.expiredBtn, { borderColor: th.border }]}
+              accessibilityRole="button"
+              accessibilityLabel={showExpired ? "Ocultar avisos expirados" : `Mostrar ${expired.length} avisos expirados`}
+            >
               <Ionicons name={showExpired ? "chevron-up" : "chevron-down"} size={14} color={th.muted}/>
               <Text style={[S.expiredText, { color: th.muted }]}>
                 {showExpired ? "Ocultar" : `Mostrar ${expired.length} expirado${expired.length > 1 ? "s" : ""}`}

@@ -71,6 +71,9 @@ export default function RepPanelScreen({
                   style={{ flex: 1, gap: 4 }}
                   onPress={() => onViewAnn && onViewAnn(ann.id)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Aviso: ${ann.title}. Prioridade: ${pm.label}. Autor: ${ann.authorName}. Data: ${ann.date}.${exp ? " Expirado." : ""}`}
+                  accessibilityHint="Toque para ver detalhes do aviso"
                 >
                   <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
                     <Badge color={pm.text} bg={pm.bg}>{pm.label}</Badge>
@@ -81,10 +84,20 @@ export default function RepPanelScreen({
                   <Text style={[S.itemMeta, { color: th.muted }]}>{ann.date} · {ann.authorName}</Text>
                 </TouchableOpacity>
                 <View style={{ gap: 6 }}>
-                  <TouchableOpacity onPress={() => onEditAnn(ann.id)} style={[S.iconBtn, { backgroundColor: th.navyLight }]}>
+                  <TouchableOpacity
+                    onPress={() => onEditAnn(ann.id)}
+                    style={[S.iconBtn, { backgroundColor: th.navyLight }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Editar aviso: ${ann.title}`}
+                  >
                     <Ionicons name="pencil-outline" size={14} color={th.navy}/>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => onDelAnn(ann.id)} style={[S.iconBtn, { backgroundColor: "rgba(239,68,68,0.1)" }]}>
+                  <TouchableOpacity
+                    onPress={() => onDelAnn(ann.id)}
+                    style={[S.iconBtn, { backgroundColor: "rgba(239,68,68,0.1)" }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Excluir aviso: ${ann.title}`}
+                  >
                     <Ionicons name="trash-outline" size={14} color="#ef4444"/>
                   </TouchableOpacity>
                 </View>
@@ -115,10 +128,20 @@ export default function RepPanelScreen({
                   <Text style={[S.itemMeta, { color: th.muted }]}>{act.subject} · {act.dueLabel}</Text>
                 </View>
                 <View style={{ gap: 6 }}>
-                  <TouchableOpacity onPress={() => onEditActivity(act.id)} style={[S.iconBtn, { backgroundColor: th.navyLight }]}>
+                  <TouchableOpacity
+                    onPress={() => onEditActivity(act.id)}
+                    style={[S.iconBtn, { backgroundColor: th.navyLight }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Editar atividade: ${act.title}`}
+                  >
                     <Ionicons name="pencil-outline" size={14} color={th.navy}/>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => onDelActivity(act.id)} style={[S.iconBtn, { backgroundColor: "rgba(239,68,68,0.1)" }]}>
+                  <TouchableOpacity
+                    onPress={() => onDelActivity(act.id)}
+                    style={[S.iconBtn, { backgroundColor: "rgba(239,68,68,0.1)" }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Excluir atividade: ${act.title}`}
+                  >
                     <Ionicons name="trash-outline" size={14} color="#ef4444"/>
                   </TouchableOpacity>
                 </View>
@@ -148,8 +171,14 @@ export default function RepPanelScreen({
               const rm = ROLE_META[m.classRole];
               const isSelf = m.userId === user.id;
               return (
-                <TouchableOpacity key={m.id} onPress={() => !isSelf && onViewMember(m)}
-                  style={[S.memberRow, { backgroundColor: th.card, borderColor: th.border }]}>
+                <TouchableOpacity
+                  key={m.id}
+                  onPress={() => !isSelf && onViewMember(m)}
+                  style={[S.memberRow, { backgroundColor: th.card, borderColor: th.border }]}
+                  accessibilityRole={isSelf ? "none" : "button"}
+                  accessibilityLabel={`Membro: ${m.name}${isSelf ? " (você)" : ""}. Papel: ${rm.label}. E-mail: ${m.email}`}
+                  accessibilityHint={!isSelf ? "Toque para gerenciar membro" : undefined}
+                >
                   <MemberAvatar member={m} th={th}/>
                   <View style={{ flex: 1 }}>
                     <Text style={[S.memberName, { color: th.fg }]}>{m.name}{isSelf ? " (você)" : ""}</Text>
@@ -192,6 +221,8 @@ export default function RepPanelScreen({
                 onCopyCode?.(copied);
               }}
               style={[S.shareBtn, { backgroundColor: th.navyLight, borderColor: th.navy + "30" }]}
+              accessibilityRole="button"
+              accessibilityLabel="Copiar código de acesso da turma"
             >
               <Ionicons name="copy-outline" size={14} color={th.navy}/>
               <Text style={[S.shareBtnText, { color: th.navy }]}>Copiar código</Text>
@@ -205,6 +236,8 @@ export default function RepPanelScreen({
                 });
               }}
               style={[S.shareBtn, { backgroundColor: th.orangeLight, borderColor: th.orange + "30" }]}
+              accessibilityRole="button"
+              accessibilityLabel="Compartilhar convite da turma"
             >
               <Ionicons name="share-social-outline" size={14} color={th.orange}/>
               <Text style={[S.shareBtnText, { color: th.orange }]}>Compartilhar</Text>
@@ -214,6 +247,8 @@ export default function RepPanelScreen({
               <TouchableOpacity
                 onPress={onRegenerateCode}
                 style={[S.shareBtn, { backgroundColor: "rgba(245, 158, 11, 0.12)", borderColor: "rgba(245, 158, 11, 0.3)" }]}
+                accessibilityRole="button"
+                accessibilityLabel="Gerar novo código de acesso da turma"
               >
                 <Ionicons name="refresh-outline" size={14} color="#d97706"/>
                 <Text style={[S.shareBtnText, { color: "#d97706" }]}>Novo código</Text>
@@ -263,24 +298,35 @@ export default function RepPanelScreen({
   return (
     <View style={[S.safe, { backgroundColor: th.bg }]}>
       <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
-        <TouchableOpacity onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+        <TouchableOpacity
+          onPress={onBack}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+        >
           <Ionicons name="arrow-back" size={22} color="#fff"/>
         </TouchableOpacity>
         <View style={{ flex: 1, marginHorizontal: 12 }}>
-          <Text style={S.hTitle}>Painel do Rep.</Text>
+          <Text style={S.hTitle} accessibilityRole="header">Painel do Rep.</Text>
           <Text style={S.hSub} numberOfLines={1}>{cls.name}</Text>
         </View>
-        <View style={[S.roleBadge, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
+        <View style={[S.roleBadge, { backgroundColor: "rgba(255,255,255,0.15)" }]} accessible accessibilityLabel={`Papel na turma: ${myRole === "owner" ? "Criador" : "Representante"}`}>
           <Ionicons name="shield-checkmark" size={12} color="#fff"/>
           <Text style={S.roleBadgeText}>{myRole === "owner" ? "Criador" : "Rep."}</Text>
         </View>
       </View>
 
       {/* Tabs */}
-      <View style={[S.tabBar, { backgroundColor: th.card, borderColor: th.border }]}>
+      <View style={[S.tabBar, { backgroundColor: th.card, borderColor: th.border }]} accessibilityRole="tablist">
         {TABS.map(t => (
-          <TouchableOpacity key={t.key} onPress={() => setTab(t.key)}
-            style={[S.tabBtn, tab === t.key && { borderBottomColor: th.orange, borderBottomWidth: 2 }]}>
+          <TouchableOpacity
+            key={t.key}
+            onPress={() => setTab(t.key)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: tab === t.key }}
+            accessibilityLabel={`Aba ${t.label}`}
+            style={[S.tabBtn, tab === t.key && { borderBottomColor: th.orange, borderBottomWidth: 2 }]}
+          >
             <Ionicons name={t.icon as any} size={15} color={tab === t.key ? th.orange : th.muted}/>
             <Text style={[S.tabLabel, { color: tab === t.key ? th.orange : th.muted,
               fontWeight: tab === t.key ? "700" : "500" }]}>{t.label}</Text>

@@ -62,15 +62,25 @@ export default function ClassHomeScreen({
     <View style={[S.safe, { backgroundColor: th.bg }]}>
       {/* Header */}
       <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
-        <TouchableOpacity onPress={onBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity
+          onPress={onBack}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar para início"
+        >
           <Ionicons name="arrow-back" size={22} color="#fff"/>
         </TouchableOpacity>
         <View style={{ flex: 1, marginHorizontal: 12 }}>
-          <Text style={S.hTitle} numberOfLines={1}>{cls.name}</Text>
+          <Text style={S.hTitle} numberOfLines={1} accessibilityRole="header">{cls.name}</Text>
           <Text style={S.hSub}>{cls.institution} · {cls.period}</Text>
         </View>
         {isRep && (
-          <TouchableOpacity onPress={onRepPanel} style={[S.repBtn, { backgroundColor: th.orange }]}>
+          <TouchableOpacity
+            onPress={onRepPanel}
+            style={[S.repBtn, { backgroundColor: th.orange }]}
+            accessibilityRole="button"
+            accessibilityLabel="Painel do Representante"
+          >
             <Ionicons name="shield-checkmark" size={14} color="#fff"/>
             <Text style={S.repBtnText}>Painel</Text>
           </TouchableOpacity>
@@ -124,8 +134,14 @@ export default function ClassHomeScreen({
                 const status = statuses[act.id] ?? "todo";
                 const sm = STATUS_META[status];
                 return (
-                  <TouchableOpacity key={act.id} onPress={() => onViewActivity(act.id)}
-                    style={[S.upCard, { backgroundColor: th.card, borderColor: am.color + "40" }]}>
+                  <TouchableOpacity
+                    key={act.id}
+                    onPress={() => onViewActivity(act.id)}
+                    style={[S.upCard, { backgroundColor: th.card, borderColor: am.color + "40" }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Próxima entrega: ${act.title}. Tipo: ${am.label}. Prazo: ${act.dueLabel}`}
+                    accessibilityHint="Toque para ver detalhes da atividade"
+                  >
                     <Ionicons name={am.icon as any} size={20} color={am.color}/>
                     <Text style={[S.upLabel, { color: am.color }]}>{am.label}</Text>
                     <Text style={[S.upTitle, { color: th.fg }]} numberOfLines={2}>{act.title}</Text>
@@ -160,11 +176,17 @@ export default function ClassHomeScreen({
           {/* Filter chips */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
             {FILTERS.map(f => (
-              <TouchableOpacity key={f.key} onPress={() => setFilter(f.key)}
+              <TouchableOpacity
+                key={f.key}
+                onPress={() => setFilter(f.key)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: filter === f.key }}
+                accessibilityLabel={`Filtrar por ${f.label}`}
                 style={[S.chip, {
                   backgroundColor: filter === f.key ? th.orange : th.card,
                   borderColor: filter === f.key ? th.orange : th.border,
-                }]}>
+                }]}
+              >
                 <Text style={[S.chipText, { color: filter === f.key ? "#fff" : th.muted,
                   fontWeight: filter === f.key ? "700" : "500" }]}>{f.label}</Text>
               </TouchableOpacity>
@@ -181,8 +203,14 @@ export default function ClassHomeScreen({
               const status = statuses[act.id] ?? "todo";
               const sm = STATUS_META[status];
               return (
-                <TouchableOpacity key={act.id} onPress={() => onViewActivity(act.id)}
-                  style={[S.actCard, { backgroundColor: th.card, borderColor: th.border, borderLeftColor: am.color }]}>
+                <TouchableOpacity
+                  key={act.id}
+                  onPress={() => onViewActivity(act.id)}
+                  style={[S.actCard, { backgroundColor: th.card, borderColor: th.border, borderLeftColor: am.color }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Atividade: ${act.title}. Tipo: ${am.label}. Disciplina: ${act.subject}. Prazo: ${act.dueLabel}. Status: ${sm.label}`}
+                  accessibilityHint="Toque para abrir detalhes da atividade"
+                >
                   <View style={{ flex: 1, gap: 4 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <Ionicons name={am.icon as any} size={16} color={am.color}/>

@@ -21,10 +21,15 @@ export default function AboutScreen({ onBack, th }: Props) {
   return (
     <View style={[S.safe, { backgroundColor: th.bg }]}>
       <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
-        <TouchableOpacity onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+        <TouchableOpacity
+          onPress={onBack}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+        >
           <Ionicons name="arrow-back" size={22} color="#fff"/>
         </TouchableOpacity>
-        <Text style={S.hTitle}>Sobre o ANOT</Text>
+        <Text style={S.hTitle} accessibilityRole="header">Sobre o ANOT</Text>
         <View style={{ width: 22 }}/>
       </View>
 
@@ -35,7 +40,7 @@ export default function AboutScreen({ onBack, th }: Props) {
             <Ionicons name="school" size={36} color={th.orange}/>
           </View>
           <Text style={[S.appName, { color: th.fg }]}>ANOT</Text>
-          <Text style={[S.version, { color: th.muted }]}>Versão 1.0.0 — Expo SDK 54</Text>
+          <Text style={[S.version, { color: th.muted }]}>Versão 1.0.0 — Expo SDK 57</Text>
           <Text style={[S.tagline, { color: th.muted }]}>
             Organize sua turma. Acompanhe seu progresso.
           </Text>
@@ -64,7 +69,7 @@ export default function AboutScreen({ onBack, th }: Props) {
         <Text style={[S.sLabel, { color: th.muted }]}>TECNOLOGIA</Text>
         <View style={[S.card, { backgroundColor: th.card, borderColor: th.border }]}>
           {[
-            { k: "Framework",   v: "React Native (Expo SDK 54)" },
+            { k: "Framework",   v: "React Native (Expo SDK 57)" },
             { k: "Linguagem",   v: "TypeScript" },
             { k: "Ícones",      v: "@expo/vector-icons" },
             { k: "Navegação",   v: "State-based (sem React Navigation)" },
