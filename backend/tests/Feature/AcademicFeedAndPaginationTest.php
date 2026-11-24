@@ -301,4 +301,21 @@ class AcademicFeedAndPaginationTest extends TestCase
         $this->assertCount(2, $resEvents->json('events'));
         $this->assertEquals(3, $resEvents->json('meta.total'));
     }
+
+    public function test_activities_handles_malformed_array_query_parameters_without_type_error(): void
+    {
+        Activity::create([
+            'class_id' => $this->schoolClass->id,
+            'created_by' => $this->owner->id,
+            'title' => 'Atividade de Teste Robusto',
+            'type' => 'dever',
+            'due_date' => now()->addDays(2)->toDateString(),
+        ]);
+
+        $response = $this->actingAs($this->student, 'sanctum')
+            ->getJson("/api/classes/{$this->schoolClass->id}/activities?direction[]=desc&sort_by[]=due_date&type[]=dever");
+
+        $response->assertOk()
+            ->assertJsonStructure(['activities', 'meta']);
+    }
 }
