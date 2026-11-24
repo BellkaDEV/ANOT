@@ -64,7 +64,7 @@ export default function AnnouncementDetailScreen({
   }
 
   const textContent = announcement.content || announcement.desc || "";
-  const expired = isExpired(announcement.createdAt);
+  const expired = isExpired(announcement.createdAt, announcement.expiresAt);
 
   const handleOpenUrl = async (url: string) => {
     const cleanUrl = url.trim();

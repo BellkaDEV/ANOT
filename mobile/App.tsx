@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { View, ActivityIndicator, StyleSheet, useColorScheme, Linking } from "react-native";
+import { View, ActivityIndicator, StyleSheet, useColorScheme, Linking, BackHandler } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -100,6 +100,8 @@ function mapBackendClass(c: any): AppClass {
         title: e.title || "",
         day: parseInt(parts[2] || "28", 10),
         month: parseInt(parts[1] || "5", 10),
+        year: parseInt(parts[0] || String(new Date().getFullYear()), 10),
+        time: e.event_time || undefined,
         type: e.type || "entrega",
         subject: e.subject || undefined,
         room: e.room || undefined,
@@ -163,6 +165,64 @@ function MainApp() {
   useEffect(() => {
     if (signed && pendingJoinCode) setScreen("joinClass");
   }, [signed, pendingJoinCode]);
+
+  useEffect(() => {
+    if (pendingPasswordReset) setScreen("resetPassword");
+  }, [pendingPasswordReset]);
+
+  useEffect(() => {
+    const onHardwareBack = () => {
+      if (memberSheet) {
+        setMemberSheet(null);
+        return true;
+      }
+      if (screen === "activityForm" || screen === "announcementForm") {
+        setScreen("repPanel");
+        return true;
+      }
+      if (screen === "repPanel" || screen === "activityDetail" || screen === "announcementDetail") {
+        setScreen("classHome");
+        return true;
+      }
+      if (screen === "notifications" || screen === "events") {
+        setScreen("classHome");
+        return true;
+      }
+      if (screen === "classCreated" || screen === "createClass" || screen === "joinClass") {
+        setScreen("dashboard");
+        return true;
+      }
+      if (screen === "about" || screen === "settings") {
+        setScreen("profile");
+        return true;
+      }
+      if (screen === "profile") {
+        if (activeId) {
+          setScreen("classHome");
+        } else {
+          setScreen("dashboard");
+        }
+        return true;
+      }
+      if (screen === "classHome") {
+        setScreen("dashboard");
+        return true;
+      }
+      if (screen === "login" || screen === "register" || screen === "forgotPassword") {
+        setScreen("welcome");
+        return true;
+      }
+      if (screen === "resetPassword") {
+        setPendingPasswordReset(null);
+        setScreen("login");
+        return true;
+      }
+      return false;
+    };
+
+    const backSubscription = BackHandler.addEventListener("hardwareBackPress", onHardwareBack);
+    return () => backSubscription.remove();
+  }, [screen, memberSheet, activeId]);
 
   useEffect(() => {
     if (pendingPasswordReset) setScreen("resetPassword");
@@ -680,7 +740,7 @@ function MainApp() {
         onViewAnnouncement={id => { setViewAnnId(id); nav("announcementDetail"); }}
         onCopyCode={() => doCopyClassCode(activeClass.code)}
         onToggleOpen={() => doToggleOpenClass(activeClass)}
-        onRepPanel={() => nav("repPanel")} onBack={() => nav("dashboard")} th={th}/>
+        onRepPanel={() => nav("repPanel")} onBack={() => nav("dashboard")} onRefresh={fetchClassesFromApi} refreshing={isLoadingClasses} th={th}/>
     );
 
     if (screen === "announcementDetail" && viewAnnId) {
@@ -720,11 +780,11 @@ function MainApp() {
       <NotificationsScreen cls={activeClass} user={appUser} readSet={readSet}
         onMarkRead={doMarkRead}
         onViewAnnouncement={id => { setViewAnnId(id); nav("announcementDetail"); }}
-        onNav={nav} th={th}/>
+        onNav={nav} onRefresh={fetchClassesFromApi} refreshing={isLoadingClasses} th={th}/>
     );
 
     if (screen === "events") return (
-      <EventsScreen cls={activeClass} user={appUser} onNav={nav} th={th}/>
+      <EventsScreen cls={activeClass} user={appUser} onNav={nav} onRefresh={fetchClassesFromApi} refreshing={isLoadingClasses} th={th}/>
     );
 
     if (screen === "repPanel") return (

@@ -154,30 +154,31 @@ export default function CalendarScreen({ navigation }: any) {
   const todayMonth = TODAY_MONTH;
   const todayDay = TODAY_DAY;
 
-  // Parse event date (YYYY-MM-DD) into day and month
+  // Parse event date (YYYY-MM-DD) into day, month and year
   const parseEventDate = (dateStr: string) => {
     try {
       const parts = dateStr.split('-');
       return {
-        day: parseInt(parts[2], 10),
+        year: parseInt(parts[0], 10),
         month: parseInt(parts[1], 10),
+        day: parseInt(parts[2], 10),
       };
     } catch {
-      return { day: 0, month: 0 };
+      return { day: 0, month: 0, year: 0 };
     }
   };
 
   // Filter events by selected month & filter tab
   const monthEvs = events.filter((e) => {
     const p = parseEventDate(e.event_date);
-    return p.month === cm.month && (filter === 'all' || e.type === filter);
+    return (!p.year || !cm.year || p.year === cm.year) && p.month === cm.month && (filter === 'all' || e.type === filter);
   });
 
   // Filter events of the selected day
   const dayEvs = selDay
     ? events.filter((e) => {
         const p = parseEventDate(e.event_date);
-        return p.day === selDay && p.month === cm.month && (filter === 'all' || e.type === filter);
+        return (!p.year || !cm.year || p.year === cm.year) && p.day === selDay && p.month === cm.month && (filter === 'all' || e.type === filter);
       })
     : [];
 
@@ -339,7 +340,7 @@ export default function CalendarScreen({ navigation }: any) {
               const dayEvents = valid
                 ? events.filter((e) => {
                     const p = parseEventDate(e.event_date);
-                    return p.day === day && p.month === cm.month && (filter === 'all' || e.type === filter);
+                    return (!p.year || !cm.year || p.year === cm.year) && p.day === day && p.month === cm.month && (filter === 'all' || e.type === filter);
                   })
                 : [];
 
@@ -419,9 +420,9 @@ export default function CalendarScreen({ navigation }: any) {
                     <View style={[styles.eventDotIndicator, { backgroundColor: em.dot }]} />
                     <View style={styles.dayEventDetails}>
                       <Text style={styles.dayEventTitleText}>{e.title}</Text>
-                      {(e.subject || e.room) && (
+                      {(e.event_time || e.subject || e.room) && (
                         <Text style={styles.dayEventSubtext}>
-                          {[e.subject, e.room].filter(Boolean).join(' · ')}
+                          {[e.event_time, e.subject, e.room].filter(Boolean).join(' · ')}
                         </Text>
                       )}
                     </View>
@@ -477,9 +478,9 @@ export default function CalendarScreen({ navigation }: any) {
                   </View>
                   <View style={styles.monthlyEventDetails}>
                     <Text style={styles.monthlyEventTitle} numberOfLines={1}>{e.title}</Text>
-                    {(e.subject || e.room) && (
+                    {(e.event_time || e.subject || e.room) && (
                       <Text style={styles.monthlyEventSubtext}>
-                        {[e.subject, e.room].filter(Boolean).join(' · ')}
+                        {[e.event_time, e.subject, e.room].filter(Boolean).join(' · ')}
                       </Text>
                     )}
                   </View>

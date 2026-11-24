@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,10 +15,10 @@ interface Props {
   cls: AppClass;
   user: AppUser;
   onNav: (s: Screen) => void;
-  th: AppTheme;
+  onRefresh?: () => void; refreshing?: boolean; th: AppTheme;
 }
 
-export default function EventsScreen({ cls, user, onNav, th }: Props) {
+export default function EventsScreen({ cls, user, onNav, onRefresh, refreshing, th }: Props) {
   const insets = useSafeAreaInsets();
   const initMonth = CAL_MONTHS.findIndex(m => m.month === TODAY_MONTH);
   const [mi, setMi] = useState(initMonth >= 0 ? initMonth : 1);
@@ -27,7 +27,7 @@ export default function EventsScreen({ cls, user, onNav, th }: Props) {
   const rows = buildCalRows(cm);
 
   function eventsForDay(day: number): AppEvent[] {
-    return cls.events.filter(e => e.month === cm.month && e.day === day);
+    return cls.events.filter(e => e.year === cm.year && e.month === cm.month && e.day === day);
   }
   const dayEvts = selDay != null ? eventsForDay(selDay) : [];
 
@@ -64,7 +64,7 @@ export default function EventsScreen({ cls, user, onNav, th }: Props) {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false} refreshControl={onRefresh ? <RefreshControl refreshing={Boolean(refreshing)} onRefresh={onRefresh} tintColor={th.orange} colors={[th.orange]} /> : undefined}>
         {/* Month nav */}
         <View style={[S.calCard, { backgroundColor: th.card, borderColor: th.border }]}>
           <View style={S.monthNav}>
@@ -114,7 +114,7 @@ export default function EventsScreen({ cls, user, onNav, th }: Props) {
               : "Selecione um dia"}
           </Text>
           {selDay != null && dayEvts.length === 0 && (
-            <Empty th={th} icon="📅" title="Sem eventos" sub="Nenhum evento neste dia"/>
+            <Empty th={th} icon="calendar-outline" title="Sem eventos" sub="Nenhum evento neste dia"/>
           )}
           {dayEvts.map(evt => {
             const em = EVENT_META[evt.type];
@@ -125,6 +125,12 @@ export default function EventsScreen({ cls, user, onNav, th }: Props) {
                     <Badge color={em.text} bg={em.bg}>{em.label}</Badge>
                     <Text style={[S.evtTitle, { color: th.fg }]}>{evt.title}</Text>
                   </View>
+                  {evt.time && (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <Ionicons name="time-outline" size={12} color={th.muted}/>
+                      <Text style={[S.evtMeta, { color: th.muted }]}>{evt.time}</Text>
+                    </View>
+                  )}
                   {evt.subject && (
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                       <Ionicons name="book-outline" size={12} color={th.muted}/>
@@ -146,10 +152,10 @@ export default function EventsScreen({ cls, user, onNav, th }: Props) {
         {/* All events list */}
         <View style={[S.section, { borderTopColor: th.border }]}>
           <Text style={[S.sLabel, { color: th.muted }]}>TODOS OS EVENTOS</Text>
-          {cls.events.filter(e => e.month === cm.month).length === 0 ? (
+          {cls.events.filter(e => e.year === cm.year && e.month === cm.month).length === 0 ? (
             <Empty th={th} icon="calendar-outline" title="Sem eventos este mês"/>
           ) : (
-            cls.events.filter(e => e.month === cm.month).sort((a,b) => a.day - b.day).map(evt => {
+            [...cls.events].filter(e => e.year === cm.year && e.month === cm.month).sort((a,b) => a.day - b.day).map(evt => {
               const em = EVENT_META[evt.type];
               return (
                 <TouchableOpacity key={evt.id} onPress={() => setSelDay(evt.day)}
@@ -160,8 +166,14 @@ export default function EventsScreen({ cls, user, onNav, th }: Props) {
                   </View>
                   <View style={{ flex: 1, gap: 3 }}>
                     <Text style={[S.evtTitle, { color: th.fg }]}>{evt.title}</Text>
-                    <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
+                    <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                       <Badge color={em.text} bg={em.bg}>{em.label}</Badge>
+                      {evt.time && (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                          <Ionicons name="time-outline" size={11} color={th.muted}/>
+                          <Text style={[S.evtMeta, { color: th.muted }]}>{evt.time}</Text>
+                        </View>
+                      )}
                       {evt.subject && <Text style={[S.evtMeta, { color: th.muted }]}>{evt.subject}</Text>}
                     </View>
                   </View>

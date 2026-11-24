@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Share,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Share, RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -26,11 +26,11 @@ interface Props {
   onCopyCode?: () => void;
   onToggleOpen?: () => void;
   loading?: boolean;
-  th: AppTheme;
+  onRefresh?: () => void; refreshing?: boolean; th: AppTheme;
 }
 
 export default function ClassHomeScreen({
-  cls, user, statuses, readSet, onNav, onViewActivity, onViewAnnouncement, onRepPanel, onBack, onCopyCode, onToggleOpen, loading, th,
+  cls, user, statuses, readSet, onNav, onViewActivity, onViewAnnouncement, onRepPanel, onBack, onCopyCode, onToggleOpen, loading, onRefresh, refreshing, th,
 }: Props) {
   const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState<ActFilter>("todos");
@@ -38,14 +38,14 @@ export default function ClassHomeScreen({
   const myRole = cls.members.find(m => m.userId === user.id)?.classRole ?? "student";
   const isRep  = myRole === "owner" || myRole === "rep";
 
-  const unread = cls.announcements.filter(a => !readSet.has(a.id) && !isExpired(a.createdAt)).length;
+  const unread = cls.announcements.filter(a => !readSet.has(a.id) && !isExpired(a.createdAt, a.expiresAt)).length;
   const filtered: Activity[] = cls.activities.filter(a =>
     (filter === "todos" || a.type === filter) &&
     (!search || a.title.toLowerCase().includes(search.toLowerCase()) || a.subject.toLowerCase().includes(search.toLowerCase()))
   );
 
   // Upcoming: activities due from today sorted ascending
-  const upcoming = cls.activities
+  const upcoming = [...cls.activities]
     .filter(a => a.dueDate >= TODAY_ISO && (statuses[a.id] ?? "todo") !== "done")
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
     .slice(0, 3);
@@ -87,9 +87,9 @@ export default function ClassHomeScreen({
         )}
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false} refreshControl={onRefresh ? <RefreshControl refreshing={Boolean(refreshing)} onRefresh={onRefresh} tintColor={th.orange} colors={[th.orange]} /> : undefined}>
         {/* Announcements */}
-        {cls.announcements.filter(a => !isExpired(a.createdAt)).length > 0 && (
+        {cls.announcements.filter(a => !isExpired(a.createdAt, a.expiresAt)).length > 0 && (
           <View style={[S.section, { borderBottomWidth: 1, borderBottomColor: th.border }]}>
             <SLabel th={th} action="Ver todos" onAction={() => onNav("notifications")}>
               AVISOS RECENTES
@@ -98,7 +98,7 @@ export default function ClassHomeScreen({
               {loading ? (
                 [1, 2].map(i => <SkelCard key={i} th={th}/>)
               ) : (
-                cls.announcements.filter(a => !isExpired(a.createdAt)).slice(0, 2).map(ann => {
+                cls.announcements.filter(a => !isExpired(a.createdAt, a.expiresAt)).slice(0, 2).map(ann => {
                   const pm = PRIORITY_META[ann.priority];
                   const isNew = !readSet.has(ann.id);
                   const handlePress = () => {

@@ -58,7 +58,7 @@ export interface Activity {
   } | null;
 }
 
-export interface AppEvent { id: string; title: string; day: number; month: number; type: EventKind; subject?: string; room?: string; }
+export interface AppEvent { id: string; title: string; day: number; month: number; year: number; time?: string; type: EventKind; subject?: string; room?: string; }
 
 export interface AppClass {
   id: string; code: string; name: string; course: string; institution: string; period: string; modality: Modality;

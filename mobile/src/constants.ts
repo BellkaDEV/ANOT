@@ -79,7 +79,11 @@ export const fmtDueLabel = (d:string) => {if(!d)return""; const[,mm,dd]=d.split(
 export const fmtDatePt = (iso:string) => new Date(iso+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
 export const getInitials = (name:string) => name.split(" ").slice(0,2).map(w=>w[0]??"").join("").toUpperCase();
 export const isValidEmail = (e:string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-export const isExpired = (createdAt:string) => { const d=new Date(createdAt),t=new Date(TODAY_ISO); return t.getTime()-d.getTime()>21*24*60*60*1000; };
+export const isExpired = (createdAt:string, expiresAt?:string|null) => {
+  if (expiresAt) return new Date(expiresAt).getTime() <= Date.now();
+  const d = new Date(createdAt), t = new Date(TODAY_ISO);
+  return t.getTime() - d.getTime() > 21 * 24 * 60 * 60 * 1000;
+};
 export const makeCode = (course:string,period:string) => { const pre=course.split(" ").map(w=>w[0]||"X").join("").toUpperCase().slice(0,3).padEnd(3,"X"); const yr=period.replace(/\D/g,"").slice(0,4).padEnd(4,"0"); return`${pre}-${yr}-${Math.random().toString(36).slice(2,6).toUpperCase()}`; };
 export const addDays = (iso:string,days:number) => { const d=new Date(iso+"T12:00:00"); d.setDate(d.getDate()+days); return d.toISOString().slice(0,10); };
 export const buildCalRows = (cm:{offset:number;days:number}) => { const total=Math.ceil((cm.offset+cm.days)/7)*7; const rows:Array<Array<number|null>>=[];for(let i=0;i<total;i+=7){const row:Array<number|null>=[];for(let j=0;j<7;j++){const day=i+j-cm.offset+1;row.push(day>=1&&day<=cm.days?day:null);}rows.push(row);}return rows; };

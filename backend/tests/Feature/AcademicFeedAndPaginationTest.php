@@ -300,6 +300,15 @@ class AcademicFeedAndPaginationTest extends TestCase
         $resEvents->assertOk();
         $this->assertCount(2, $resEvents->json('events'));
         $this->assertEquals(3, $resEvents->json('meta.total'));
+
+        // Validação de filtros inválidos
+        $this->actingAs($this->student, 'sanctum')
+            ->getJson("/api/classes/{$this->schoolClass->id}/announcements?priority=invalida")
+            ->assertStatus(422);
+
+        $this->actingAs($this->student, 'sanctum')
+            ->getJson("/api/classes/{$this->schoolClass->id}/events?type=tipo_inexistente")
+            ->assertStatus(422);
     }
 
     public function test_activities_handles_malformed_array_query_parameters_without_type_error(): void

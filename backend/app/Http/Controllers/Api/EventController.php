@@ -31,6 +31,16 @@ class EventController extends Controller
 
     public function index(Request $request, $classId)
     {
+        $request->validate([
+            'type' => 'sometimes|string|in:prova,entrega,evento,periodo',
+            'subject' => 'sometimes|string|max:255',
+            'from_date' => 'sometimes|date',
+            'to_date' => 'sometimes|date',
+            'search' => 'sometimes|string|max:255',
+            'per_page' => 'sometimes|integer|min:1|max:100',
+            'page' => 'sometimes|integer|min:1',
+        ]);
+
         $user = $request->user();
         $role = $this->getMembership($classId, $user);
         if (! $role) {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge, Empty } from "../components/ui";
@@ -14,21 +14,21 @@ interface Props {
   onMarkRead: (id: string) => void;
   onViewAnnouncement?: (id: string) => void;
   onNav: (s: Screen) => void;
-  th: AppTheme;
+  onRefresh?: () => void; refreshing?: boolean; th: AppTheme;
 }
 
-export default function NotificationsScreen({ cls, user, readSet, onMarkRead, onViewAnnouncement, onNav, th }: Props) {
+export default function NotificationsScreen({ cls, user, readSet, onMarkRead, onViewAnnouncement, onNav, onRefresh, refreshing, th }: Props) {
   const insets = useSafeAreaInsets();
   const [showExpired, setShowExpired] = useState(false);
 
-  const active  = cls.announcements.filter(a => !isExpired(a.createdAt));
-  const expired = cls.announcements.filter(a => isExpired(a.createdAt));
+  const active  = cls.announcements.filter(a => !isExpired(a.createdAt, a.expiresAt));
+  const expired = cls.announcements.filter(a => isExpired(a.createdAt, a.expiresAt));
   const shown   = showExpired ? [...active, ...expired] : active;
   const unread  = active.filter(a => !readSet.has(a.id)).length;
 
   function AnnCard({ ann }: { ann: Announcement }) {
     const pm = PRIORITY_META[ann.priority];
-    const exp = isExpired(ann.createdAt);
+    const exp = isExpired(ann.createdAt, ann.expiresAt);
     const isNew = !readSet.has(ann.id) && !exp;
     const handlePress = () => {
       onMarkRead(ann.id);
@@ -81,7 +81,7 @@ export default function NotificationsScreen({ cls, user, readSet, onMarkRead, on
         )}
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false} refreshControl={onRefresh ? <RefreshControl refreshing={Boolean(refreshing)} onRefresh={onRefresh} tintColor={th.orange} colors={[th.orange]} /> : undefined}>
         <View style={S.body}>
           {shown.length === 0 ? (
             <Empty th={th} icon="notifications-off-outline" title="Nenhum aviso" sub="Fique de olho, novos avisos aparecerão aqui"/>
