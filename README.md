@@ -1,6 +1,6 @@
 # ANOT
 
-Aplicativo mobile de gestão acadêmica para turmas, avisos, atividades, grupos de trabalho e calendário.
+Aplicativo mobile de gestão acadêmica para turmas, avisos, atividades individuais e calendário.
 
 O projeto é dividido em:
 
@@ -102,7 +102,7 @@ npx expo-doctor
 
 ## Estado atual
 
-O fluxo principal de autenticação, turmas, atividades, avisos, grupos, calendário, QR Code e deep links está implementado. A validação em dispositivo físico e a configuração de produção ainda devem ser realizadas antes de um deploy público.
+O fluxo principal de autenticação, turmas, atividades individuais, avisos, calendário, QR Code e deep links está implementado. A validação em dispositivo físico e a configuração de produção ainda devem ser realizadas antes de um deploy público.
 
 ## Segurança
 

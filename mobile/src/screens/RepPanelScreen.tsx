@@ -5,6 +5,7 @@ import {
 import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge, Btn, Empty, MemberAvatar, SLabel } from "../components/ui";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { PRIORITY_META, ACT_META, ROLE_META, isExpired } from "../constants";
 import { copyToClipboard } from "../utils/clipboard";
 import type {
@@ -42,6 +43,7 @@ export default function RepPanelScreen({
   onDeleteClass, onCopyCode, onToggleOpen, onRegenerateCode, onBack, th,
 }: Props) {
   const insets = useSafeAreaInsets();
+  const [confirmDeleteClass, setConfirmDeleteClass] = useState(false);
   const [tab, setTab] = useState<RepTab>("avisos");
   const myRole = cls.members.find(m => m.userId === user.id)?.classRole ?? "student";
   const isOwner = myRole === "owner";
@@ -59,11 +61,11 @@ export default function RepPanelScreen({
       <View style={{ gap: 10 }}>
         <Btn th={th} onPress={onAddAnn} iconName="add-circle" full>Novo aviso</Btn>
         {cls.announcements.length === 0 ? (
-          <Empty th={th} icon="🔔" title="Nenhum aviso" cta="Criar primeiro aviso" onCta={onAddAnn}/>
+          <Empty th={th} icon="notifications-outline" title="Nenhum aviso" cta="Criar primeiro aviso" onCta={onAddAnn}/>
         ) : (
           cls.announcements.map(ann => {
             const pm = PRIORITY_META[ann.priority];
-            const exp = isExpired(ann.createdAt);
+            const exp = isExpired(ann.createdAt, ann.expiresAt);
             return (
               <View key={ann.id} style={[S.itemCard, { backgroundColor: th.card, borderColor: th.border,
                 borderLeftColor: pm.dot, opacity: exp ? 0.6 : 1 }]}>
@@ -115,7 +117,7 @@ export default function RepPanelScreen({
       <View style={{ gap: 10 }}>
         <Btn th={th} onPress={onAddActivity} iconName="add-circle" full>Nova atividade</Btn>
         {cls.activities.length === 0 ? (
-          <Empty th={th} icon="📋" title="Nenhuma atividade" cta="Criar primeira atividade" onCta={onAddActivity}/>
+          <Empty th={th} icon="clipboard-outline" title="Nenhuma atividade" cta="Criar primeira atividade" onCta={onAddActivity}/>
         ) : (
           cls.activities.map(act => {
             const am = ACT_META[act.type];
@@ -287,7 +289,7 @@ export default function RepPanelScreen({
         )}
 
         {isOwner && (
-          <Btn th={th} variant="danger" onPress={onDeleteClass} full iconName="trash-outline">
+          <Btn th={th} variant="danger" onPress={() => setConfirmDeleteClass(true)} full iconName="trash-outline">
             Excluir turma
           </Btn>
         )}
@@ -340,6 +342,20 @@ export default function RepPanelScreen({
         {tab === "membros"    && <TabMembros/>}
         {tab === "turma"      && <TabTurma/>}
       </ScrollView>
+
+      <ConfirmDialog
+        visible={confirmDeleteClass}
+        title="Excluir turma permanentemente?"
+        message="Esta ação é irreversível. Todos os membros, atividades, avisos e dados desta turma serão removidos definitivamente."
+        confirmLabel="Excluir Turma"
+        isDestructive
+        onConfirm={() => {
+          setConfirmDeleteClass(false);
+          onDeleteClass();
+        }}
+        onCancel={() => setConfirmDeleteClass(false)}
+        th={th}
+      />
     </View>
   );
 }

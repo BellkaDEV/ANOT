@@ -31,6 +31,15 @@ class AnnouncementController extends Controller
 
     public function index(Request $request, $classId)
     {
+        $request->validate([
+            'active_only' => 'sometimes|boolean',
+            'include_expired' => 'sometimes|boolean',
+            'priority' => 'sometimes|string|in:baixa,media,alta',
+            'search' => 'sometimes|string|max:255',
+            'per_page' => 'sometimes|integer|min:1|max:100',
+            'page' => 'sometimes|integer|min:1',
+        ]);
+
         $user = $request->user();
         $role = $this->getMembership($classId, $user);
         if (! $role) {
