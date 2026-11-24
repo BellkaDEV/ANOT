@@ -37,12 +37,16 @@ export default function ProfileScreen({
   return (
     <View style={[S.safe, { backgroundColor: th.bg }]}>
       <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
-        <Text style={S.hTitle}>Perfil</Text>
+        <Text style={S.hTitle} accessibilityRole="header">Perfil</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         {/* Avatar section */}
-        <View style={[S.avatarSection, { backgroundColor: th.headerBg }]}>
+        <View
+          style={[S.avatarSection, { backgroundColor: th.headerBg }]}
+          accessible
+          accessibilityLabel={`Perfil de ${user.name}, e-mail ${user.email}`}
+        >
           <View style={[S.avatar, { backgroundColor: "rgba(228,130,46,0.25)" }]}>
             <Text style={S.avatarText}>{getInitials(user.name)}</Text>
           </View>
@@ -68,7 +72,13 @@ export default function ProfileScreen({
         </View>
 
         {/* Progress bar */}
-        <View style={[S.progCard, { backgroundColor: th.card, borderColor: th.border }]}>
+        <View
+          style={[S.progCard, { backgroundColor: th.card, borderColor: th.border }]}
+          accessible
+          accessibilityRole="progressbar"
+          accessibilityValue={{ min: 0, max: 100, now: pct }}
+          accessibilityLabel={`Progresso geral de atividades: ${pct}%, ${done} de ${totalActs} atividades concluídas`}
+        >
           <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
             <Text style={[S.progLabel, { color: th.fg }]}>Progresso geral</Text>
             <Text style={[S.progPct, { color: th.orange }]}>{pct}%</Text>
@@ -83,7 +93,13 @@ export default function ProfileScreen({
         <View style={[S.menuCard, { backgroundColor: th.card, borderColor: th.border }]}>
           {links.map((l, i) => (
             <React.Fragment key={l.label}>
-              <TouchableOpacity onPress={l.onPress} style={S.menuRow}>
+              <TouchableOpacity
+                onPress={l.onPress}
+                style={S.menuRow}
+                accessibilityRole="button"
+                accessibilityLabel={l.label}
+                accessibilityHint="Toque para abrir"
+              >
                 <View style={[S.menuIcon, { backgroundColor: th.navyLight }]}>
                   <Ionicons name={l.icon as any} size={16} color={th.navy}/>
                 </View>
