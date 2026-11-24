@@ -41,23 +41,23 @@ class ActivityController extends Controller
 
         $query = Activity::where('class_id', $classId)->with('creator:id,name,avatar_url');
 
-        if ($request->filled('type')) {
+        if ($request->filled('type') && is_string($request->input('type'))) {
             $query->where('type', $request->input('type'));
         }
 
-        if ($request->filled('subject')) {
+        if ($request->filled('subject') && is_string($request->input('subject'))) {
             $query->where('subject', 'like', "%{$request->input('subject')}%");
         }
 
-        if ($request->filled('from_date')) {
+        if ($request->filled('from_date') && is_string($request->input('from_date'))) {
             $query->where('due_date', '>=', $request->input('from_date'));
         }
 
-        if ($request->filled('to_date')) {
+        if ($request->filled('to_date') && is_string($request->input('to_date'))) {
             $query->where('due_date', '<=', $request->input('to_date'));
         }
 
-        if ($request->filled('status')) {
+        if ($request->filled('status') && is_string($request->input('status'))) {
             $status = $request->input('status');
             if ($status === 'todo') {
                 $query->where(function ($q) use ($user): void {
@@ -74,7 +74,7 @@ class ActivityController extends Controller
             }
         }
 
-        if ($request->filled('search')) {
+        if ($request->filled('search') && is_string($request->input('search'))) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search): void {
                 $q->where('title', 'like', "%{$search}%")
@@ -82,13 +82,15 @@ class ActivityController extends Controller
             });
         }
 
-        $sortBy = $request->input('sort_by', 'due_date');
+        $rawSortBy = $request->input('sort_by', 'due_date');
+        $sortBy = is_string($rawSortBy) ? $rawSortBy : 'due_date';
         $allowedSorts = ['due_date', 'created_at', 'title', 'points_value'];
         if (! in_array($sortBy, $allowedSorts, true)) {
             $sortBy = 'due_date';
         }
 
-        $direction = strtolower($request->input('direction', $request->input('order', 'asc')));
+        $rawDirection = $request->input('direction', $request->input('order', 'asc'));
+        $direction = is_string($rawDirection) ? strtolower($rawDirection) : 'asc';
         if (! in_array($direction, ['asc', 'desc'], true)) {
             $direction = 'asc';
         }
