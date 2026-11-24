@@ -37,13 +37,62 @@ class EventController extends Controller
             return response()->json(['message' => 'Você não tem permissão para acessar esta turma.'], 403);
         }
 
-        $events = Event::where('class_id', $classId)
-            ->orderBy('event_date', 'asc')
+        $query = Event::where('class_id', $classId);
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+
+        if ($request->filled('subject')) {
+            $query->where('subject', 'like', "%{$request->input('subject')}%");
+        }
+
+        if ($request->filled('from_date')) {
+            $query->where('event_date', '>=', $request->input('from_date'));
+        }
+
+        if ($request->filled('to_date')) {
+            $query->where('event_date', '<=', $request->input('to_date'));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search): void {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('subject', 'like', "%{$search}%")
+                    ->orWhere('room', 'like', "%{$search}%");
+            });
+        }
+
+        $query->orderBy('event_date', 'asc')
             ->orderBy('event_time', 'asc')
-            ->get();
+            ->orderBy('id', 'asc');
+
+        if ($request->has('per_page') || $request->has('page')) {
+            $perPage = max(1, min((int) $request->input('per_page', 15), 100));
+            $paginator = $query->paginate($perPage);
+            $events = collect($paginator->items());
+            $meta = [
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'has_more' => $paginator->hasMorePages(),
+            ];
+        } else {
+            $events = $query->get();
+            $meta = [
+                'total' => $events->count(),
+                'per_page' => $events->count(),
+                'current_page' => 1,
+                'last_page' => 1,
+                'has_more' => false,
+            ];
+        }
 
         return response()->json([
             'events' => EventResource::collection($events),
+            'meta' => $meta,
         ]);
     }
 

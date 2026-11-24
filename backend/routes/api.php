@@ -38,6 +38,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::post('/classes', [ClassController::class, 'store']);
     Route::post('/classes/join', [ClassController::class, 'join'])->middleware('throttle:join-class');
     Route::get('/classes/{id}', [ClassController::class, 'show']);
+    Route::get('/classes/{id}/feed', [ClassController::class, 'feed']);
     Route::put('/classes/{id}', [ClassController::class, 'update']);
     Route::put('/classes/{id}/toggle-open', [ClassController::class, 'toggleOpen']);
     Route::put('/classes/{id}/regenerate-code', [ClassController::class, 'regenerateCode']);
