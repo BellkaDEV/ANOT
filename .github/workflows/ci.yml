@@ -6,25 +6,16 @@ on:
   pull_request:
     branches: [ main, master, develop ]
 
-# CI only needs to read the repository.  Keep a single run per ref so an
-# obsolete push cannot consume runners after a newer commit is available.
-permissions:
-  contents: read
-
-concurrency:
-  group: anot-ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   mobile-quality:
     name: Mobile TypeScript, Expo and dependency checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -44,11 +35,9 @@ jobs:
 
       - name: Export Android bundle
         run: cd mobile && npx expo export --platform android
-        env:
-          EXPO_PUBLIC_API_URL: https://api.anot.app
 
       - name: Upload Android export artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@v4
         with:
           name: anot-android-export-${{ github.sha }}
           path: mobile/dist
@@ -76,10 +65,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
+        uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           extensions: mbstring, dom, fileinfo, pdo, pdo_pgsql, pdo_sqlite
@@ -89,7 +78,7 @@ jobs:
         run: cd backend && composer install --prefer-dist --no-interaction --no-progress
 
       - name: Setup Node.js for web assets
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -102,7 +91,7 @@ jobs:
         run: cd backend && npm run build
 
       - name: Upload web assets artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@v4
         with:
           name: anot-web-assets-${{ github.sha }}
           path: backend/public/build
@@ -145,7 +134,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4
 
       - name: Validate Compose configuration
         working-directory: backend
