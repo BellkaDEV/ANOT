@@ -40,8 +40,10 @@ COPY --from=frontend-assets /build/public/build ./public/build
 # Install PHP dependencies
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# Setup directory permissions for Laravel
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+# Setup writable Laravel directories. `storage/framework/views` is excluded
+# from the build context, so recreate it before Artisan derives VIEW_COMPILED_PATH.
+RUN mkdir -p /var/www/storage/framework/views \
+    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
 # Copy Nginx and Supervisor configs
 COPY docker/nginx.conf /etc/nginx/nginx.conf
