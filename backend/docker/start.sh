@@ -13,7 +13,9 @@ mkdir -p /var/www/storage/framework/views \
          /var/www/storage/framework/cache/data \
          /var/www/storage/framework/sessions \
          /var/www/storage/logs \
-         /var/www/bootstrap/cache
+         /var/www/bootstrap/cache \
+         /var/run
+rm -f /var/run/php-fpm.sock
 chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 

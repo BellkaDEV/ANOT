@@ -51,12 +51,12 @@ class ValidateProductionConfig extends Command
                 'message' => 'QUEUE_CONNECTION deve ser database ou redis.',
             ],
             'SESSION_DRIVER' => [
-                'ok' => in_array((string) config('session.driver'), ['database', 'redis'], true),
-                'message' => 'SESSION_DRIVER deve ser database ou redis.',
+                'ok' => in_array((string) config('session.driver'), ['database', 'redis', 'file'], true),
+                'message' => 'SESSION_DRIVER deve ser database, redis ou file.',
             ],
             'CACHE_STORE' => [
-                'ok' => in_array((string) config('cache.default'), ['database', 'redis'], true),
-                'message' => 'CACHE_STORE deve ser database ou redis.',
+                'ok' => in_array((string) config('cache.default'), ['database', 'redis', 'file'], true),
+                'message' => 'CACHE_STORE deve ser database, redis ou file.',
             ],
             'SUPPORT_EMAIL' => [
                 'ok' => filter_var((string) config('app.support_email'), FILTER_VALIDATE_EMAIL) !== false,
