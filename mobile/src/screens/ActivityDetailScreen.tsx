@@ -33,6 +33,7 @@ export default function ActivityDetailScreen({
   const insets = useSafeAreaInsets();
   const [localNotes, setLocalNotes] = useState(notes);
   const [saved, setSaved] = useState(false);
+  const [savingNotes, setSavingNotes] = useState(false);
 
   const am = ACT_META[activity.type];
   const sm = STATUS_META[status];
@@ -45,10 +46,17 @@ export default function ActivityDetailScreen({
     nao_informado: "Não informado",
   };
 
-  function saveNotes() {
-    onSaveNotes(activity.id, localNotes);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  async function saveNotes() {
+    try {
+      setSavingNotes(true);
+      await Promise.resolve(onSaveNotes(activity.id, localNotes));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      // Ignora erro aqui para não exibir falso positivo em caso de falha de rede/API
+    } finally {
+      setSavingNotes(false);
+    }
   }
 
   const header = (
@@ -197,6 +205,7 @@ export default function ActivityDetailScreen({
           th={th}
           variant="secondary"
           size="sm"
+          loading={savingNotes}
           onPress={saveNotes}
         >
           {saved ? "Salvo ✓" : "Salvar anotações"}

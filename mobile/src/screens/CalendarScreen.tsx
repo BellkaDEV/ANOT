@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme/theme';
 import api from '../services/api';
-import { CAL_MONTHS, TODAY_DAY, TODAY_MONTH } from '../constants';
+import { CAL_MONTHS, TODAY_DAY, TODAY_MONTH, TODAY_YEAR } from '../constants';
 
 
 export default function CalendarScreen({ navigation }: any) {
@@ -19,7 +19,8 @@ export default function CalendarScreen({ navigation }: any) {
   const eventsRequestIdRef = useRef(0);
 
   // Calendar UI states matching figma
-  const [monthIdx, setMonthIdx] = useState(TODAY_MONTH - 1);
+  const currentMonthIdx = CAL_MONTHS.findIndex((m) => m.year === TODAY_YEAR && m.month === TODAY_MONTH);
+  const [monthIdx, setMonthIdx] = useState(currentMonthIdx >= 0 ? currentMonthIdx : 12);
   const [selDay, setSelDay] = useState<number | null>(TODAY_DAY);
   const [filter, setFilter] = useState<'all' | 'prova' | 'entrega' | 'evento' | 'periodo'>('all');
 
@@ -333,7 +334,7 @@ export default function CalendarScreen({ navigation }: any) {
             {Array.from({ length: totalCells }, (_, i) => {
               const day = i - cm.offset + 1;
               const valid = day >= 1 && day <= cm.days;
-              const isToday = valid && day === todayDay && cm.month === todayMonth;
+              const isToday = valid && day === todayDay && cm.month === todayMonth && cm.year === TODAY_YEAR;
               const isSel = valid && day === selDay;
 
               // Filter event categories present on this specific day

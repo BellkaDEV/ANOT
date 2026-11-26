@@ -23,6 +23,7 @@ export default function ResetPasswordScreen({ email, onSubmit, onBack, loading =
   const [done, setDone] = useState(false);
 
   async function submit() {
+    if (loading) return;
     if (password.length < 8 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
       return setError("Use pelo menos 8 caracteres, maiúsculas, minúsculas e números.");
     }
@@ -49,12 +50,40 @@ export default function ResetPasswordScreen({ email, onSubmit, onBack, loading =
           <View style={{ flex: 1 }}><Text style={[S.cardTitle, { color: th.fg }]}>Crie uma nova senha</Text><Text style={[S.cardSub, { color: th.muted }]}>{email}</Text></View>
         </View>
         {done ? (
-          <View style={[S.successBox, { backgroundColor: th.successBg }]}><Text style={[S.successText, { color: th.success }]}>Senha redefinida. Você já pode entrar novamente no ANOT.</Text></View>
+          <View style={[S.successBox, { backgroundColor: th.successBg }]}><Text style={[S.successText, { color: th.success }]}>Senha redefinida com sucesso. Você já pode entrar novamente no ANOT.</Text></View>
         ) : (
           <>
-            <FInput th={th} label="Nova senha" value={password} onChange={setPassword} placeholder="••••••••" secure={!showPassword} leftIcon="lock-closed-outline" rightIcon={showPassword ? "eye-off-outline" : "eye-outline"} onRightPress={() => setShowPassword(!showPassword)} hint="Mínimo de 8 caracteres, maiúscula, minúscula e número" />
-            <FInput th={th} label="Confirme a senha" value={confirmation} onChange={setConfirmation} placeholder="••••••••" secure={!showPassword} leftIcon="shield-checkmark-outline" error={error} />
-            <Btn th={th} onPress={submit} loading={loading} full iconName="checkmark-circle-outline">Salvar nova senha</Btn>
+            <FInput
+              th={th}
+              label="Nova senha"
+              value={password}
+              onChange={(val) => {
+                setPassword(val);
+                if (error) setError(undefined);
+              }}
+              placeholder="••••••••"
+              secure={!showPassword}
+              leftIcon="lock-closed-outline"
+              rightIcon={showPassword ? "eye-off-outline" : "eye-outline"}
+              onRightPress={() => setShowPassword(!showPassword)}
+              hint="Mínimo de 8 caracteres, maiúscula, minúscula e número"
+            />
+            <FInput
+              th={th}
+              label="Confirme a nova senha"
+              value={confirmation}
+              onChange={(val) => {
+                setConfirmation(val);
+                if (error) setError(undefined);
+              }}
+              placeholder="••••••••"
+              secure={!showPassword}
+              leftIcon="shield-checkmark-outline"
+              error={error}
+            />
+            <Btn th={th} onPress={submit} loading={loading} disabled={loading} full iconName="checkmark-circle-outline">
+              {loading ? "Salvando nova senha..." : "Salvar nova senha"}
+            </Btn>
           </>
         )}
       </View>

@@ -22,6 +22,7 @@ import MemberSheet from "./src/components/MemberSheet";
 import { extractInviteCode } from "./src/utils/inviteLinks";
 import { extractPasswordReset, type PasswordResetLink } from "./src/utils/passwordResetLinks";
 import { copyToClipboard } from "./src/utils/clipboard";
+import { formatApiError } from "./src/utils/errorHandling";
 
 import WelcomeScreen      from "./src/screens/WelcomeScreen";
 import LoginScreen        from "./src/screens/LoginScreen";
@@ -135,6 +136,7 @@ function MainApp() {
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [pendingJoinCode, setPendingJoinCode] = useState<string | null>(null);
   const [pendingPasswordReset, setPendingPasswordReset] = useState<PasswordResetLink | null>(null);
+  const [authFormError, setAuthFormError] = useState<string | null>(null);
 
   const receiveInviteUrl = useCallback((url: string) => {
     const code = extractInviteCode(url);
@@ -283,7 +285,8 @@ function MainApp() {
 
   // Sync auth state to initial screen
   useEffect(() => {
-    if (signed && screen === "welcome") {
+    if (signed && (screen === "welcome" || screen === "login" || screen === "register")) {
+      setAuthFormError(null);
       setScreen("dashboard");
     }
   }, [signed]);
@@ -329,7 +332,7 @@ function MainApp() {
 
   // Standardized API error handler
   const handleApiError = useCallback((err: any, defaultMsg: string) => {
-    if (err.response?.status === 401) {
+    if (err.response?.status === 401 && signed) {
       authLogout();
       setClasses([]);
       setActiveId(null);
@@ -338,34 +341,22 @@ function MainApp() {
       return;
     }
 
-    let msg = defaultMsg;
-    if (err.response?.status === 422) {
-      if (err.response.data?.errors) {
-        const firstKey = Object.keys(err.response.data.errors)[0];
-        const firstErr = err.response.data.errors[firstKey];
-        msg = Array.isArray(firstErr) ? firstErr[0] : String(firstErr);
-      } else if (err.response.data?.message) {
-        msg = err.response.data.message;
-      }
-    } else if (err.response?.status >= 500) {
-      msg = "Ocorreu um erro no servidor. Tente novamente mais tarde.";
-    } else if (err.response?.data?.message) {
-      msg = err.response.data.message;
-    } else if (!err.response?.data && err.message) {
-      msg = err.message;
-    }
+    const msg = formatApiError(err, defaultMsg);
     toast(msg, "error");
-  }, [authLogout, toast]);
+  }, [authLogout, signed, toast]);
 
   // Auth wrappers
   async function doLogin(email: string, pw: string) {
     setIsSubmittingForm(true);
+    setAuthFormError(null);
     try {
       await authLogin(email, pw);
       setScreen("dashboard");
       toast("Bem-vindo(a) ao ANOT!");
     } catch (err: any) {
-      handleApiError(err, "Usuário ou senha inválidos.");
+      const msg = err.message || formatApiError(err, "Usuário ou senha inválidos.");
+      setAuthFormError(msg);
+      toast(msg, "error");
     } finally {
       setIsSubmittingForm(false);
     }
@@ -373,12 +364,15 @@ function MainApp() {
 
   async function doRegister(name: string, email: string, pw: string) {
     setIsSubmittingForm(true);
+    setAuthFormError(null);
     try {
       await authRegister(name, email, pw);
       setScreen("dashboard");
       toast("Conta criada com sucesso!");
     } catch (err: any) {
-      handleApiError(err, "Erro ao criar conta. Verifique os dados.");
+      const msg = err.message || formatApiError(err, "Erro ao criar conta. Verifique os dados.");
+      setAuthFormError(msg);
+      toast(msg, "error");
     } finally {
       setIsSubmittingForm(false);
     }
@@ -632,14 +626,14 @@ function MainApp() {
   }
 
   // Navigation helpers
-  function nav(s: Screen) { setScreen(s); }
+  function nav(s: Screen) { setAuthFormError(null); setScreen(s); }
   function goClassHome()  { setScreen("classHome"); }
 
   // Screen Rendering Router
   function renderInner(): React.ReactElement | null {
     if (screen === "welcome")  return <WelcomeScreen onLogin={() => nav("login")} onRegister={() => nav("register")} th={th}/>;
-    if (screen === "login")    return <LoginScreen onLogin={doLogin} onBack={() => nav("welcome")} onRegister={() => nav("register")} onForgotPassword={() => nav("forgotPassword")} loading={isSubmittingForm} th={th}/>;
-    if (screen === "register") return <RegisterScreen onRegister={doRegister} onBack={() => nav("login")} loading={isSubmittingForm} th={th}/>;
+    if (screen === "login")    return <LoginScreen onLogin={doLogin} onBack={() => nav("welcome")} onRegister={() => nav("register")} onForgotPassword={() => nav("forgotPassword")} loading={isSubmittingForm} errorMessage={authFormError} onClearError={() => setAuthFormError(null)} th={th}/>;
+    if (screen === "register") return <RegisterScreen onRegister={doRegister} onBack={() => nav("login")} loading={isSubmittingForm} errorMessage={authFormError} onClearError={() => setAuthFormError(null)} th={th}/>;
     if (screen === "forgotPassword") return <ForgotPasswordScreen onSubmit={doRequestPasswordReset} onBack={() => nav("login")} loading={isSubmittingForm} th={th}/>;
     if (screen === "resetPassword" && pendingPasswordReset) return <ResetPasswordScreen email={pendingPasswordReset.email} onSubmit={doResetPassword} onBack={() => { setPendingPasswordReset(null); nav("login"); }} loading={isSubmittingForm} th={th}/>;
 

@@ -6,7 +6,7 @@ import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons";
 import { Badge, Empty } from "../components/ui";
 import FloatingNav from "../components/FloatingNav";
-import { CAL_MONTHS, EVENT_META, buildCalRows, TODAY_DAY, TODAY_MONTH } from "../constants";
+import { CAL_MONTHS, EVENT_META, buildCalRows, TODAY_DAY, TODAY_MONTH, TODAY_YEAR } from "../constants";
 import type { AppTheme, AppClass, AppUser, Screen, AppEvent } from "../types";
 
 const WDAYS = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
@@ -20,8 +20,8 @@ interface Props {
 
 export default function EventsScreen({ cls, user, onNav, onRefresh, refreshing, th }: Props) {
   const insets = useSafeAreaInsets();
-  const initMonth = CAL_MONTHS.findIndex(m => m.month === TODAY_MONTH);
-  const [mi, setMi] = useState(initMonth >= 0 ? initMonth : 1);
+  const initMonth = CAL_MONTHS.findIndex(m => m.year === TODAY_YEAR && m.month === TODAY_MONTH);
+  const [mi, setMi] = useState(initMonth >= 0 ? initMonth : 12);
   const [selDay, setSelDay] = useState<number | null>(TODAY_DAY);
   const cm = CAL_MONTHS[mi]!;
   const rows = buildCalRows(cm);
@@ -34,7 +34,7 @@ export default function EventsScreen({ cls, user, onNav, onRefresh, refreshing, 
   function CalCell({ day }: { day: number | null }) {
     if (!day) return <View style={S.cellEmpty}/>;
     const evts = eventsForDay(day);
-    const isToday = day === TODAY_DAY && cm.month === TODAY_MONTH;
+    const isToday = day === TODAY_DAY && cm.month === TODAY_MONTH && cm.year === TODAY_YEAR;
     const isSel   = day === selDay;
     const dot1    = evts[0] ? EVENT_META[evts[0].type].dot : null;
     const dot2    = evts[1] ? EVENT_META[evts[1].type].dot : null;

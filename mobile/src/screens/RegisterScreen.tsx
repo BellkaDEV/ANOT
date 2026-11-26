@@ -11,10 +11,19 @@ interface Props {
   onRegister: (name: string, email: string, pw: string) => void;
   onBack: () => void;
   loading?: boolean;
+  errorMessage?: string | null;
+  onClearError?: () => void;
   th: AppTheme;
 }
 
-export default function RegisterScreen({ onRegister, onBack, loading = false, th }: Props) {
+export default function RegisterScreen({
+  onRegister,
+  onBack,
+  loading = false,
+  errorMessage,
+  onClearError,
+  th,
+}: Props) {
   const insets = useSafeAreaInsets();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -25,19 +34,39 @@ export default function RegisterScreen({ onRegister, onBack, loading = false, th
 
   function validate() {
     const e: typeof errors = {};
-    if (!name.trim()) e.name = "Nome completo obrigatório";
-    if (!email.trim()) e.email = "E-mail obrigatório";
-    else if (!isValidEmail(email)) e.email = "E-mail inválido";
-    if (!pw) e.pw = "Senha obrigatória";
-    else if (pw.length < 8) e.pw = "A senha deve conter no mínimo 8 caracteres";
-    else if (!/[a-z]/.test(pw) || !/[A-Z]/.test(pw) || !/[0-9]/.test(pw)) e.pw = "A senha deve conter maiúsculas, minúsculas e números";
-    if (pw !== confirmPw) e.confirmPw = "As senhas não coincidem";
+    const cleanName = name.trim();
+    const cleanEmail = email.trim();
+
+    if (!cleanName) {
+      e.name = "Nome completo obrigatório";
+    }
+
+    if (!cleanEmail) {
+      e.email = "E-mail obrigatório";
+    } else if (!isValidEmail(cleanEmail)) {
+      e.email = "E-mail inválido";
+    }
+
+    if (!pw) {
+      e.pw = "Senha obrigatória";
+    } else if (pw.length < 8) {
+      e.pw = "A senha deve conter no mínimo 8 caracteres";
+    } else if (!/[a-z]/.test(pw) || !/[A-Z]/.test(pw) || !/[0-9]/.test(pw)) {
+      e.pw = "A senha deve conter maiúsculas, minúsculas e números";
+    }
+
+    if (pw !== confirmPw) {
+      e.confirmPw = "As senhas não coincidem";
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   }
 
   function submit() {
+    if (loading) return;
     if (!validate()) return;
+    if (onClearError) onClearError();
     onRegister(name.trim(), email.trim(), pw);
   }
 
@@ -69,12 +98,23 @@ export default function RegisterScreen({ onRegister, onBack, loading = false, th
           </View>
         </View>
 
+        {errorMessage ? (
+          <View style={[S.errorBanner, { backgroundColor: th.errorBg, borderColor: th.error }]}>
+            <AppIcon name="alert-circle-outline" size={20} color={th.error} />
+            <Text style={[S.errorBannerText, { color: th.error }]}>{errorMessage}</Text>
+          </View>
+        ) : null}
+
         <View style={{ gap: 14 }}>
           <FInput
             th={th}
             label="Nome Completo *"
             value={name}
-            onChange={setName}
+            onChange={(val) => {
+              setName(val);
+              if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+              if (onClearError && errorMessage) onClearError();
+            }}
             placeholder="Ex.: Maria Silva"
             leftIcon="person-outline"
             autoCapitalize="words"
@@ -84,7 +124,11 @@ export default function RegisterScreen({ onRegister, onBack, loading = false, th
             th={th}
             label="E-mail *"
             value={email}
-            onChange={setEmail}
+            onChange={(val) => {
+              setEmail(val);
+              if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+              if (onClearError && errorMessage) onClearError();
+            }}
             placeholder="seu.nome@universidade.edu.br"
             leftIcon="mail-outline"
             keyboardType="email-address"
@@ -95,7 +139,11 @@ export default function RegisterScreen({ onRegister, onBack, loading = false, th
             th={th}
             label="Senha *"
             value={pw}
-            onChange={setPw}
+            onChange={(val) => {
+              setPw(val);
+              if (errors.pw) setErrors((prev) => ({ ...prev, pw: undefined }));
+              if (onClearError && errorMessage) onClearError();
+            }}
             placeholder="Mínimo 8 caracteres, com maiúsculas e números"
             secure={!showPw}
             leftIcon="lock-closed-outline"
@@ -107,7 +155,11 @@ export default function RegisterScreen({ onRegister, onBack, loading = false, th
             th={th}
             label="Confirmar Senha *"
             value={confirmPw}
-            onChange={setConfirmPw}
+            onChange={(val) => {
+              setConfirmPw(val);
+              if (errors.confirmPw) setErrors((prev) => ({ ...prev, confirmPw: undefined }));
+              if (onClearError && errorMessage) onClearError();
+            }}
             placeholder="Repita sua senha"
             secure={!showPw}
             leftIcon="shield-checkmark-outline"
@@ -115,8 +167,15 @@ export default function RegisterScreen({ onRegister, onBack, loading = false, th
           />
         </View>
 
-        <Btn th={th} onPress={submit} loading={loading} full iconName="checkmark-circle-outline">
-          Finalizar Cadastro
+        <Btn
+          th={th}
+          onPress={submit}
+          loading={loading}
+          disabled={loading}
+          full
+          iconName="checkmark-circle-outline"
+        >
+          {loading ? "Criando conta..." : "Finalizar Cadastro"}
         </Btn>
       </View>
     </KeyboardAwareScreen>
@@ -139,4 +198,19 @@ const S = StyleSheet.create({
   iconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   cardTitle: { fontSize: 18, fontWeight: "800" },
   cardSub: { fontSize: 13, marginTop: 2 },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  errorBannerText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 18,
+  },
 });

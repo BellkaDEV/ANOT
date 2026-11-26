@@ -41,6 +41,9 @@ class ValidateProductionConfigTest extends TestCase
             'session.driver' => 'database',
             'cache.default' => 'database',
             'mail.default' => 'smtp',
+            'mail.mailers.smtp.host' => 'smtp.anot.app',
+            'mail.mailers.smtp.username' => 'anot',
+            'mail.mailers.smtp.password' => 'strong-secret',
         ]);
 
         $this->artisan('app:validate-production', ['--json' => true])
@@ -109,6 +112,62 @@ class ValidateProductionConfigTest extends TestCase
 
         $this->artisan('app:validate-production')
             ->expectsOutputToContain('FAIL MOBILE_RESET_URL')
+            ->assertFailed();
+    }
+
+    public function test_command_rejects_missing_postgres_connection_fields_and_smtp_credentials(): void
+    {
+        config([
+            'app.env' => 'production',
+            'app.debug' => false,
+            'app.url' => 'https://api.anot.app',
+            'app.mobile_reset_url' => 'anot://reset-password',
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+            'app.support_email' => 'suporte@anot.app',
+            'database.default' => 'pgsql',
+            'database.connections.pgsql.host' => '',
+            'database.connections.pgsql.port' => 0,
+            'database.connections.pgsql.database' => '',
+            'database.connections.pgsql.username' => '',
+            'database.connections.pgsql.password' => 'strong-secret',
+            'queue.default' => 'database',
+            'session.driver' => 'database',
+            'cache.default' => 'database',
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.host' => '',
+            'mail.mailers.smtp.username' => '',
+            'mail.mailers.smtp.password' => '',
+        ]);
+
+        $this->artisan('app:validate-production')
+            ->expectsOutputToContain('FAIL DB_HOST')
+            ->expectsOutputToContain('FAIL DB_PORT')
+            ->expectsOutputToContain('FAIL DB_DATABASE')
+            ->expectsOutputToContain('FAIL DB_USERNAME')
+            ->expectsOutputToContain('FAIL MAIL')
+            ->assertFailed();
+    }
+
+    public function test_command_rejects_placeholder_support_email(): void
+    {
+        config([
+            'app.env' => 'production',
+            'app.debug' => false,
+            'app.url' => 'https://api.anot.app',
+            'app.mobile_reset_url' => 'anot://reset-password',
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+            'app.support_email' => 'support@example.com',
+            'database.default' => 'pgsql',
+            'database.connections.pgsql.password' => 'strong-secret',
+            'queue.default' => 'database',
+            'session.driver' => 'database',
+            'cache.default' => 'database',
+            'mail.default' => 'brevo',
+            'mail.mailers.brevo.api_key' => 'brevo-secret',
+        ]);
+
+        $this->artisan('app:validate-production')
+            ->expectsOutputToContain('FAIL SUPPORT_EMAIL')
             ->assertFailed();
     }
 

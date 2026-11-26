@@ -60,7 +60,8 @@ export default function JoinClassScreen({ onJoin, onBack, loading = false, th, i
 
   function handleBarcodeScanned({ data }: { data: string }) {
     if (scanned) return;
-    const scannedCode = extractInviteCode(data);
+    const raw = data.trim().toUpperCase();
+    const scannedCode = extractInviteCode(data) || (/^[A-Z0-9-]{4,20}$/.test(raw) ? raw : null);
     if (!scannedCode) {
       setScannerError("QR Code inválido. Use um convite gerado pelo ANOT.");
       return;

@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Validation\Rules\Password;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -19,37 +18,32 @@ class AuthController extends Controller
     {
         if ($request->has('email')) {
             $request->merge([
-                'email' => strtolower(trim($request->email)),
+                'email' => strtolower(trim((string) $request->email)),
             ]);
         }
 
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users,email',
-                'password' => [
-                    'required',
-                    'string',
-                    Password::min(8)->mixedCase()->numbers(),
-                    'confirmed',
-                ],
-                'avatar_url' => 'nullable|string|url',
-            ], [
-                'password' => 'A senha não atende aos requisitos mínimos.',
-                'password.min' => 'A senha não atende aos requisitos mínimos.',
-                'password.mixed' => 'A senha não atende aos requisitos mínimos.',
-                'password.numbers' => 'A senha não atende aos requisitos mínimos.',
-            ]);
-        } catch (ValidationException $e) {
-            $errors = $e->errors();
-            if (isset($errors['email'])) {
-                return response()->json([
-                    'message' => 'Este e-mail já está cadastrado no sistema.',
-                    'errors' => $errors,
-                ], 422);
-            }
-            throw $e;
-        }
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'password' => [
+                'required',
+                'string',
+                Password::min(8)->mixedCase()->numbers(),
+                'confirmed',
+            ],
+            'avatar_url' => 'nullable|string|url',
+        ], [
+            'name.required' => 'O nome completo é obrigatório.',
+            'email.required' => 'O e-mail é obrigatório.',
+            'email.email' => 'Informe um endereço de e-mail válido.',
+            'email.unique' => 'Este e-mail já está cadastrado no sistema.',
+            'password' => 'A senha não atende aos requisitos mínimos.',
+            'password.required' => 'A senha é obrigatória.',
+            'password.min' => 'A senha não atende aos requisitos mínimos.',
+            'password.mixed' => 'A senha não atende aos requisitos mínimos.',
+            'password.numbers' => 'A senha não atende aos requisitos mínimos.',
+            'password.confirmed' => 'A confirmação de senha não confere.',
+        ]);
 
         $user = User::create([
             'name' => trim($validated['name']),
@@ -73,7 +67,7 @@ class AuthController extends Controller
     {
         if ($request->has('email')) {
             $request->merge([
-                'email' => strtolower(trim($request->email)),
+                'email' => strtolower(trim((string) $request->email)),
             ]);
         }
 
@@ -157,7 +151,7 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $request->user()->currentAccessToken()?->delete();
 
         return response()->json([
             'message' => 'Logout realizado com sucesso.',

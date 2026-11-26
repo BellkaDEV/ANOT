@@ -21,6 +21,7 @@ RUN apk update && apk add --no-cache \
     unzip \
     git \
     curl \
+    gettext \
     postgresql-client
 
 RUN docker-php-ext-install pdo pdo_pgsql pgsql zip bcmath opcache
@@ -40,15 +41,21 @@ COPY --from=frontend-assets /build/public/build ./public/build
 # Install PHP dependencies
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# Setup directory permissions for Laravel
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+# Setup writable Laravel directories. Ensure all runtime directories exist
+# before Artisan executes caching and php-fpm serves requests.
+RUN mkdir -p /var/www/storage/framework/views \
+             /var/www/storage/framework/cache/data \
+             /var/www/storage/framework/sessions \
+             /var/www/storage/logs \
+             /var/www/bootstrap/cache \
+    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Copy Nginx and Supervisor configs
-COPY docker/nginx.conf /etc/nginx/nginx.conf
+# Copy PHP-FPM, Nginx, and Supervisor configs
+COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/zz-docker.conf
+COPY docker/nginx.conf /etc/nginx/nginx.conf.template
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
-
-EXPOSE 80
 
 ENTRYPOINT ["/usr/local/bin/start.sh"]

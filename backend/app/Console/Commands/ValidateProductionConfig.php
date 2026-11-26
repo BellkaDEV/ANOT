@@ -38,6 +38,22 @@ class ValidateProductionConfig extends Command
                 'ok' => (string) config('database.default') === 'pgsql',
                 'message' => 'DB_CONNECTION deve ser pgsql em produção.',
             ],
+            'DB_HOST' => [
+                'ok' => (string) Arr::get(config('database.connections'), 'pgsql.host') !== '',
+                'message' => 'DB_HOST deve ser configurado.',
+            ],
+            'DB_PORT' => [
+                'ok' => (int) Arr::get(config('database.connections'), 'pgsql.port') > 0,
+                'message' => 'DB_PORT deve ser configurado com uma porta válida.',
+            ],
+            'DB_DATABASE' => [
+                'ok' => (string) Arr::get(config('database.connections'), 'pgsql.database') !== '',
+                'message' => 'DB_DATABASE deve ser configurado.',
+            ],
+            'DB_USERNAME' => [
+                'ok' => (string) Arr::get(config('database.connections'), 'pgsql.username') !== '',
+                'message' => 'DB_USERNAME deve ser configurado.',
+            ],
             'DB_PASSWORD' => [
                 'ok' => $this->hasRealValue((string) Arr::get(config('database.connections'), 'pgsql.password'), 'troque-por-uma-senha-forte'),
                 'message' => 'DB_PASSWORD deve ser definido fora do repositório.',
@@ -59,7 +75,9 @@ class ValidateProductionConfig extends Command
                 'message' => 'CACHE_STORE deve ser database ou redis.',
             ],
             'SUPPORT_EMAIL' => [
-                'ok' => filter_var((string) config('app.support_email'), FILTER_VALIDATE_EMAIL) !== false,
+                'ok' => filter_var((string) config('app.support_email'), FILTER_VALIDATE_EMAIL) !== false
+                    && ! str_ends_with((string) config('app.support_email'), '@example.com')
+                    && ! str_ends_with((string) config('app.support_email'), '@example.org'),
                 'message' => 'SUPPORT_EMAIL deve ser um endereço válido.',
             ],
         ];
@@ -122,6 +140,14 @@ class ValidateProductionConfig extends Command
             );
         }
 
-        return in_array($mailer, ['smtp', 'ses', 'mailgun', 'postmark'], true);
+        if ($mailer === 'smtp') {
+            $host = (string) config('mail.mailers.smtp.host');
+            $user = (string) config('mail.mailers.smtp.username');
+            $pass = (string) config('mail.mailers.smtp.password');
+
+            return $host !== '' && $user !== '' && $pass !== '';
+        }
+
+        return in_array($mailer, ['ses', 'mailgun', 'postmark'], true);
     }
 }

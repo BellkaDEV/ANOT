@@ -13,10 +13,21 @@ interface Props {
   onRegister: () => void;
   onForgotPassword: () => void;
   loading?: boolean;
+  errorMessage?: string | null;
+  onClearError?: () => void;
   th: AppTheme;
 }
 
-export default function LoginScreen({ onLogin, onBack, onRegister, onForgotPassword, loading = false, th }: Props) {
+export default function LoginScreen({
+  onLogin,
+  onBack,
+  onRegister,
+  onForgotPassword,
+  loading = false,
+  errorMessage,
+  onClearError,
+  th,
+}: Props) {
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
@@ -25,16 +36,28 @@ export default function LoginScreen({ onLogin, onBack, onRegister, onForgotPassw
 
   function validate() {
     const e: typeof errors = {};
-    if (!email.trim()) e.email = "E-mail obrigatório";
-    else if (!isValidEmail(email)) e.email = "E-mail inválido";
-    if (!pw) e.pw = "Senha obrigatória";
-    else if (pw.length < 6) e.pw = "Mínimo 6 caracteres";
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail) {
+      e.email = "E-mail obrigatório";
+    } else if (!isValidEmail(cleanEmail)) {
+      e.email = "E-mail inválido";
+    }
+
+    if (!pw) {
+      e.pw = "Senha obrigatória";
+    } else if (pw.length < 6) {
+      e.pw = "Mínimo 6 caracteres";
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   }
 
   function submit() {
+    if (loading) return;
     if (!validate()) return;
+    if (onClearError) onClearError();
     onLogin(email.trim(), pw);
   }
 
@@ -66,12 +89,23 @@ export default function LoginScreen({ onLogin, onBack, onRegister, onForgotPassw
           </View>
         </View>
 
+        {errorMessage ? (
+          <View style={[S.errorBanner, { backgroundColor: th.errorBg, borderColor: th.error }]}>
+            <AppIcon name="alert-circle-outline" size={20} color={th.error} />
+            <Text style={[S.errorBannerText, { color: th.error }]}>{errorMessage}</Text>
+          </View>
+        ) : null}
+
         <View style={{ gap: 16 }}>
           <FInput
             th={th}
             label="E-mail institucional"
             value={email}
-            onChange={setEmail}
+            onChange={(val) => {
+              setEmail(val);
+              if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+              if (onClearError && errorMessage) onClearError();
+            }}
             placeholder="seu@email.edu.br"
             leftIcon="mail-outline"
             keyboardType="email-address"
@@ -83,7 +117,11 @@ export default function LoginScreen({ onLogin, onBack, onRegister, onForgotPassw
             th={th}
             label="Senha"
             value={pw}
-            onChange={setPw}
+            onChange={(val) => {
+              setPw(val);
+              if (errors.pw) setErrors((prev) => ({ ...prev, pw: undefined }));
+              if (onClearError && errorMessage) onClearError();
+            }}
             placeholder="••••••••"
             secure={!showPw}
             leftIcon="lock-closed-outline"
@@ -93,9 +131,17 @@ export default function LoginScreen({ onLogin, onBack, onRegister, onForgotPassw
           />
         </View>
 
-        <Btn th={th} onPress={submit} loading={loading} full iconName="log-in-outline">
-          Entrar na conta
+        <Btn
+          th={th}
+          onPress={submit}
+          loading={loading}
+          disabled={loading}
+          full
+          iconName="log-in-outline"
+        >
+          {loading ? "Entrando..." : "Entrar na conta"}
         </Btn>
+
         <TouchableOpacity onPress={onForgotPassword} accessibilityRole="button" accessibilityLabel="Esqueci minha senha">
           <Text style={[S.forgotLink, { color: th.orange }]}>Esqueci minha senha</Text>
         </TouchableOpacity>
@@ -127,6 +173,21 @@ const S = StyleSheet.create({
   iconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   cardTitle: { fontSize: 18, fontWeight: "800" },
   cardSub: { fontSize: 13, marginTop: 2 },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  errorBannerText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 18,
+  },
   footerRow: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 10 },
   footerText: { fontSize: 14 },
   registerLink: { fontSize: 14, fontWeight: "700" },

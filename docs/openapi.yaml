@@ -1,0 +1,938 @@
+openapi: 3.0.3
+info:
+  title: ANOT API
+  description: Canonical REST API specification for ANOT academic management platform (post-groups MVP).
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api
+    description: Local Development Server
+  - url: https://api.anot.app/api
+    description: Production Server
+
+paths:
+  /health:
+    servers:
+      - url: http://localhost:8000
+        description: Local Development Server
+      - url: https://api.anot.app
+        description: Production Server
+    get:
+      summary: Health check endpoint
+      description: Returns health status of application, database, and cache.
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  version:
+                    type: string
+                    example: 1.0.0
+                  timestamp:
+                    type: string
+                    format: date-time
+                  checks:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        example: ok
+                      cache:
+                        type: string
+                        example: ok
+        '503':
+          description: Degraded / Service Unavailable
+
+  /register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+                - password_confirmation
+              properties:
+                name:
+                  type: string
+                  example: Maria Silva
+                email:
+                  type: string
+                  format: email
+                  example: maria@anot.app
+                password:
+                  type: string
+                  format: password
+                  example: SenhaSegura123
+                password_confirmation:
+                  type: string
+                  format: password
+                  example: SenhaSegura123
+                avatar_url:
+                  type: string
+                  format: uri
+                  nullable: true
+      responses:
+        '201':
+          description: User registered successfully
+        '422':
+          description: Validation error
+
+  /login:
+    post:
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: maria@anot.app
+                password:
+                  type: string
+                  format: password
+                  example: SenhaSegura123
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+        '403':
+          description: User suspended
+        '422':
+          description: Validation error
+
+  /forgot-password:
+    post:
+      summary: Request password reset link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Reset instructions sent
+
+  /reset-password:
+    post:
+      summary: Reset password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - email
+                - password
+                - password_confirmation
+              properties:
+                token:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                password_confirmation:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Password reset successful
+        '422':
+          description: Invalid token or details
+
+  /logout:
+    post:
+      summary: Revoke current session token
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully logged out
+        '401':
+          description: Unauthenticated
+
+  /logout-all:
+    post:
+      summary: Revoke all session tokens for authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: All sessions revoked
+        '401':
+          description: Unauthenticated
+
+  /me:
+    get:
+      summary: Get current authenticated user details
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile
+        '401':
+          description: Unauthenticated
+
+  /account/password:
+    put:
+      summary: Change password and revoke other sessions
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - current_password
+                - password
+                - password_confirmation
+              properties:
+                current_password:
+                  type: string
+                  format: password
+                password:
+                  type: string
+                  format: password
+                password_confirmation:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Password updated successfully
+        '422':
+          description: Validation or incorrect current password
+
+  /account:
+    delete:
+      summary: Delete user account
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Account deleted
+        '422':
+          description: Password verification failed
+
+  /email/verification-notification:
+    post:
+      summary: Resend email verification notification
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Verification link sent
+        '400':
+          description: Email already verified
+
+  /admin/users:
+    get:
+      summary: List users (Platform Admin only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated user list
+        '403':
+          description: Forbidden - not a platform admin
+
+  /admin/classes:
+    get:
+      summary: List all classes (Platform Admin only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated class list
+        '403':
+          description: Forbidden - not a platform admin
+
+  /admin/users/{user}/suspend:
+    post:
+      summary: Suspend a user account (Platform Admin only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: user
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User suspended
+        '403':
+          description: Cannot suspend another admin or own account
+
+  /admin/users/{user}/unsuspend:
+    post:
+      summary: Unsuspend a user account (Platform Admin only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: user
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User unsuspended
+        '403':
+          description: Forbidden
+
+  /classes:
+    get:
+      summary: List user classes
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Array of classes user belongs to or owns
+    post:
+      summary: Create a new class
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                course:
+                  type: string
+                institution:
+                  type: string
+                period:
+                  type: string
+                modality:
+                  type: string
+                  enum: [presencial, ead, hibrido]
+      responses:
+        '201':
+          description: Class created
+
+  /classes/join:
+    post:
+      summary: Join class by access code
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  example: 7K9W2X
+      responses:
+        '200':
+          description: Already a member
+        '201':
+          description: Joined class
+        '403':
+          description: Class is closed
+        '404':
+          description: Class code not found
+
+  /classes/{id}:
+    get:
+      summary: Get class details by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Class details
+        '403':
+          description: Not a member
+        '404':
+          description: Class not found
+    put:
+      summary: Update class details (Owner/Rep only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                course:
+                  type: string
+                institution:
+                  type: string
+                period:
+                  type: string
+                modality:
+                  type: string
+      responses:
+        '200':
+          description: Class updated
+        '403':
+          description: Unauthorized
+    delete:
+      summary: Delete class (Owner only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Class deleted
+        '403':
+          description: Only owner can delete
+
+  /classes/{id}/toggle-open:
+    put:
+      summary: Toggle enrollment status (Owner/Rep only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Status toggled
+
+  /classes/{id}/regenerate-code:
+    put:
+      summary: Regenerate class join code (Owner/Rep only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Code regenerated with new value
+
+  /classes/{id}/members:
+    get:
+      summary: List members of a class
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Member list
+
+  /classes/{classId}/members/{userId}/promote:
+    put:
+      summary: Promote student to representative (Owner only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Member promoted to rep
+
+  /classes/{classId}/members/{userId}/demote:
+    put:
+      summary: Demote representative to student (Owner only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Member demoted to student
+
+  /classes/{classId}/members/{userId}:
+    delete:
+      summary: Remove member or leave class
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Member removed
+
+  /classes/{classId}/activities:
+    get:
+      summary: List activities for a class with optional filters
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: type
+          required: false
+          schema:
+            type: string
+            enum: [dever, trabalho, teste, outros]
+        - in: query
+          name: search
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Activities list
+    post:
+      summary: Create activity (Owner/Rep only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - type
+                - due_date
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                type:
+                  type: string
+                  enum: [dever, trabalho, teste, outros]
+                due_date:
+                  type: string
+                  format: date-time
+                points:
+                  type: number
+      responses:
+        '201':
+          description: Activity created
+
+  /activities/{id}:
+    get:
+      summary: Get activity details by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Activity details with user progress
+    put:
+      summary: Update activity (Owner/Rep only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                type:
+                  type: string
+                  enum: [dever, trabalho, teste, outros]
+                due_date:
+                  type: string
+                  format: date-time
+                points:
+                  type: number
+      responses:
+        '200':
+          description: Activity updated
+    delete:
+      summary: Delete activity (Owner/Rep only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Activity deleted
+
+  /activities/{id}/progress:
+    put:
+      summary: Update personal progress on an activity
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [pendente, em_andamento, entregue, devolvido]
+                grade:
+                  type: number
+                  nullable: true
+                notes:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Personal progress updated
+
+  /classes/{classId}/announcements:
+    get:
+      summary: List announcements for a class
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Announcements list
+    post:
+      summary: Create announcement (Owner/Rep only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - content
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                priority:
+                  type: string
+                  enum: [baixa, normal, alta]
+      responses:
+        '201':
+          description: Announcement created
+
+  /announcements/{id}:
+    get:
+      summary: Get announcement details
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Announcement details
+    put:
+      summary: Update announcement (Author/Owner/Rep only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                priority:
+                  type: string
+      responses:
+        '200':
+          description: Announcement updated
+    delete:
+      summary: Delete announcement (Author/Owner/Rep only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Announcement deleted
+
+  /classes/{classId}/events:
+    get:
+      summary: List calendar events for a class
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Events list
+    post:
+      summary: Create event (Owner/Rep only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - start_time
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                start_time:
+                  type: string
+                  format: date-time
+                end_time:
+                  type: string
+                  format: date-time
+                location:
+                  type: string
+      responses:
+        '201':
+          description: Event created
+
+  /events/{id}:
+    get:
+      summary: Get event details
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Event details
+    put:
+      summary: Update event (Owner/Rep only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                start_time:
+                  type: string
+                  format: date-time
+                end_time:
+                  type: string
+                  format: date-time
+                location:
+                  type: string
+      responses:
+        '200':
+          description: Event updated
+    delete:
+      summary: Delete event (Owner/Rep only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Event deleted
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: SanctumToken

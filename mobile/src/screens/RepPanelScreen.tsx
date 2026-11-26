@@ -91,6 +91,7 @@ export default function RepPanelScreen({
                     style={[S.iconBtn, { backgroundColor: th.navyLight }]}
                     accessibilityRole="button"
                     accessibilityLabel={`Editar aviso: ${ann.title}`}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Ionicons name="pencil-outline" size={14} color={th.navy}/>
                   </TouchableOpacity>
@@ -99,6 +100,7 @@ export default function RepPanelScreen({
                     style={[S.iconBtn, { backgroundColor: "rgba(239,68,68,0.1)" }]}
                     accessibilityRole="button"
                     accessibilityLabel={`Excluir aviso: ${ann.title}`}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Ionicons name="trash-outline" size={14} color="#ef4444"/>
                   </TouchableOpacity>
@@ -135,6 +137,7 @@ export default function RepPanelScreen({
                     style={[S.iconBtn, { backgroundColor: th.navyLight }]}
                     accessibilityRole="button"
                     accessibilityLabel={`Editar atividade: ${act.title}`}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Ionicons name="pencil-outline" size={14} color={th.navy}/>
                   </TouchableOpacity>
@@ -143,6 +146,7 @@ export default function RepPanelScreen({
                     style={[S.iconBtn, { backgroundColor: "rgba(239,68,68,0.1)" }]}
                     accessibilityRole="button"
                     accessibilityLabel={`Excluir atividade: ${act.title}`}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Ionicons name="trash-outline" size={14} color="#ef4444"/>
                   </TouchableOpacity>
@@ -376,7 +380,7 @@ const S = StyleSheet.create({
   itemTitle:{ fontSize: 14, fontWeight: "700" },
   itemSub:  { fontSize: 13 },
   itemMeta: { fontSize: 11 },
-  iconBtn:  { width: 30, height: 30, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+  iconBtn:  { width: 34, height: 34, borderRadius: 8, alignItems: "center", justifyContent: "center" },
   memberRow:{ flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14,
               borderWidth: 1, padding: 12, marginBottom: 6 },
   memberName:{ fontSize: 14, fontWeight: "700" },

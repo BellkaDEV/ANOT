@@ -36,11 +36,11 @@
       "expo-secure-store",
       "expo-status-bar"
     ],
+    "owner": "anot-class",
     "extra": {
       "eas": {
-        "projectId": "79dbd06b-82a1-4200-9baa-6c2759f703af"
+        "projectId": "1955928e-214f-4a63-80b5-5dcfe7b1541e"
       }
-    },
-    "owner": "bellkadev"
+    }
   }
 }

@@ -47,6 +47,9 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
     if (!title.trim()) e.title = "Título obrigatório";
     if (!subject.trim()) e.subject = "Matéria obrigatória";
     if (!dueDate) e.dueDate = "Data de entrega obrigatória";
+    if (dueTime.trim() && !/^([01]\d|2[0-3]):([0-5]\d)$/.test(dueTime.trim())) {
+      e.dueTime = "Horário inválido. Use o formato HH:MM (ex.: 14:00)";
+    }
 
     if (type === "teste" && hasPoints) {
       const pts = parseFloat(pointsValue.replace(",", "."));
@@ -281,6 +284,7 @@ export default function ActivityFormScreen({ existing, onSave, onDelete, onBack,
           label="HORÁRIO DE ENTREGA (OPCIONAL)"
           value={dueTime}
           onChange={setDueTime}
+          error={errors.dueTime}
           th={th}
         />
 

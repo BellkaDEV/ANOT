@@ -56,14 +56,18 @@ const localIso = (date: Date) => `${date.getFullYear()}-${String(date.getMonth()
 export const TODAY_ISO = localIso(now);
 export const TODAY_DAY = now.getDate();
 export const TODAY_MONTH = now.getMonth() + 1;
-export const CAL_MONTHS = Array.from({ length: 12 }, (_, monthIndex) => {
-  const firstDay = new Date(now.getFullYear(), monthIndex, 1);
+export const TODAY_YEAR = now.getFullYear();
+const baseYear = now.getFullYear();
+export const CAL_MONTHS = Array.from({ length: 36 }, (_, idx) => {
+  const year = baseYear - 1 + Math.floor(idx / 12);
+  const monthIndex = idx % 12;
+  const firstDay = new Date(year, monthIndex, 1);
   return {
-    year: now.getFullYear(),
+    year,
     month: monthIndex + 1,
-    name: `${MONTH_NAMES_PT[monthIndex]} ${now.getFullYear()}`,
+    name: `${MONTH_NAMES_PT[monthIndex]} ${year}`,
     short: MONTH_SHORT_PT[monthIndex],
-    days: new Date(now.getFullYear(), monthIndex + 1, 0).getDate(),
+    days: new Date(year, monthIndex + 1, 0).getDate(),
     offset: (firstDay.getDay() + 6) % 7,
   };
 });

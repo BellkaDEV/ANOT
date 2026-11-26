@@ -10,12 +10,13 @@ if (process.env.NODE_ENV === 'production' && !ENV_API_URL?.startsWith('https://'
 
 export const API_URL = `${(ENV_API_URL || DEFAULT_URL).replace(/\/+$/, '').replace(/\/api$/, '')}/api`;
 
+// Timeout aumentado para 25s para suportar cold starts em servidores de produção (ex: Render)
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: 25000,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    Accept: 'application/json',
   },
 });
 
@@ -40,20 +41,36 @@ export const subscribeToUnauthorized = (callback: UnauthorizedCallback) => {
 };
 
 const notifyConnection = (isOnline: boolean) => {
-  listeners.forEach(cb => cb(isOnline));
+  listeners.forEach((cb) => cb(isOnline));
 };
 
 let isHandling401 = false;
+
+// Rotas públicas que nunca devem acionar o fluxo de "sessão expirada / logout forçado"
+const isGuestAuthUrl = (url?: string): boolean => {
+  if (!url) return false;
+  return (
+    url.includes('/login') ||
+    url.includes('/register') ||
+    url.includes('/forgot-password') ||
+    url.includes('/reset-password')
+  );
+};
 
 api.interceptors.request.use(
   async (config) => {
     if (__DEV__) {
       console.log(`[ANOT API] ${config.method?.toUpperCase() || 'REQUEST'} ${config.baseURL || ''}${config.url || ''}`);
     }
-    const token = await getToken();
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+
+    // Não injetar token Sanctum se for uma rota de autenticação pública
+    if (!isGuestAuthUrl(config.url)) {
+      const token = await getToken();
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
+
     return config;
   },
   (error) => {
@@ -72,10 +89,14 @@ api.interceptors.response.use(
     } else {
       notifyConnection(true);
 
-      if (error.response.status === 401 && !isHandling401) {
+      const requestUrl = error.config?.url;
+      const isGuestRoute = isGuestAuthUrl(requestUrl);
+
+      // Apenas acionar o evento de 401 se NÃO for rota pública (onde 401 significa apenas credenciais inválidas)
+      if (error.response.status === 401 && !isHandling401 && !isGuestRoute) {
         isHandling401 = true;
         await deleteToken();
-        unauthorizedListeners.forEach(cb => cb());
+        unauthorizedListeners.forEach((cb) => cb());
         setTimeout(() => {
           isHandling401 = false;
         }, 1000);

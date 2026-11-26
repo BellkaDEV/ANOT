@@ -21,10 +21,12 @@ export default function ForgotPasswordScreen({ onSubmit, onBack, loading = false
   const [sent, setSent] = useState(false);
 
   async function submit() {
-    if (!email.trim()) return setError("E-mail obrigatório");
-    if (!isValidEmail(email)) return setError("E-mail inválido");
+    if (loading) return;
+    const cleanEmail = email.trim();
+    if (!cleanEmail) return setError("E-mail obrigatório");
+    if (!isValidEmail(cleanEmail)) return setError("E-mail inválido");
     setError(undefined);
-    if (await onSubmit(email.trim())) setSent(true);
+    if (await onSubmit(cleanEmail)) setSent(true);
   }
 
   const header = (
@@ -41,15 +43,39 @@ export default function ForgotPasswordScreen({ onSubmit, onBack, loading = false
     <KeyboardAwareScreen header={header} th={th} contentContainerStyle={S.body}>
       <View style={[S.card, { backgroundColor: th.card, borderColor: th.border }]}>
         <View style={S.cardTop}>
-          <View style={[S.iconWrap, { backgroundColor: th.orangeLight }]}><AppIcon name="key-outline" size={22} color={th.orange} /></View>
-          <View style={{ flex: 1 }}><Text style={[S.cardTitle, { color: th.fg }]}>Redefina sua senha</Text><Text style={[S.cardSub, { color: th.muted }]}>Enviaremos instruções para o e-mail informado.</Text></View>
+          <View style={[S.iconWrap, { backgroundColor: th.orangeLight }]}>
+            <AppIcon name="key-outline" size={22} color={th.orange} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[S.cardTitle, { color: th.fg }]}>Redefina sua senha</Text>
+            <Text style={[S.cardSub, { color: th.muted }]}>Enviaremos instruções para o e-mail informado.</Text>
+          </View>
         </View>
         {sent ? (
-          <View style={[S.successBox, { backgroundColor: th.successBg }]}><Text style={[S.successText, { color: th.success }]}>Se o e-mail estiver cadastrado, você receberá as instruções em instantes. Verifique também a caixa de spam.</Text></View>
+          <View style={[S.successBox, { backgroundColor: th.successBg }]}>
+            <Text style={[S.successText, { color: th.success }]}>
+              Se o e-mail estiver cadastrado, você receberá as instruções em instantes. Verifique também a caixa de spam.
+            </Text>
+          </View>
         ) : (
           <>
-            <FInput th={th} label="E-mail cadastrado" value={email} onChange={setEmail} placeholder="seu@email.edu.br" leftIcon="mail-outline" keyboardType="email-address" autoCapitalize="none" error={error} />
-            <Btn th={th} onPress={submit} loading={loading} full iconName="send-outline">Enviar instruções</Btn>
+            <FInput
+              th={th}
+              label="E-mail cadastrado"
+              value={email}
+              onChange={(val) => {
+                setEmail(val);
+                if (error) setError(undefined);
+              }}
+              placeholder="seu@email.edu.br"
+              leftIcon="mail-outline"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              error={error}
+            />
+            <Btn th={th} onPress={submit} loading={loading} disabled={loading} full iconName="send-outline">
+              {loading ? "Enviando instruções..." : "Enviar instruções"}
+            </Btn>
           </>
         )}
       </View>

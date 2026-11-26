@@ -16,4 +16,11 @@ class HealthCheckTest extends TestCase
             ->assertJsonPath('checks.database', 'ok')
             ->assertJsonPath('checks.cache', 'ok');
     }
+
+    public function test_health_endpoint_always_returns_http_200(): void
+    {
+        $response = $this->get('/health');
+
+        $response->assertStatus(200);
+    }
 }

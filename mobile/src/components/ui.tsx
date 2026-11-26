@@ -236,10 +236,11 @@ export function SkelCard({th}:{th:AppTheme}) {
 
 // ─── EMPTY STATE ──────────────────────────────────────────────────────────────
 export function Empty({icon="clipboard-outline",title,sub,cta,onCta,th}:{icon?:string;title:string;sub?:string;cta?:string;onCta?:()=>void;th:AppTheme}) {
+  const safeIcon = (icon && !/[\u{1F300}-\u{1FAFF}]/u.test(icon)) ? icon : "clipboard-outline";
   return (
     <View style={S.emptyWrap}>
       <View style={[S.emptyBox,{backgroundColor:th.card2}]}>
-        <Ionicons name={(icon || "clipboard-outline") as any} size={24} color={th.muted}/>
+        <Ionicons name={safeIcon as any} size={24} color={th.muted}/>
       </View>
       <Text style={[S.emptyTitle,{color:th.fg}]}>{title}</Text>
       {sub&&<Text style={[S.emptySub,{color:th.muted}]}>{sub}</Text>}
