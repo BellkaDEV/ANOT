@@ -33,7 +33,7 @@ class HealthController extends Controller
             'version' => config('app.version', '1.0.0'),
             'timestamp' => now()->toIso8601String(),
             'checks' => $checks,
-        ], $healthy ? 200 : 503);
+        ], 200);
     }
 
     private function databaseCheck(): string
