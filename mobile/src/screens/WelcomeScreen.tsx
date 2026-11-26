@@ -1,7 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import { Btn } from "../components/ui";
 import type { AppTheme } from "../types";
 
@@ -13,8 +12,13 @@ export default function WelcomeScreen({ onLogin, onRegister, th }: Props) {
       <View style={[S.root, { backgroundColor: th.navy }]}>
         {/* Top section */}
         <View style={S.top}>
-          <View style={[S.logoWrap, { backgroundColor: "rgba(255,255,255,0.1)" }]}>
-            <Ionicons name="school" size={40} color="#e4822e"/>
+          <View style={S.logoWrap}>
+            <Image
+              source={require("../../assets/brand-icon.png")}
+              style={S.logoImage}
+              resizeMode="cover"
+              accessibilityLabel="Ícone do aplicativo ANOT"
+            />
           </View>
           <Text style={S.appName}>ANOT</Text>
           <Text style={[S.tagline, { color: "rgba(255,255,255,0.72)" }]}>
@@ -47,7 +51,10 @@ const S = StyleSheet.create({
   safe:    { flex: 1 },
   root:    { flex: 1, justifyContent: "space-between", paddingBottom: 0 },
   top:     { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24, gap: 16 },
-  logoWrap:{ width: 88, height: 88, borderRadius: 26, alignItems: "center", justifyContent: "center" },
+  logoWrap:{ width: 88, height: 88, borderRadius: 26, overflow: "hidden", alignItems: "center", justifyContent: "center",
+             borderWidth: 1.5, borderColor: "rgba(255,255,255,0.22)",
+             shadowColor: "#000", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 6 },
+  logoImage: { width: "100%", height: "100%" },
   appName: { fontSize: 40, fontWeight: "900", color: "#fff", letterSpacing: 2 },
   tagline: { fontSize: 17, textAlign: "center", lineHeight: 26 },
   dots:    { flexDirection: "row", gap: 6, marginTop: 8 },

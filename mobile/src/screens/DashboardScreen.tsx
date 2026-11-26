@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Btn, SkelCard, Empty } from "../components/ui";
@@ -41,9 +41,19 @@ export default function DashboardScreen({
     <View style={[S.safe, { backgroundColor: th.bg }]}>
       {/* Header */}
       <View style={[S.header, { backgroundColor: th.headerBg, paddingTop: Math.max(insets.top, 12) + 6 }]}>
-        <View>
-          <Text style={S.hGreet}>Olá, {user.name.split(" ")[0]} 👋</Text>
-          <Text style={S.hSub}>{classes.length} {classes.length === 1 ? "turma" : "turmas"} ativas</Text>
+        <View style={S.brandRow}>
+          <View style={S.brandBadge}>
+            <Image
+              source={require("../../assets/brand-icon.png")}
+              style={S.brandImg}
+              resizeMode="cover"
+              accessibilityLabel="ANOT"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={S.hGreet} numberOfLines={1}>Olá, {user.name.split(" ")[0]} 👋</Text>
+            <Text style={S.hSub}>{classes.length} {classes.length === 1 ? "turma" : "turmas"} ativas</Text>
+          </View>
         </View>
         <View style={{ flexDirection: "row", gap: 8 }}>
           <TouchableOpacity
@@ -212,6 +222,10 @@ const S = StyleSheet.create({
   safe:       { flex: 1 },
   header:     { paddingHorizontal: 20, paddingVertical: 18, flexDirection: "row",
                 alignItems: "center", justifyContent: "space-between" },
+  brandRow:   { flex: 1, flexDirection: "row", alignItems: "center", gap: 12, marginRight: 12 },
+  brandBadge: { width: 38, height: 38, borderRadius: 11, overflow: "hidden",
+                borderWidth: 1, borderColor: "rgba(255,255,255,0.22)" },
+  brandImg:   { width: "100%", height: "100%" },
   hGreet:     { fontSize: 20, fontWeight: "800", color: "#fff" },
   hSub:       { fontSize: 13, color: "rgba(255,255,255,0.65)", marginTop: 2 },
   iconBtn:    { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },

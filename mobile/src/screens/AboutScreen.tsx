@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import type { AppTheme } from "../types";
@@ -36,8 +36,13 @@ export default function AboutScreen({ onBack, th }: Props) {
       <ScrollView contentContainerStyle={S.body}>
         {/* Hero */}
         <View style={[S.hero, { backgroundColor: th.card, borderColor: th.border }]}>
-          <View style={[S.logoWrap, { backgroundColor: th.orangeLight }]}>
-            <Ionicons name="school" size={36} color={th.orange}/>
+          <View style={[S.logoWrap, { borderColor: th.border }]}>
+            <Image
+              source={require("../../assets/brand-icon.png")}
+              style={S.logoImage}
+              resizeMode="cover"
+              accessibilityLabel="Logo ANOT"
+            />
           </View>
           <Text style={[S.appName, { color: th.fg }]}>ANOT</Text>
           <Text style={[S.version, { color: th.muted }]}>Versão 1.0.0 — Expo SDK 57</Text>
@@ -124,7 +129,8 @@ const S = StyleSheet.create({
   hTitle:     { fontSize: 17, fontWeight: "700", color: "#fff" },
   body:       { padding: 16, gap: 12, paddingBottom: 40 },
   hero:       { borderRadius: 20, borderWidth: 1, padding: 24, alignItems: "center", gap: 8, marginBottom: 8 },
-  logoWrap:   { width: 72, height: 72, borderRadius: 22, alignItems: "center", justifyContent: "center" },
+  logoWrap:   { width: 72, height: 72, borderRadius: 22, borderWidth: 1, overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  logoImage:  { width: "100%", height: "100%" },
   appName:    { fontSize: 28, fontWeight: "900", letterSpacing: 2 },
   version:    { fontSize: 12 },
   tagline:    { fontSize: 14, textAlign: "center", lineHeight: 21 },

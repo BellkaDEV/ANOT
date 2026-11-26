@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppIcon from "../components/AppIcon";
 import KeyboardAwareScreen from "../components/KeyboardAwareScreen";
@@ -89,8 +89,13 @@ export default function RegisterScreen({
     <KeyboardAwareScreen header={header} th={th} contentContainerStyle={S.body}>
       <View style={[S.card, { backgroundColor: th.card, borderColor: th.border }]}>
         <View style={S.cardTop}>
-          <View style={[S.iconWrap, { backgroundColor: th.orangeLight }]}>
-            <AppIcon name="person-add" size={22} color={th.orange} />
+          <View style={[S.iconWrap, { borderColor: th.border }]}>
+            <Image
+              source={require("../../assets/brand-icon.png")}
+              style={S.logoImage}
+              resizeMode="cover"
+              accessibilityLabel="Logo ANOT"
+            />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[S.cardTitle, { color: th.fg }]}>Nova Conta ANOT</Text>
@@ -195,7 +200,8 @@ const S = StyleSheet.create({
   body: { padding: 20, gap: 20 },
   card: { borderRadius: 20, borderWidth: 1, padding: 24, gap: 18 },
   cardTop: { flexDirection: "row", alignItems: "center", gap: 14 },
-  iconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  iconWrap: { width: 48, height: 48, borderRadius: 14, borderWidth: 1, overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  logoImage: { width: "100%", height: "100%" },
   cardTitle: { fontSize: 18, fontWeight: "800" },
   cardSub: { fontSize: 13, marginTop: 2 },
   errorBanner: {
